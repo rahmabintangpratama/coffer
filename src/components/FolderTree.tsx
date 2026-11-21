@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronRight, Folder, LoaderCircle } from "lucide-react";
-import { type KeyboardEvent, useEffect, useId, useRef, useState } from "react";
+import { type KeyboardEvent, Fragment, useEffect, useId, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 export interface TreeFolder {
@@ -119,6 +119,8 @@ export function FolderTree(props: FolderTreeProps) {
     else if (event.key === "ArrowRight") {
       event.preventDefault();
       if (!row.expanded) toggle(row.folder.prefix);
+      // An open node that failed to load tries again; otherwise Right goes in.
+      else if (loads[row.folder.prefix]?.state === "error") setLoads((current) => Object.fromEntries(Object.entries(current).filter(([key]) => key !== row.folder.prefix)));
       else move(index + 1);
     } else if (event.key === "ArrowLeft") {
       event.preventDefault();
@@ -142,8 +144,8 @@ export function FolderTree(props: FolderTreeProps) {
         const disabled = isDisabled(prefix);
         const selected = value === prefix;
         return (
+          <Fragment key={prefix === "" ? "root" : prefix}>
           <li
-            key={prefix === "" ? "root" : prefix}
             role="treeitem"
             aria-level={row.level}
             // The visible name sits in an aria-hidden button (the row is the one control), so the item is named from those texts:
@@ -195,11 +197,17 @@ export function FolderTree(props: FolderTreeProps) {
                 {prefix === currentPrefix && <span id={`${idBase}-c${index.toString()}`} className="shrink-0 text-sm text-fg-muted">{currentLabel}</span>}
               </button>
             </div>
-            {row.expanded && state === undefined && <p role="status" className="sr-only">{loadingLabel}</p>}
-            {row.expanded && state?.state === "error" && (
-              <p role="alert" className="py-1 text-sm text-danger-fg" style={{ paddingLeft: `calc(var(--cf-space-2) + ${row.level.toString()} * var(--cf-space-5))` }}>{errorLabel}</p>
-            )}
           </li>
+          {/* Status lines are their own list items, so the tree item's content is exactly the name that is drawn (WCAG 2.5.3). */}
+          {row.expanded && state === undefined && (
+            <li role="none"><p role="status" className="sr-only">{loadingLabel}</p></li>
+          )}
+          {row.expanded && state?.state === "error" && (
+            <li role="none">
+              <p role="alert" className="py-1 text-sm text-danger-fg" style={{ paddingLeft: `calc(var(--cf-space-2) + ${row.level.toString()} * var(--cf-space-5))` }}>{errorLabel}</p>
+            </li>
+          )}
+          </Fragment>
         );
       })}
     </ul>
