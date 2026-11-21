@@ -396,7 +396,7 @@ Spec for the file Cloudflare Pages serves (from the design proposal, with cache 
 
 ```
 /*
-  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob: https:; media-src blob: https:; font-src 'self'; worker-src 'self' blob:; manifest-src 'self'; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src blob:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob: https:; media-src blob: https:; font-src 'self'; worker-src 'self' blob:; manifest-src 'self'; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
   Referrer-Policy: no-referrer
   X-Content-Type-Options: nosniff
   Cross-Origin-Opener-Policy: same-origin
@@ -422,7 +422,7 @@ Spec for the file Cloudflare Pages serves (from the design proposal, with cache 
 Notes:
 - `connect-src https:` is required because the endpoint is chosen by the user; it is the only broad directive. `http://localhost:*` and `http://127.0.0.1:*` allow a local S3 server. Do **not** add `upgrade-insecure-requests` (it would break localhost `http`).
 - `script-src 'self'` forbids inline scripts, so there is no inline theme script; `public/theme-init.js` is a small blocking file ([C-22](open-questions.md#owner-confirmed-decisions)). `style-src 'self'` forbids `<style>` tags and `style=""` attributes in HTML; React sets styles through the CSSOM, which is allowed. Radix, Vaul and TanStack Virtual set positions through React props, which works; this must be verified in a real browser (console shows no CSP violations) ([C-31](open-questions.md#owner-confirmed-decisions)).
-- `frame-src blob:` is for the sandbox HTML preview. `worker-src 'self' blob:` is for the bundled pdf.js worker. `img-src https:` and `media-src https:` serve presigned previews.
+- `frame-src 'none'`: the sandbox HTML preview is an `<iframe sandbox="" srcdoc>`, which `frame-src` does not govern ([D-39](open-questions.md#decisions-made-on-the-owners-behalf)), so nothing needs a frame source. A `blob:` frame would not render in Safari anyway. `worker-src 'self' blob:` is for the bundled pdf.js worker. `img-src https:` and `media-src https:` serve presigned previews.
 - HSTS `preload` from the design proposal is omitted: preloading is a deliberate, hard-to-reverse choice for a domain the project controls ([C-32](open-questions.md#owner-confirmed-decisions)).
 - A `<meta http-equiv>` CSP cannot replace `frame-ancestors`; the header is the source of truth. A CI check fetches the built `_headers`, parses it and asserts every directive above.
 - Optional hardening (v1): `require-trusted-types-for 'script'` in Report-Only first.

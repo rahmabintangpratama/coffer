@@ -37,7 +37,8 @@ export const EXPECTED_CSP: Record<string, string> = {
   "worker-src": "'self' blob:",
   "manifest-src": "'self'",
   "connect-src": "'self' https: http://localhost:* http://127.0.0.1:*",
-  "frame-src": "blob:",
+  // The sandboxed HTML preview is an srcdoc frame, which frame-src does not govern (D-39); no page may frame anything else.
+  "frame-src": "'none'",
   "object-src": "'none'",
   "base-uri": "'none'",
   "form-action": "'none'",

@@ -109,6 +109,20 @@ describe("FR-56 HTML as source", () => {
     expect(document.querySelector("dialog script")).toBeNull();
   });
 
+  it("the sandbox attribute is exactly empty: never allow-scripts, never allow-same-origin, never any allow-* token", async () => {
+    readObject.mockResolvedValue(enc(page));
+    setup(file("page.html", "html"));
+    await userEvent.click(await screen.findByRole("button", { name: "Render in sandbox" }));
+    const frame = document.querySelector("iframe");
+    // allow-scripts together with allow-same-origin would let the page remove its own sandbox and read the app's storage.
+    expect(frame?.getAttribute("sandbox")).toBe("");
+    // jsdom has no iframe.sandbox token list, so the attribute text is split by hand.
+    expect((frame?.getAttribute("sandbox") ?? "x").split(/\s+/).filter(Boolean)).toEqual([]);
+    expect(frame?.getAttribute("sandbox") ?? "").not.toMatch(/allow-/);
+    expect(frame?.hasAttribute("allow")).toBe(true);
+    expect(frame?.getAttribute("allow")).toBe("");
+  });
+
   it("AC-56.2 renders in an iframe with sandbox=\"\", the network locked first, and can go back to source", async () => {
     readObject.mockResolvedValue(enc(page));
     setup(file("page.html", "html"));
