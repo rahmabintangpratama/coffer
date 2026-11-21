@@ -19,10 +19,17 @@ export default defineConfig({
   globalSetup: "./tests/e2e/global-setup.ts",
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
+  // One retry in CI only. A test that needs it is reported as flaky in the run summary (scripts/ci/e2e-summary.ts), never hidden.
   retries: process.env.CI ? 1 : 0,
-  reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : "list",
+  // Each CI job runs one project; two workers keep a 4-core runner from being overloaded while the server and the S3 fixture run beside it.
+  workers: process.env.CI ? 2 : undefined,
+  timeout: 30_000,
+  expect: { timeout: 5_000 },
+  // Blob reports are merged across the matrix jobs into one HTML report and one summary.
+  reporter: process.env.CI ? [["github"], ["blob"]] : "list",
   use: {
     baseURL: `http://127.0.0.1:${port}`,
+    // Kept for every failed attempt, so the first failure of a flaky test has a trace even though its retry passes.
     trace: "retain-on-failure",
   },
   projects: engines.flatMap((engine) =>
