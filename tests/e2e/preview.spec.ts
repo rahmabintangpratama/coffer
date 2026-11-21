@@ -2,13 +2,13 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, test } from "@playwright/test";
 import { cspViolations, enterApp, recordCspViolations } from "./helpers";
 
-// M5a: the preview viewer for images, video, audio, text and code, SVG and the
-// no-preview fallback (FR-50, FR-51, FR-52, FR-54, FR-57, FR-58). Fixtures are
+// M5a and M5b: the preview viewer for images, video, audio, text and code, SVG, PDF,
+// Markdown, HTML as source and the no-preview fallback (FR-50 to FR-58). Fixtures are
 // seeded under preview/ in the shared bucket by tests/e2e/fixture.ts.
 const rows = (page: Page) => page.locator('[data-component="FileRow"], [data-component="FileTile"]');
 const row = (page: Page, name: string) => rows(page).filter({ hasText: name }).first();
 const dialog = (page: Page) => page.locator('dialog[data-component="Preview"]');
-const FILE_COUNT = 10;
+const FILE_COUNT = 14;
 
 async function openFile(page: Page, name: string): Promise<void> {
   const target = row(page, name);
@@ -16,6 +16,13 @@ async function openFile(page: Page, name: string): Promise<void> {
   await target.focus();
   await page.keyboard.press("Enter");
   await expect(dialog(page)).toBeVisible();
+}
+
+/** Close with Escape and wait for the row to take focus back, so the next open does not race the focus move. */
+async function closeViewer(page: Page, name: string): Promise<void> {
+  await page.keyboard.press("Escape");
+  await expect(dialog(page)).toHaveCount(0);
+  await expect(row(page, name)).toBeFocused();
 }
 
 test.describe("preview", () => {
@@ -39,10 +46,10 @@ test.describe("preview", () => {
 
   test("AC-50.2 arrow keys move between files and announce the position", async ({ page }) => {
     await openFile(page, "code.ts");
-    // Ten files in name order: big.txt, blob.bin, code.ts, hostile.svg, hostile.txt, mislabeled.png, README, sample.*.
+    // Fourteen files in name order: big.txt, blob.bin, code.ts, hostile.html, hostile.md, hostile.svg, hostile.txt, mislabeled.png, README, sample.*, scripted.pdf.
     await expect(dialog(page).getByRole("status").filter({ hasText: / of / })).toHaveText(`3 of ${FILE_COUNT.toString()}`);
     await page.keyboard.press("ArrowRight");
-    await expect(dialog(page).getByRole("heading", { level: 1 })).toHaveText("hostile.svg");
+    await expect(dialog(page).getByRole("heading", { level: 1 })).toHaveText("hostile.html");
     await expect(dialog(page).getByRole("status").filter({ hasText: / of / })).toHaveText(`4 of ${FILE_COUNT.toString()}`);
     await page.keyboard.press("ArrowLeft");
     await page.keyboard.press("ArrowLeft");
@@ -147,8 +154,7 @@ test.describe("preview", () => {
     for (const name of ["sample.png", "hostile.svg", "code.ts", "sample.wav"]) {
       await openFile(page, name);
       await expect(dialog(page).locator("img, audio, [role='region']").first()).toBeVisible();
-      await page.keyboard.press("Escape");
-      await expect(dialog(page)).toHaveCount(0);
+      await closeViewer(page, name);
     }
     expect(await cspViolations(page)).toEqual([]);
   });
@@ -169,5 +175,143 @@ test.describe("preview", () => {
     await page.keyboard.press("ArrowRight");
     const image = await new AxeBuilder({ page }).include("dialog[data-component='Preview']").analyze();
     expect(image.violations.filter((v) => v.impact === "serious" || v.impact === "critical")).toEqual([]);
+  });
+});
+
+const ATTACKER = "attacker.invalid";
+
+test.describe("PDF, Markdown and HTML (M5b)", () => {
+  const requests: string[] = [];
+  const blocked = new Set<string>();
+  test.beforeEach(async ({ page }) => {
+    requests.length = 0;
+    blocked.clear();
+    page.on("request", (request) => { requests.push(request.url()); });
+    // The browser reports a request that the CSP stops, then fails it with "csp": it never reaches the network.
+    page.on("requestfailed", (request) => {
+      if (/csp/i.test(request.failure()?.errorText ?? "")) blocked.add(request.url());
+    });
+    await recordCspViolations(page);
+    await enterApp(page, "/files");
+    await page.evaluate(() => { window.location.hash = "#/files/preview"; });
+    await expect(row(page, "sample.pdf")).toBeVisible({ timeout: 20_000 });
+  });
+
+  const nothingLeft = () => {
+    expect(requests.filter((url) => url.includes(ATTACKER) && !blocked.has(url))).toEqual([]);
+  };
+
+  test("AC-53.1 a PDF renders page by page with Previous and Next page and Page N of M", async ({ page }) => {
+    await openFile(page, "sample.pdf");
+    const pageStatus = dialog(page).getByRole("status").filter({ hasText: /^Page / });
+    await expect(pageStatus).toHaveText("Page 1 of 2", { timeout: 20_000 });
+    const canvas = dialog(page).locator("canvas[data-component='PdfPage']");
+    const inked = () => canvas.evaluate((element: HTMLCanvasElement) => {
+      const data = element.getContext("2d")?.getImageData(0, 0, element.width, element.height).data;
+      if (!data) return false;
+      for (let i = 0; i < data.length; i += 4) if ((data[i] ?? 255) < 128) return true;
+      return false;
+    });
+    await expect.poll(inked, { timeout: 20_000 }).toBe(true);
+    await expect(dialog(page).getByRole("button", { name: "Previous page" })).toBeDisabled();
+    await dialog(page).getByRole("button", { name: "Next page" }).click();
+    await expect(pageStatus).toHaveText("Page 2 of 2");
+    await expect(dialog(page).getByRole("button", { name: "Next page" })).toBeDisabled();
+    await expect.poll(inked).toBe(true);
+  });
+
+  test("AC-53.1 a PDF with an open-action script and a link runs nothing and follows nothing", async ({ page }) => {
+    let dialogOpened = false;
+    page.on("dialog", (alert) => {
+      dialogOpened = true;
+      void alert.dismiss();
+    });
+    await openFile(page, "scripted.pdf");
+    await expect(dialog(page).getByRole("status").filter({ hasText: /^Page / })).toHaveText("Page 1 of 1", { timeout: 20_000 });
+    await dialog(page).locator("canvas[data-component='PdfPage']").click();
+    expect(dialogOpened).toBe(false);
+    nothingLeft();
+  });
+
+  test("AC-55.1 Markdown is sanitized: no raw HTML, no remote images, safe links only", async ({ page }) => {
+    await openFile(page, "hostile.md");
+    const body = dialog(page).locator("[data-component='MarkdownBody']");
+    await expect(body.getByRole("heading", { name: "Notes title", level: 1 })).toBeVisible();
+    await expect(dialog(page).getByText("Markdown · sanitized")).toBeVisible();
+    // Rendered formatting is there; everything dangerous is not an element.
+    await expect(body.locator("strong")).toHaveText("bold");
+    await expect(body.locator("li")).toHaveCount(2);
+    expect(await body.locator("script, iframe, form, input, meta, img, [onerror], [onclick]").count()).toBe(0);
+    const hrefs = await body.locator("a").evaluateAll((links) => links.map((link) => ({ href: link.getAttribute("href"), rel: link.getAttribute("rel"), target: link.getAttribute("target") })));
+    for (const link of hrefs) {
+      expect(link.href ?? "").toMatch(/^(https?:|mailto:)/);
+      expect(link.rel).toBe("noopener noreferrer");
+      expect(link.target).toBe("_blank");
+    }
+    expect(hrefs.map((link) => link.href)).toEqual(expect.arrayContaining(["https://example.com/page", "mailto:someone@example.com"]));
+    expect(hrefs.some((link) => (link.href ?? "").startsWith("javascript:") || (link.href ?? "").startsWith("data:"))).toBe(false);
+    expect(await page.evaluate(() => (window as unknown as { __mdRan?: boolean }).__mdRan)).toBeUndefined();
+    nothingLeft();
+  });
+
+  test("AC-56.1 HTML opens as source with the safety notice", async ({ page }) => {
+    await openFile(page, "hostile.html");
+    await expect(dialog(page).getByText("Shown as code for your safety.")).toBeVisible();
+    await expect(dialog(page).getByRole("region", { name: "Preview of hostile.html" })).toContainText("<script>window.__htmlRan = true;");
+    await expect(dialog(page).getByRole("button", { name: "Render in sandbox" })).toBeVisible();
+    expect(await dialog(page).locator("iframe").count()).toBe(0);
+    expect(await page.evaluate(() => (window as unknown as { __htmlRan?: boolean }).__htmlRan)).toBeUndefined();
+    nothingLeft();
+  });
+
+  test("AC-56.2 Render in sandbox uses sandbox=\"\" and srcdoc, and nothing in the page executes or is requested", async ({ page }) => {
+    await openFile(page, "hostile.html");
+    await dialog(page).getByRole("button", { name: "Render in sandbox" }).click();
+    const frame = dialog(page).locator("iframe");
+    await expect(frame).toBeVisible();
+    expect(await frame.getAttribute("sandbox")).toBe("");
+    // srcdoc, not a blob: URL: WebKit refuses a blob frame under the app's frame-ancestors policy (D-39).
+    expect(await frame.getAttribute("srcdoc")).toContain("Hostile page heading");
+    expect(await frame.getAttribute("src")).toBeNull();
+    await expect(dialog(page).getByText(/Shown in a sandbox: scripts, forms, popups and remote resources are blocked/)).toBeVisible();
+    // Through the iframe element, whatever URL the engine reports for a sandboxed blob document.
+    const inner = await (await frame.elementHandle()).contentFrame();
+    expect(inner).toBeTruthy();
+    await expect(inner!.locator("#heading")).toHaveText("Hostile page heading");
+    expect(await inner!.evaluate(() => (window as unknown as { __htmlRan?: boolean }).__htmlRan)).toBeUndefined();
+    expect(await inner!.title()).toBe("hostile page");
+    // The frame cannot reach the app: no same-origin access.
+    expect(await page.evaluate(() => (window as unknown as { __htmlRan?: boolean }).__htmlRan)).toBeUndefined();
+    expect(await page.title()).not.toBe("pwned");
+    await expect(page).toHaveURL(/#\/files\/preview\?preview=/);
+    nothingLeft();
+    // Back to source.
+    await dialog(page).getByRole("button", { name: "Show source" }).click();
+    await expect(dialog(page).locator("iframe")).toHaveCount(0);
+  });
+
+  test("no CSP violation while previewing a PDF, Markdown and rendered HTML", async ({ page }) => {
+    await openFile(page, "sample.pdf");
+    await expect(dialog(page).getByRole("status").filter({ hasText: /^Page / })).toHaveText("Page 1 of 2", { timeout: 20_000 });
+    await closeViewer(page, "sample.pdf");
+    await openFile(page, "hostile.md");
+    await expect(dialog(page).getByText("Markdown · sanitized")).toBeVisible();
+    await closeViewer(page, "hostile.md");
+    await openFile(page, "hostile.html");
+    await dialog(page).getByRole("button", { name: "Render in sandbox" }).click();
+    await expect(dialog(page).locator("iframe")).toBeVisible();
+    const violations = (await cspViolations(page)).filter((entry) => !entry.includes("blob"));
+    expect(violations).toEqual([]);
+  });
+
+  test("the PDF, Markdown and HTML views pass axe", async ({ page }) => {
+    for (const name of ["hostile.md", "hostile.html", "sample.pdf"]) {
+      await openFile(page, name);
+      if (name === "sample.pdf") await expect(dialog(page).getByRole("status").filter({ hasText: /^Page / })).toHaveText("Page 1 of 2", { timeout: 20_000 });
+      else await expect(dialog(page).locator("[data-component='MarkdownBody'], [role='region']").first()).toBeVisible();
+      const result = await new AxeBuilder({ page }).include("dialog[data-component='Preview']").analyze();
+      expect(result.violations.filter((v) => v.impact === "serious" || v.impact === "critical"), name).toEqual([]);
+      await closeViewer(page, name);
+    }
   });
 });

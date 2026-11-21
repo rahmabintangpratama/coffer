@@ -1,0 +1,36 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R /OpenAction << /S /JavaScript /JS (app.alert\('pdf script ran'\);) >> >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [4 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 200] /Resources << /Font << /F1 3 0 R >> >> /Contents 5 0 R /Annots [6 0 R] >>
+endobj
+5 0 obj
+<< /Length 43 >>
+stream
+BT /F1 24 Tf 40 100 Td (Scripted PDF) Tj ET
+endstream
+endobj
+6 0 obj
+<< /Type /Annot /Subtype /Link /Rect [0 0 300 200] /Border [0 0 0] /A << /S /URI /URI (https://attacker.invalid/pdf-link) >> >>
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000128 00000 n 
+0000000185 00000 n 
+0000000255 00000 n 
+0000000397 00000 n 
+0000000490 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+633
+%%EOF

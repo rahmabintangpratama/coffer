@@ -1,0 +1,17 @@
+<!doctype html>
+<html>
+<head>
+<title>hostile page</title>
+<meta http-equiv="refresh" content="0;url=https://attacker.invalid/refresh">
+<link rel="stylesheet" href="https://attacker.invalid/style.css">
+<script>window.__htmlRan = true; document.title = "pwned";</script>
+</head>
+<body onload="window.__htmlRan = true">
+<h1 id="heading">Hostile page heading</h1>
+<img src="https://attacker.invalid/pixel.png" onerror="window.__htmlRan = true">
+<a href="javascript:window.__htmlRan = true" id="jslink">javascript link</a>
+<iframe src="https://attacker.invalid/nested"></iframe>
+<form action="https://attacker.invalid/post" method="post"><input name="x"><button>send</button></form>
+<script src="https://attacker.invalid/remote.js"></script>
+</body>
+</html>
