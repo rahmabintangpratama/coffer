@@ -1,7 +1,7 @@
 # Coffer MVP implementation plan
 
 - **Purpose:** Split the MVP into milestones of one to three days. Each milestone lists its requirements, deliverables, tests and an exit check that can be demoed.
-- **Status:** Draft (awaiting owner approval; no milestone has started)
+- **Status:** Approved. M0 is complete (2026-11-21); M1 has not started.
 - **Last updated:** 2026-11-21
 - **Source files in `design/`:** [`HANDOFF.md`](../design/HANDOFF.md), [`screens.md`](../design/screens.md), [`components.md`](../design/components.md), [`tokens.json`](../design/tokens.json)
 - **Related:** [product-spec.md](product-spec.md) (FR, AC, release plan), [technical-spec.md](technical-spec.md), [open-questions.md](open-questions.md)
@@ -39,6 +39,8 @@ Total: 35 days plus buffer. Every MVP FR in the product spec appears in at least
 ---
 
 ## M0: Scaffold, CI, token generator, headers, MinIO (3 days)
+
+**Status: complete.** Deviations from this plan (all logged in `docs/open-questions.md`): the S3 fixture runs the frozen `bitnamilegacy/minio` image because the official MinIO images are no longer published (OQ-32); TypeScript is pinned to 6.0.3 because `typescript-eslint` does not support TypeScript 7 yet; the generated token CSS differs from the design CSS in one place, an undefined custom property in the design file (DC-25).
 
 **Requirements:** NFR-2 (headers), NFR-11 (copy-key check skeleton), NFR-12 (token tooling). No FR.
 

@@ -34,7 +34,7 @@ Each directory with an `AGENTS.md` has a `CLAUDE.md` that imports it. Nested fil
 
 ## Commands
 
-Package manager: **pnpm** 12 with Node 22 (`.nvmrc`; enable pnpm with `corepack enable`). Commands marked **TBD** do not exist yet; update this table in the same change that adds each script.
+Package manager: **pnpm** 12 with Node 22 (`.nvmrc`; enable pnpm with `corepack enable`). Every command below exists. Update this table in the same change that adds or renames a script. CI (`.github/workflows/ci.yml`) runs them on every push and pull request.
 
 | Task | Command |
 |---|---|

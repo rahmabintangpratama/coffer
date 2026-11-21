@@ -85,7 +85,7 @@ Current and previous major versions of Chrome, Edge and Firefox. Safari 16.4 or 
 
 ## Development
 
-Prerequisites: Node 22, pnpm 12 (enable it with `corepack enable`) and Docker (for a local MinIO). This table lists the commands that exist today. M0, the first milestone of the [implementation plan](docs/implementation-plan.md), adds the rest in the same changes that add the tools.
+Prerequisites: Node 22, pnpm 12 (enable it with `corepack enable`) and Docker (for a local MinIO). The commands below exist as of M0, the first milestone of the [implementation plan](docs/implementation-plan.md). The CI workflow in `.github/workflows/ci.yml` runs them on every push and pull request. There is still no usable application: the app is a placeholder page until M1.
 
 | Task | Command |
 |---|---|
