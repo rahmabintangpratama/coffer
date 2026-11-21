@@ -7,7 +7,7 @@ export {
   type LocalNetworkPermission,
   type PermissionQuery,
 } from "./local-network";
-export { addressSpaceOf, type AddressSpace } from "./local-network";
+export { addressSpaceOf, needsLocalNetworkPermission, type AddressSpace } from "./local-network";
 export { corsJson, corsRule, corsXml, type CorsRule } from "./cors";
 export {
   AppError,

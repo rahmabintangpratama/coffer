@@ -8,7 +8,7 @@ import {
 } from "@aws-sdk/client-s3";
 import type { ConnectionTestResult, ConnectionTestStep, TestFailure, TestStepId } from "@/lib/types";
 import { AppError, isNetworkFailure, toAppError } from "./errors";
-import { addressSpaceOf, type PermissionQuery, localNetworkPermission } from "./local-network";
+import { addressSpaceOf, localNetworkPermission, needsLocalNetworkPermission, type PermissionQuery } from "./local-network";
 
 export interface ConnectionTestRun extends ConnectionTestResult {
   /** Bucket names, when no bucket was given and the key may list them. */
@@ -33,6 +33,8 @@ export interface ConnectionTestOptions {
   signal?: AbortSignal;
   /** For tests: 16 hex characters. */
   randomHex?: () => string;
+  /** For tests: the host of the page making the requests. Default: the page's own. */
+  pageHostname?: string;
   /** For tests: reads the local network permission. Default: the browser's Permissions API. */
   queryPermission?: PermissionQuery;
 }
@@ -160,7 +162,8 @@ export async function runConnectionTest(options: ConnectionTestOptions): Promise
   } catch {
     checkAbort();
     // A blocked local network and a stopped server look alike. Read the permission now: if it is denied, say so.
-    const local = addressSpaceOf(url.hostname) !== "public";
+    const pageHostname = options.pageHostname ?? (typeof location === "undefined" ? "" : location.hostname);
+    const local = needsLocalNetworkPermission(pageHostname, url.hostname);
     const denied = local && (await localNetworkPermission(endpoint, options.queryPermission)) === "denied";
     update("reach", { status: "fail", failure: denied ? "localNetworkDenied" : "network" });
     return finish("failed");

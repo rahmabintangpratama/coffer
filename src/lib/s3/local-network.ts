@@ -14,6 +14,18 @@ export type LocalNetworkPermission = "granted" | "prompt" | "denied" | "unsuppor
 
 export type PermissionQuery = (name: string) => Promise<LocalNetworkPermission>;
 
+const PRIVACY: Record<AddressSpace, number> = { public: 0, local: 1, loopback: 2 };
+
+/**
+ * Chrome asks only when a page reaches a more private address space than its own:
+ * a public page to a private address or localhost, or a private page to localhost.
+ * A page served from localhost reaching localhost needs nothing, although the
+ * Permissions API still answers "prompt" there, so the page's own address decides.
+ */
+export function needsLocalNetworkPermission(pageHostname: string, endpointHostname: string): boolean {
+  return PRIVACY[addressSpaceOf(endpointHostname)] > PRIVACY[addressSpaceOf(pageHostname)];
+}
+
 export function permissionNameFor(space: AddressSpace): "loopback-network" | "local-network" | null {
   if (space === "loopback") return "loopback-network";
   return space === "local" ? "local-network" : null;
