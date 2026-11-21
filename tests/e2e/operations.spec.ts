@@ -114,7 +114,7 @@ test.describe("rename, copy and move", () => {
     await put(`${folder}/target/keep.txt`, "k");
     await page.getByRole("button", { name: "Refresh" }).click();
     await expect(row(page, "target")).toBeVisible({ timeout: 15_000 });
-    await chooseFromMenu(page, layoutFor(testInfo), "a.txt", /^Move/);
+    await chooseFromMenu(page, layoutFor(testInfo), "a.txt", /^Move…/);
     const dialog = page.getByRole("dialog", { name: "Move 1 item" });
     await expect(dialog.getByRole("tree", { name: "Folders" })).toBeVisible();
     await expect(dialog.getByText("Current location")).toBeVisible();
@@ -132,7 +132,7 @@ test.describe("rename, copy and move", () => {
   });
 
   test("the Move dialog passes axe", async ({ page }, testInfo) => {
-    await chooseFromMenu(page, layoutFor(testInfo), "a.txt", /^Move/);
+    await chooseFromMenu(page, layoutFor(testInfo), "a.txt", /^Move…/);
     const dialog = page.getByRole("dialog", { name: "Move 1 item" });
     // The tree lists each folder on the way to the current one, one request per level, so it gets the 15 s the folder lists get.
     await expect(dialog.getByRole("treeitem", { name: /Current location/ })).toBeVisible({ timeout: 15_000 });
@@ -171,7 +171,7 @@ test.describe("folders and the journal", () => {
       new PerformanceObserver((list) => { for (const entry of list.getEntries()) store.__long.push(entry.duration); }).observe({ entryTypes: ["longtask"] });
     });
     await put(`${folder}/dst/keep.txt`, "k");
-    await chooseFromMenu(page, layoutFor(testInfo), "src", /^Move/);
+    await chooseFromMenu(page, layoutFor(testInfo), "src", /^Move…/);
     const dialog = page.getByRole("dialog", { name: "Move 1 item" });
     await dialog.getByRole("tree").getByRole("treeitem", { name: /^dst/ }).focus();
     await page.keyboard.press("Enter");
@@ -191,8 +191,8 @@ test.describe("folders and the journal", () => {
 async function moveSrcIntoDst(page: Page): Promise<void> {
   await page.getByRole("button", { name: "More actions for src" }).first().click();
   const layout = layoutFor(test.info());
-  if (layout === "compact") await page.getByRole("dialog").getByRole("button", { name: /^Move/ }).click();
-  else await page.getByRole("menuitem", { name: /^Move/ }).click();
+  if (layout === "compact") await page.getByRole("dialog").getByRole("button", { name: /^Move…/ }).click();
+  else await page.getByRole("menuitem", { name: /^Move…/ }).click();
   const dialog = page.getByRole("dialog", { name: "Move 1 item" });
   await dialog.getByRole("tree").getByRole("treeitem", { name: /^dst/ }).focus();
   await page.keyboard.press("Enter");

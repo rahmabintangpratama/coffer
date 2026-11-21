@@ -42,7 +42,7 @@ async function trashFromMenu(page: Page, layout: Layout, name: string): Promise<
   else await page.getByRole("menuitem", { name: /^Move to trash/ }).click();
 }
 
-test("exit check: trash, undo, trash twice, two entries with times, restore one, empty with the typed count", async ({ page }, testInfo) => {
+test("AC-36.1, AC-36.3, AC-70.1, AC-70.4 and AC-71.2 exit check: trash, undo, trash twice, two entries with times, restore one, empty with the typed count", async ({ page }, testInfo) => {
   const layout = layoutFor(testInfo);
   const bucket = await freshBucket();
   await put(bucket, "a.txt", "first");
