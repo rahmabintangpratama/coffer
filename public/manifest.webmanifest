@@ -1,0 +1,10 @@
+{
+  "name": "Coffer",
+  "short_name": "Coffer",
+  "description": "Browser-only file manager for S3-compatible object storage.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#EFEDE9",
+  "theme_color": "#FFFFFF"
+}

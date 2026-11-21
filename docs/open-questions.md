@@ -66,7 +66,12 @@ Answered by the project owner. The **From** column gives the question that was o
 
 ## Open questions
 
-None. Every question so far is decided. Add new ones here with an owner and a recommended answer.
+### OQ-33: App icon and logo
+- **Owner:** Product, Design
+- **Status:** Open
+- **Question:** The design package has no logo or app icon (`logo-mark.svg` was not supplied and is not needed per the owner). The web manifest and the browser tab therefore have no icon, which means the app cannot be installed to a home screen yet.
+- **Recommended:** Design supplies a mark (an SVG plus 192 and 512 px PNGs) before the first release; until then the tab uses an empty icon and the manifest has no `icons`. Not generated here, because an invented logo would be a placeholder passed off as final.
+- **Affects:** `public/manifest.webmanifest`, `index.html`
 
 ---
 
