@@ -1,5 +1,6 @@
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
+import { LayoutContext } from "@/components/layout";
 import { t } from "@/lib/i18n";
 import { AppBar } from "./AppBar";
 import { BottomNav } from "./BottomNav";
@@ -10,7 +11,7 @@ import { NavRail } from "./NavRail";
 import { isActiveRoute } from "./routes";
 import { Sidebar } from "./Sidebar";
 import { ToastHost } from "./ToastHost";
-import { useCompactLayout } from "./useCompactLayout";
+import { useLayoutMode } from "./useCompactLayout";
 
 /**
  * The three shells from design/screens.md, chosen by the width of .cf-root:
@@ -22,7 +23,8 @@ export function Shell({ children }: { children: ReactNode }) {
   const main = useRef<HTMLElement>(null);
   const menuButton = useRef<HTMLButtonElement>(null);
   const moreButton = useRef<HTMLButtonElement>(null);
-  const compact = useCompactLayout(root);
+  const layout = useLayoutMode(root);
+  const compact = layout === "compact";
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -57,6 +59,7 @@ export function Shell({ children }: { children: ReactNode }) {
   }
 
   return (
+    <LayoutContext value={layout}>
     <div ref={root} className="cf-root min-h-dvh">
       <div className="cf-app flex min-h-dvh flex-col bg-app text-fg @md:flex-row">
         <button
@@ -120,5 +123,6 @@ export function Shell({ children }: { children: ReactNode }) {
         <ToastHost />
       </div>
     </div>
+    </LayoutContext>
   );
 }

@@ -5,7 +5,8 @@
   },
   "act": {
     "restore": "Restore",
-    "unstar": "Remove from starred"
+    "unstar": "Remove from starred",
+    "retry": "Try again"
   },
   "app": {
     "loadError": {
@@ -44,6 +45,33 @@
     },
     "loadAll": {
       "progress": "Loaded {count} items"
+    },
+    "row": {
+      "meta": "{date} · {size}"
+    },
+    "sort": {
+      "asc": "Sort ascending",
+      "desc": "Sort descending"
+    },
+    "refresh": "Refresh",
+    "breadcrumb": {
+      "label": "Folder path",
+      "up": "Parent folder"
+    },
+    "partial": {
+      "sortNote": "Sorting by size or date only orders the items loaded so far."
+    },
+    "pageError": {
+      "title": "Couldn’t load more items after {count}",
+      "body": "The items already loaded are still shown."
+    },
+    "error": {
+      "denied": "This key isn’t allowed to list this folder. Your files are not affected.",
+      "generic": "Something went wrong while listing this folder. Your files are not affected."
+    },
+    "download": {
+      "multi": "Downloads start one after another. Your browser may ask to allow multiple downloads.",
+      "error": "Couldn’t start the download. Try again."
     }
   },
   "form": {
@@ -212,5 +240,41 @@
       "title": "Upload interrupted"
     },
     "waitingUnlock": "Waiting for unlock"
+  },
+  "filter": {
+    "any": "Any",
+    "typeOption": {
+      "folder": "Folders",
+      "image": "Images",
+      "video": "Videos",
+      "audio": "Audio",
+      "pdf": "PDFs",
+      "document": "Documents",
+      "archive": "Archives"
+    },
+    "modifiedOption": {
+      "today": "Today",
+      "week": "Past 7 days",
+      "month": "Past 30 days",
+      "year": "Past year"
+    }
+  },
+  "det": {
+    "typeLabel": "Type",
+    "modifiedLabel": "Last modified",
+    "loading": "Loading",
+    "error": "Couldn’t read this value"
+  },
+  "kind": {
+    "image": "Image",
+    "svg": "SVG image",
+    "video": "Video",
+    "audio": "Audio",
+    "pdf": "PDF document",
+    "code": "Code or text",
+    "markdown": "Markdown",
+    "html": "HTML",
+    "archive": "Archive",
+    "unknown": "File"
   }
 }

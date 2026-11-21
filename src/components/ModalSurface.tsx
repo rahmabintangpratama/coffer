@@ -3,7 +3,7 @@ import { type HTMLAttributes, type ReactNode, type RefObject, useEffect, useId, 
 import { cn } from "@/lib/utils";
 import { Button } from "./Button";
 
-export type Placement = "responsive" | "bottom" | "start";
+export type Placement = "responsive" | "bottom" | "start" | "end";
 
 export interface ModalSurfaceProps {
   open: boolean;
@@ -33,6 +33,7 @@ export interface ModalSurfaceProps {
 const panelByPlacement: Record<Placement, string> = {
   bottom: "self-end w-full rounded-t-lg pb-[env(safe-area-inset-bottom)]",
   start: "justify-self-start w-[86%] max-w-80 h-full rounded-r-lg pt-[env(safe-area-inset-top)]",
+  end: "justify-self-end w-full max-w-(--cf-size-details-width) h-full rounded-l-lg pt-[env(safe-area-inset-top)]",
   responsive:
     "self-end w-full rounded-t-lg pb-[env(safe-area-inset-bottom)] " +
     "@md:self-center @md:justify-self-center @md:w-120 @md:rounded-lg @md:pb-0",
@@ -91,12 +92,12 @@ export function ModalSurface(props: ModalSurfaceProps) {
         {...otherPanelProps}
         className={cn(
           "cf-panel flex max-h-[calc(100dvh-var(--cf-space-12))] flex-col overflow-hidden bg-elevated shadow-dialog",
-          placement === "start" && "max-h-none",
+          (placement === "start" || placement === "end") && "max-h-none",
           panelByPlacement[placement],
           panelClassName,
         )}
       >
-        {placement !== "start" && (
+        {placement !== "start" && placement !== "end" && (
           <div
             aria-hidden="true"
             className={cn("mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-line-strong", placement === "responsive" && "@md:hidden")}

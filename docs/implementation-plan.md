@@ -1,7 +1,7 @@
 # Coffer MVP implementation plan
 
 - **Purpose:** Split the MVP into milestones of one to three days. Each milestone lists its requirements, deliverables, tests and an exit check that can be demoed.
-- **Status:** Approved. M0, M1, M2a and M2b are complete (2026-11-21); M3 has not started.
+- **Status:** Approved. M0, M1, M2a, M2b and M3 are complete (2026-11-21); M4 has not started.
 - **Last updated:** 2026-11-21
 - **Source files in `design/`:** [`HANDOFF.md`](../design/HANDOFF.md), [`screens.md`](../design/screens.md), [`components.md`](../design/components.md), [`tokens.json`](../design/tokens.json)
 - **Related:** [product-spec.md](product-spec.md) (FR, AC, release plan), [technical-spec.md](technical-spec.md), [open-questions.md](open-questions.md)
@@ -132,6 +132,8 @@ Total: 35 days plus buffer. Every MVP FR in the product spec appears in at least
 - Selection model and `SelectionBar`; `ContextMenu` and mobile action sheet showing only the actions that exist so far (each later milestone adds its items; no disabled dead entries).
 - Download through a presigned URL (short-lived, `attachment`).
 - All states from `T10_FileStates` and `T10b_FileStates`.
+
+**Status: complete.** Differences from the plan below: see [D-35](open-questions.md#decisions-made-on-the-owners-behalf) (placement of search and selection bar, no folder menu yet, details from state, test-only cap variable). The Files route is its own 49.7 KB gzip chunk, the S3 chunk is 72.9 KB, and the first route stays under budget. Pull-to-refresh and touch long-press selection are built but covered by unit tests only; the e2e matrix runs no touch gestures yet (M10 manual pass).
 
 **Tests:** unit for key decoding, sorting and filters; integration listing 5,000 objects with delimiter, awkward keys (`#?%+`, spaces, Unicode, 1,024 bytes) and pagination; e2e scrolling a 5,000-item fixture within the performance budget, selection on touch and pointer, download works; axe and keyboard.
 

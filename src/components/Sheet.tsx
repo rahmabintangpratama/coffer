@@ -6,8 +6,8 @@ export interface SheetProps {
   onClose: () => void;
   title: string;
   closeLabel: string;
-  /** bottom: bottom sheet with a drag handle. start: left drawer. */
-  side?: "bottom" | "start";
+  /** bottom: bottom sheet with a drag handle. start: left drawer. end: right panel. */
+  side?: "bottom" | "start" | "end";
   /** Component name from design/components.md (for example MoreSheet or NavDrawer). */
   component: string;
   returnFocusRef?: RefObject<HTMLElement | null>;

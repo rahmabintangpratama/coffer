@@ -1,4 +1,5 @@
 import { lazy, Suspense } from "react";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { Route, Router, Switch } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
 import { t } from "@/lib/i18n";
@@ -6,6 +7,7 @@ import { CopyBoundary } from "./CopyBoundary";
 import { NotFoundScreen } from "./screens/NotFoundScreen";
 import { PlaceholderScreen } from "./screens/PlaceholderScreen";
 import { SettingsScreen } from "./screens/SettingsScreen";
+import { queryClient } from "./query";
 import { routes } from "./routes";
 import { useSession } from "./session";
 import { Shell } from "./Shell";
@@ -13,6 +15,10 @@ import { Shell } from "./Shell";
 // Onboarding, the provider presets and the form are not needed once connected, so they are one lazy chunk.
 const OnboardingFlow = lazy(() => import("@/features/onboarding").then((module) => ({ default: module.OnboardingFlow })));
 const onboardingGroups = ["ob", "form", "conn"] as const;
+// Browsing is its own chunk too: the listing code, the virtualizer and the menus load after connect.
+const FilesRoute = lazy(() => import("./screens/FilesRoute"));
+const HomeScreen = lazy(() => import("@/features/files").then((module) => ({ default: module.HomeScreen })));
+const filesGroups = ["files", "det", "filter", "search", "sel", "kind", "col", "view", "sort", "row", "menu", "home", "type"] as const;
 
 function LoadError() {
   return (
@@ -44,15 +50,25 @@ export function App() {
     );
   }
 
+  const screenFallback = <div aria-busy="true" className="min-h-40" />;
   return (
+    <QueryClientProvider client={queryClient}>
     <Router hook={useHashLocation}>
       <Shell>
         <Switch>
           <Route path={routes.home}>
-            <PlaceholderScreen titleKey="nav.home" />
+            <CopyBoundary groups={filesGroups} fallback={screenFallback} errorFallback={<LoadError />}>
+              <Suspense fallback={screenFallback}>
+                <HomeScreen connection={connection} />
+              </Suspense>
+            </CopyBoundary>
           </Route>
-          <Route path={routes.files}>
-            <PlaceholderScreen titleKey="nav.files" />
+          <Route path={`${routes.files}/*?`}>
+            <CopyBoundary groups={filesGroups} fallback={screenFallback} errorFallback={<LoadError />}>
+              <Suspense fallback={screenFallback}>
+                <FilesRoute connection={connection} />
+              </Suspense>
+            </CopyBoundary>
           </Route>
           <Route path={routes.starred}>
             <PlaceholderScreen titleKey="nav.starred" />
@@ -72,5 +88,6 @@ export function App() {
         </Switch>
       </Shell>
     </Router>
+    </QueryClientProvider>
   );
 }

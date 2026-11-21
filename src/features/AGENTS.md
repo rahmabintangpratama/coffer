@@ -4,7 +4,7 @@ One folder per feature area. Layer rules are in [../AGENTS.md](../AGENTS.md).
 
 ## Folders (create when building the feature)
 
-`onboarding/` (FR-1 to FR-13), `browse/` (FR-20 to FR-27), `actions/` (FR-30 to FR-38), `transfers/` (FR-40 to FR-45), `preview/` (FR-50 to FR-58), `share/` (FR-60, FR-61), `trash/` (FR-70, FR-71), `library/` (starred and recent, FR-80, FR-81), `storage/` (FR-90), `settings/` (FR-100 to FR-102), `readonly/` (FR-110, FR-111), `demo/` (FR-120, v1). Requirement IDs are defined in [../../docs/product-spec.md](../../docs/product-spec.md).
+`onboarding/` (FR-1 to FR-13), `files/` (browse, FR-20 to FR-37 so far; `actions/` was folded into it, D-35), `transfers/` (FR-40 to FR-45), `preview/` (FR-50 to FR-58), `share/` (FR-60, FR-61), `trash/` (FR-70, FR-71), `library/` (starred and recent, FR-80, FR-81), `storage/` (FR-90), `settings/` (FR-100 to FR-102), `readonly/` (FR-110, FR-111), `demo/` (FR-120, v1). Requirement IDs are defined in [../../docs/product-spec.md](../../docs/product-spec.md).
 
 ## Rules
 

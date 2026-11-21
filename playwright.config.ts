@@ -33,7 +33,8 @@ export default defineConfig({
   ),
   webServer: {
     // Serves dist with its _headers, so every e2e test runs under the real CSP.
-    command: `pnpm build && node scripts/serve/dist-server.ts --port ${port}`,
+    // The cap is lowered so the "Load all" cap message can be shown with a few thousand objects.
+    command: `VITE_COFFER_LOAD_ALL_CAP=3000 pnpm build && node scripts/serve/dist-server.ts --port ${port}`,
     url: `http://127.0.0.1:${port}`,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
