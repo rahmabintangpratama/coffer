@@ -33,7 +33,12 @@ export default tseslint.config(
   {
     files: ["**/*.js"],
     ...tseslint.configs.disableTypeChecked,
-    languageOptions: { globals: globals.node },
+    languageOptions: { ...tseslint.configs.disableTypeChecked.languageOptions, globals: globals.node },
+  },
+  {
+    // Classic scripts served as-is from public/.
+    files: ["public/**/*.js"],
+    languageOptions: { sourceType: "script", globals: globals.browser },
   },
   {
     files: ["src/**/*.{ts,tsx}"],
