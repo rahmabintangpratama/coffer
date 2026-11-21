@@ -91,6 +91,8 @@ export interface ConnectionProfile {
   region: string;
   addressingStyle: AddressingStyle;
   bucket?: string;
+  /** T-7: the connection root (start folder), empty or ending in "/". Trash and the connection test live under it. */
+  prefix?: string;
   access: "readWrite" | "readOnly"; // readOnly: write test got AccessDenied, list and read passed, person chose "Connect read-only"
   sessionTokenExpiresAt?: string; // ISO 8601; caps share-link expiry (see ShareLimits)
   credentials:

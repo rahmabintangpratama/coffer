@@ -116,10 +116,10 @@ Imports point down only. Violations fail lint.
 | T-2 | Add `v: 1` to the encrypted credentials object. | Migrations of the format. |
 | T-3 | Extend `OperationJournalEntry` with `phase`, `cursor`, `failures`, `undoOf` (section 8). | Resume needs more than `total/done`. |
 | T-4 | `ConnectionProfile.sessionTokenExpiresAt` is filled from the JWT `exp`, `AWS_CREDENTIAL_EXPIRATION` or a `Token expires at` field ([C-12](open-questions.md#owner-confirmed-decisions)). When it is absent and a session token is present, share links are capped at 1 hour. | Share limits for tokens without known expiry. |
-| T-5 | Add `AppError` (code, retryable, context-free message key). | Errors must be secret-free by construction. |
+| T-5 | Add `AppError` (code, retryable, status, hint, request id; never the SDK message). **Applied in M2a** (`src/lib/s3/errors.ts`). | Errors must be secret-free by construction. |
 | T-6 | Document `Settings.uploadConcurrency` as parallel parts (copy `beh.parts`), not parallel files. | Name versus label mismatch. |
 | T-8 | Add `"interrupted"` to `UploadStatus` (MVP). `needsFile` is used only from v1, when resume exists. | MVP aborts uploads on reload instead of resuming ([C-43](open-questions.md#owner-confirmed-decisions)). |
-| T-7 | Add `ConnectionProfile.prefix?: string` (empty or ending in `/`): the connection root and start folder ([D-19](open-questions.md#decisions-made-on-the-owners-behalf)). | Prefix-scoped keys; test file and Trash live under it. |
+| T-7 | **Applied in M2a.** Add `ConnectionProfile.prefix?: string` (empty or ending in `/`): the connection root and start folder ([D-19](open-questions.md#decisions-made-on-the-owners-behalf)). | Prefix-scoped keys; test file and Trash live under it. |
 
 ---
 
@@ -167,7 +167,7 @@ Imports point down only. Violations fail lint.
 
 ## 5. Connection test algorithm
 
-Runs in `src/lib/s3/test.ts` and returns `ConnectionTestResult` while emitting step updates for the progress list (`aria-live="polite"`). Test keys use the name `.coffer-test-<random 16 hex>.txt` under the connection's start folder when one is set, otherwise in the bucket root ([C-37](open-questions.md#owner-confirmed-decisions)); they never overwrite an existing key (a collision check uses `If-None-Match: *` where the provider accepts it, otherwise `HeadObject`).
+Runs in `src/lib/s3/connection-test.ts` and returns `ConnectionTestResult` while emitting step updates for the progress list (`aria-live="polite"`). Test keys use the name `.coffer-test-<random 16 hex>.txt` under the connection's start folder when one is set, otherwise in the bucket root ([C-37](open-questions.md#owner-confirmed-decisions)); the name has 64 random bits, so it cannot realistically collide with an existing key and no extra request checks for one.
 
 **Step 0: pre-flight (no request).** Validate the endpoint. If the page is `https:` and the endpoint is `http:` and not localhost, fail with `mixedContent` (message `ob.fail.net.*`).
 

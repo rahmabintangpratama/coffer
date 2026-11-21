@@ -10,6 +10,12 @@ The only module that imports the AWS SDK. No UI imports (no React, no `component
 - Credentials are a function that reads the vault and throws `LockedError` when locked. Destroy the client on lock.
 - Add no middleware that logs requests, URLs or headers.
 
+## Connection test
+
+- `connection-test.ts` runs the six steps and reports each through `onStep`. Pass a client made with `maxAttempts: 1` so a CORS block fails at once. A signed call that gets no response after the no-cors probe passed is CORS; otherwise it is a network failure.
+- The test file is `{prefix}.coffer-test-<16 hex>.txt`. Write denied with list and read passing is `readOnly`; delete denied is `failed` (C-20, C-21).
+- `cors.ts` builds the rule from the app origin only; it refuses `*`.
+
 ## Errors
 
 - Catch SDK errors at this boundary and rethrow `AppError { code, retryable, status?, hint? }`. Never expose `error.message`, request URLs, signatures or headers.
