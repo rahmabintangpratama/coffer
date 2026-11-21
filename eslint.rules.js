@@ -12,6 +12,26 @@ const REACT = {
   group: ["react", "react/*", "react-dom", "react-dom/*"],
   ...msg("src/lib is framework-free: no React."),
 };
+// Radix primitives that inject a <style> element, which the CSP blocks (D-25).
+const RADIX_STYLE_INJECTORS = {
+  group: [
+    "@radix-ui/react-dialog",
+    "@radix-ui/react-alert-dialog",
+    "@radix-ui/react-select",
+    "@radix-ui/react-scroll-area",
+  ],
+  ...msg("This Radix primitive injects a style element the CSP blocks. Use the native dialog, a native select or native scrolling (D-25)."),
+};
+// Menus and popovers are only safe in non-modal mode. The wrappers in src/components hard-code it.
+const RADIX_MENUS = {
+  group: [
+    "@radix-ui/react-dropdown-menu",
+    "@radix-ui/react-context-menu",
+    "@radix-ui/react-popover",
+    "@radix-ui/react-menubar",
+  ],
+  ...msg("Import menus and popovers through the wrappers in src/components, which are non-modal (D-25)."),
+};
 const S3 = { group: ["@/lib/s3", "@/lib/s3/**"], ...msg("This layer must not import lib/s3.") };
 const STORAGE = { group: ["@/lib/storage", "@/lib/storage/**"], ...msg("This layer must not import lib/storage.") };
 const PROVIDERS_FROM_STORAGE = {
@@ -22,15 +42,15 @@ const PROVIDERS_FROM_STORAGE = {
 /** `no-restricted-imports` options per source area. Later areas replace earlier ones, so each is complete. */
 export const importRules = {
   // Everything in src except lib/s3 (the only SDK user).
-  default: [AWS_SDK],
-  app: [AWS_SDK],
-  features: [AWS_SDK, APP],
-  components: [AWS_SDK, APP, FEATURES, S3, STORAGE],
-  lib: [AWS_SDK, REACT, COMPONENTS, FEATURES, APP],
-  libS3: [REACT, COMPONENTS, FEATURES, APP],
-  libStorage: [AWS_SDK, REACT, COMPONENTS, FEATURES, APP, S3, PROVIDERS_FROM_STORAGE],
-  libProviders: [AWS_SDK, REACT, COMPONENTS, FEATURES, APP, S3, STORAGE],
-  libI18n: [AWS_SDK, REACT, COMPONENTS, FEATURES, APP, S3, STORAGE],
+  default: [AWS_SDK, RADIX_STYLE_INJECTORS, RADIX_MENUS],
+  app: [AWS_SDK, RADIX_STYLE_INJECTORS, RADIX_MENUS],
+  features: [AWS_SDK, RADIX_STYLE_INJECTORS, RADIX_MENUS, APP],
+  components: [AWS_SDK, RADIX_STYLE_INJECTORS, APP, FEATURES, S3, STORAGE],
+  lib: [AWS_SDK, RADIX_STYLE_INJECTORS, RADIX_MENUS, REACT, COMPONENTS, FEATURES, APP],
+  libS3: [RADIX_STYLE_INJECTORS, RADIX_MENUS, REACT, COMPONENTS, FEATURES, APP],
+  libStorage: [AWS_SDK, RADIX_STYLE_INJECTORS, RADIX_MENUS, REACT, COMPONENTS, FEATURES, APP, S3, PROVIDERS_FROM_STORAGE],
+  libProviders: [AWS_SDK, RADIX_STYLE_INJECTORS, RADIX_MENUS, REACT, COMPONENTS, FEATURES, APP, S3, STORAGE],
+  libI18n: [AWS_SDK, RADIX_STYLE_INJECTORS, RADIX_MENUS, REACT, COMPONENTS, FEATURES, APP, S3, STORAGE],
 };
 
 export const restrictedImports = (patterns) => ["error", { patterns }];
@@ -60,3 +80,12 @@ export const syntaxRules = [
 ];
 
 export const restrictedSyntax = ["error", ...syntaxRules];
+
+/** In src/components, a Radix menu or popover root must say modal={false} (D-25). */
+export const nonModalRule = {
+  selector:
+    "JSXOpeningElement[name.type='JSXMemberExpression'][name.property.name='Root']" +
+    "[name.object.name=/^(DropdownMenu|ContextMenu|Popover|Menubar)$/]" +
+    ":not(:has(JSXAttribute[name.name='modal'][value.expression.value=false]))",
+  message: "Radix menus and popovers must be non-modal: pass modal={false} (D-25). Modal mode injects a style element the CSP blocks.",
+};

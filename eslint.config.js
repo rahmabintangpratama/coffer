@@ -2,7 +2,7 @@ import js from "@eslint/js";
 import reactHooks from "eslint-plugin-react-hooks";
 import globals from "globals";
 import tseslint from "typescript-eslint";
-import { importRules, restrictedImports, restrictedSyntax } from "./eslint.rules.js";
+import { importRules, nonModalRule, restrictedImports, restrictedSyntax } from "./eslint.rules.js";
 
 export default tseslint.config(
   {
@@ -53,7 +53,13 @@ export default tseslint.config(
   },
   { files: ["src/app/**/*.{ts,tsx}"], rules: { "no-restricted-imports": restrictedImports(importRules.app) } },
   { files: ["src/features/**/*.{ts,tsx}"], rules: { "no-restricted-imports": restrictedImports(importRules.features) } },
-  { files: ["src/components/**/*.{ts,tsx}"], rules: { "no-restricted-imports": restrictedImports(importRules.components) } },
+  {
+    files: ["src/components/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": restrictedImports(importRules.components),
+      "no-restricted-syntax": ["error", ...restrictedSyntax.slice(1), nonModalRule],
+    },
+  },
   { files: ["src/lib/**/*.{ts,tsx}"], rules: { "no-restricted-imports": restrictedImports(importRules.lib) } },
   { files: ["src/lib/s3/**/*.{ts,tsx}"], rules: { "no-restricted-imports": restrictedImports(importRules.libS3) } },
   { files: ["src/lib/storage/**/*.{ts,tsx}"], rules: { "no-restricted-imports": restrictedImports(importRules.libStorage) } },

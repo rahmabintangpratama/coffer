@@ -11,3 +11,4 @@ export const importRules: Record<
 export function restrictedImports(patterns: ImportPattern[]): Linter.RuleEntry;
 export const syntaxRules: { selector: string; message: string }[];
 export const restrictedSyntax: Linter.RuleEntry;
+export const nonModalRule: { selector: string; message: string };

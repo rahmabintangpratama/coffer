@@ -66,6 +66,30 @@ describe("project lint rules", () => {
     expect((await messages("src/components/x.ts", "import { x } from '@/lib/storage/vault';")).join()).toContain("lib/storage");
   });
 
+  it("bans the Radix primitives that inject a style element, everywhere", async () => {
+    for (const path of ["src/components/x.ts", "src/features/a/x.ts", "src/app/x.ts"]) {
+      for (const pkg of ["react-dialog", "react-select", "react-scroll-area", "react-alert-dialog"]) {
+        expect((await messages(path, `import * as P from '@radix-ui/${pkg}';`)).join(), `${path} ${pkg}`).toContain("style element");
+      }
+    }
+  });
+
+  it("lets only src/components import Radix menus and popovers", async () => {
+    const code = "import * as Menu from '@radix-ui/react-dropdown-menu';";
+    expect((await messages("src/features/a/x.ts", code)).join()).toContain("wrappers in src/components");
+    expect((await messages("src/app/x.ts", code)).join()).toContain("wrappers in src/components");
+    expect(await messages("src/components/x.ts", code)).toEqual([]);
+  });
+
+  it("requires modal={false} on Radix menu and popover roots in src/components", async () => {
+    const bad = "export const a = <DropdownMenu.Root><DropdownMenu.Trigger /></DropdownMenu.Root>;";
+    const good = "export const a = <DropdownMenu.Root modal={false}><DropdownMenu.Trigger /></DropdownMenu.Root>;";
+    const modalTrue = "export const a = <Popover.Root modal><Popover.Trigger /></Popover.Root>;";
+    expect((await messages("src/components/x.tsx", bad)).join()).toContain("must be non-modal");
+    expect((await messages("src/components/x.tsx", modalTrue)).join()).toContain("must be non-modal");
+    expect(await messages("src/components/x.tsx", good)).toEqual([]);
+  });
+
   it("lets only lib/s3 import the AWS SDK", async () => {
     expect((await messages("src/features/a/x.ts", "import { S3Client } from '@aws-sdk/client-s3';")).join()).toContain("Only src/lib/s3");
     expect(await messages("src/lib/s3/x.ts", "import { S3Client } from '@aws-sdk/client-s3';")).toEqual([]);
