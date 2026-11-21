@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { LayoutContext } from "@/components/layout";
+import { TransferPanelHost } from "./TransferPanelHost";
 import { t } from "@/lib/i18n";
 import { AppBar } from "./AppBar";
 import { BottomNav } from "./BottomNav";
@@ -121,6 +122,7 @@ export function Shell({ children }: { children: ReactNode }) {
           }}
         />
         <ToastHost />
+        <TransferPanelHost />
       </div>
     </div>
     </LayoutContext>

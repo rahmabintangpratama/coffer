@@ -33,6 +33,18 @@
   "dlg": {
     "zip": {
       "warn": "This folder is about {size}. Large downloads can run out of memory in some browsers."
+    },
+    "newFolder": {
+      "label": "Folder name",
+      "create": "Create",
+      "err": {
+        "empty": "Enter a name for the folder.",
+        "exists": "A folder named {name} already exists here.",
+        "tooLong": "That name is too long. A key can be at most 1,024 bytes.",
+        "control": "Names can’t contain control characters.",
+        "dots": "A folder can’t be named “.” or “..”.",
+        "failed": "Couldn’t create the folder. Check that this key can write here, then try again."
+      }
     }
   },
   "files": {
@@ -239,7 +251,28 @@
       "body": "{name} was interrupted when the page closed. Start it again.",
       "title": "Upload interrupted"
     },
-    "waitingUnlock": "Waiting for unlock"
+    "waitingUnlock": "Waiting for unlock",
+    "title": {
+      "done": "{count, plural, one {Uploaded # item} other {Uploaded # items}}"
+    },
+    "row": {
+      "queued": "Waiting",
+      "done": "Done"
+    },
+    "progress": "{percent}% · {done} of {total}",
+    "error": {
+      "denied": "This key isn’t allowed to write here.",
+      "network": "The connection dropped before the upload finished.",
+      "cors": "The bucket didn’t return the part’s ETag. Add ETag to ExposeHeaders in its CORS rule.",
+      "quota": "The provider refused this file: it is too large or the account is out of space.",
+      "throttled": "The provider is asking Coffer to slow down. Try again in a moment.",
+      "generic": "The upload failed. Your other files are not affected."
+    },
+    "rejected": {
+      "one": "{name} can’t be uploaded: its name is too long or has characters a bucket can’t store.",
+      "many": "{count} files can’t be uploaded: their names are too long or have characters a bucket can’t store."
+    },
+    "checkError": "Couldn’t check which files already exist. Nothing was uploaded; try again."
   },
   "filter": {
     "any": "Any",

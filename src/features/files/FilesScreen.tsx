@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { type DragEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { Banner } from "@/components/Banner";
 import { Button } from "@/components/Button";
@@ -8,6 +9,7 @@ import { Skeleton } from "@/components/Skeleton";
 import { t } from "@/lib/i18n";
 import type { AppError } from "@/lib/s3/errors";
 import type { ConnectionSummary, FileItem, FolderItem, Settings } from "@/lib/types";
+import { candidatesFromDrop, useTransfers, useUpload } from "@/features/transfers";
 import { actionsFor, type ActionHandlers } from "./actions";
 import { Breadcrumb } from "./Breadcrumb";
 import { DetailsPanel } from "./DetailsPanel";
@@ -15,6 +17,8 @@ import { downloadItems } from "./download";
 import { FileGrid } from "./FileGrid";
 import { FileList } from "./FileList";
 import { ListBanners } from "./ListBanners";
+import { NewFolderDialog } from "./NewFolderDialog";
+import { NewMenu } from "./NewMenu";
 import { filterItems, type Filters, hasFilters, type Item, noFilters, pathFromPrefix, prefixFromPath, sortItems, withoutHidden } from "./model";
 import { SelectionBar } from "./SelectionBar";
 import { FilterChips, SearchPill, ViewControls } from "./Toolbar";
@@ -58,6 +62,11 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
   const [detailsKey, setDetailsKey] = useState<string | null>(null);
   const [contextItem, setContextItem] = useState<Item | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [newFolderOpen, setNewFolderOpen] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const queryClient = useQueryClient();
+  const hasTransfers = useTransfers((state) => state.transfers.length + state.interrupted.length > 0);
+  const writable = connection.access === "readWrite";
   const search = useRef<HTMLInputElement>(null);
   const selection = useSelection();
   const [, navigate] = useLocation();
@@ -121,6 +130,48 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
     [handlers],
   );
 
+  // After uploads or a new folder the folder reloads from page 1.
+  const reload = useCallback(() => {
+    void queryClient.resetQueries({ queryKey: ["list", connection.id, bucket, root + relative] });
+  }, [queryClient, connection.id, bucket, root, relative]);
+  const { upload, dialog: conflictDialog } = useUpload({ connection, folderPrefix: root + relative, folderName: folderLabel, notify, onUploaded: reload });
+  const existingFolderNames = useMemo(() => new Set(listing.items.filter((item) => item.kind === "folder").map((item) => item.name)), [listing.items]);
+  const createFolder = useCallback(
+    async (name: string) => {
+      const { clientFor, putFolder } = await import("@/lib/s3");
+      await putFolder(clientFor(connection), { bucket, key: `${root}${relative}${name}/` });
+      reload();
+    },
+    [connection, bucket, root, relative, reload],
+  );
+
+  // Dropping files anywhere in the screen uploads them here (AC-40.2). Only file drags react; the overlay hides on leave or drop.
+  const isFileDrag = (event: DragEvent) => writable && event.dataTransfer.types.includes("Files");
+  const depth = useRef(0);
+  const dragHandlers = {
+    onDragEnter: (event: DragEvent) => {
+      if (!isFileDrag(event)) return;
+      event.preventDefault();
+      depth.current += 1;
+      setDragging(true);
+    },
+    onDragOver: (event: DragEvent) => {
+      if (isFileDrag(event)) event.preventDefault();
+    },
+    onDragLeave: (event: DragEvent) => {
+      if (!isFileDrag(event)) return;
+      depth.current = Math.max(0, depth.current - 1);
+      if (depth.current === 0) setDragging(false);
+    },
+    onDrop: (event: DragEvent) => {
+      if (!isFileDrag(event)) return;
+      event.preventDefault();
+      depth.current = 0;
+      setDragging(false);
+      void candidatesFromDrop(event.dataTransfer).then(upload);
+    },
+  };
+
   const filtering = hasFilters(filters);
   const onSort = (by: "name" | "modified" | "size") => {
     onSettings({ sort: { by, dir: settings.sort.by === by && settings.sort.dir === "asc" ? "desc" : "asc" } });
@@ -166,7 +217,7 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
   }
 
   return (
-    <section data-component="FilesScreen" className="flex gap-6">
+    <section data-component="FilesScreen" className="relative flex gap-6" {...dragHandlers}>
       <div className="flex min-w-0 flex-1 flex-col gap-3">
         <h1 className="sr-only">{t("nav.files")}</h1>
         <SearchPill value={filters.query} onChange={(query) => { setFilters({ ...filters, query }); }} placeholder={t("search.placeholderFolder", { folder: folderLabel })} inputRef={search} />
@@ -178,7 +229,10 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
           ) : (
             <>
               <Breadcrumb rootLabel={bucket} prefix={relative} menu={[]} />
-              <ViewControls sort={settings.sort} view={settings.view} onSort={(sort) => { onSettings({ sort }); }} onView={(view) => { onSettings({ view }); }} onRefresh={() => void refresh()} refreshing={refreshing} />
+              <div className="flex items-center gap-2">
+                <ViewControls sort={settings.sort} view={settings.view} onSort={(sort) => { onSettings({ sort }); }} onView={(view) => { onSettings({ view }); }} onRefresh={() => void refresh()} refreshing={refreshing} />
+                {writable && <NewMenu onNewFolder={() => { setNewFolderOpen(true); }} onFiles={(candidates) => void upload(candidates)} raised={hasTransfers} />}
+              </div>
             </>
           )}
         </div>
@@ -196,6 +250,16 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
         )}
         {body}
       </div>
+      {conflictDialog}
+      <NewFolderDialog open={newFolderOpen} onClose={() => { setNewFolderOpen(false); }} parentPrefix={root + relative} existingNames={existingFolderNames} onCreate={createFolder} />
+      {dragging && (
+        <div role="status" data-component="DropOverlay" className="pointer-events-none fixed inset-0 z-(--cf-z-overlay) flex items-center justify-center bg-overlay p-6">
+          <div className="rounded-lg border-2 border-dashed border-accent bg-elevated p-8 text-center shadow-overlay">
+            <p className="text-lg font-semibold">{t("drop.title", { folder: folderLabel })}</p>
+            <p className="mt-1 text-fg-muted">{t("drop.sub")}</p>
+          </div>
+        </div>
+      )}
       <DetailsPanel
         layout={layout}
         connection={connection}
