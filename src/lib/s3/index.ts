@@ -39,3 +39,5 @@ export {
   type UploadRecord,
   type UploadStateStore,
 } from "./upload";
+export { PREVIEW_SECONDS, presignView, readObject } from "./preview";
+export { looksBinary, mimeOf, sniffKind } from "./keys";

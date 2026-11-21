@@ -104,3 +104,54 @@ export function keepBothKey(key: string, isTaken: (candidate: string) => boolean
     if (!isTaken(candidate)) return candidate;
   }
 }
+
+const MIME: Record<string, string> = {
+  png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp", avif: "image/avif",
+  bmp: "image/bmp", ico: "image/x-icon", svg: "image/svg+xml",
+  mp4: "video/mp4", m4v: "video/mp4", mov: "video/quicktime", webm: "video/webm", ogv: "video/ogg", mkv: "video/x-matroska",
+  mp3: "audio/mpeg", wav: "audio/wav", ogg: "audio/ogg", oga: "audio/ogg", m4a: "audio/mp4", flac: "audio/flac", aac: "audio/aac", opus: "audio/ogg",
+};
+
+/**
+ * The media type to ask the provider to answer with for a preview, by extension.
+ * Objects are often stored as application/octet-stream, which Safari will not
+ * play or draw; the signed URL overrides it for this one response.
+ */
+export function mimeOf(name: string): string | undefined {
+  const dot = name.lastIndexOf(".");
+  return dot <= 0 ? undefined : MIME[name.slice(dot + 1).toLowerCase()];
+}
+
+const startsWith = (bytes: Uint8Array, signature: readonly number[], offset = 0): boolean =>
+  signature.every((value, index) => bytes[offset + index] === value);
+const ascii = (bytes: Uint8Array, start: number, end: number): string => String.fromCharCode(...bytes.slice(start, end));
+
+/** Control characters other than tab, line feed, form feed and carriage return: what a text file does not contain. */
+export function looksBinary(bytes: Uint8Array): boolean {
+  let controls = 0;
+  for (const byte of bytes) {
+    if (byte === 0) return true;
+    if (byte < 32 && byte !== 9 && byte !== 10 && byte !== 12 && byte !== 13) controls += 1;
+  }
+  return bytes.length > 0 && controls / bytes.length > 0.02;
+}
+
+/**
+ * What a file is from its first bytes (FR-50: extension plus magic bytes). Used
+ * when the extension says nothing. Text with no markup signature counts as `code`
+ * (plain text); anything with control characters stays `unknown`.
+ */
+export function sniffKind(head: Uint8Array): FileKind {
+  if (startsWith(head, [0x89, 0x50, 0x4e, 0x47])) return "image";
+  if (startsWith(head, [0xff, 0xd8, 0xff]) || startsWith(head, [0x47, 0x49, 0x46, 0x38])) return "image";
+  if (ascii(head, 0, 4) === "RIFF") return ascii(head, 8, 12) === "WEBP" ? "image" : ascii(head, 8, 12) === "WAVE" ? "audio" : "unknown";
+  if (startsWith(head, [0x25, 0x50, 0x44, 0x46])) return "pdf";
+  if (startsWith(head, [0x50, 0x4b, 0x03, 0x04]) || startsWith(head, [0x1f, 0x8b])) return "archive";
+  if (ascii(head, 4, 8) === "ftyp" || startsWith(head, [0x1a, 0x45, 0xdf, 0xa3])) return "video";
+  if (ascii(head, 0, 4) === "OggS" || ascii(head, 0, 4) === "fLaC" || ascii(head, 0, 3) === "ID3" || (head[0] === 0xff && ((head[1] ?? 0) & 0xe0) === 0xe0)) return "audio";
+  if (looksBinary(head)) return "unknown";
+  const text = new TextDecoder().decode(head).replace(/^\uFEFF/, "").trimStart().toLowerCase();
+  if (text.startsWith("<svg") || (text.startsWith("<?xml") && text.includes("<svg"))) return "svg";
+  if (text.startsWith("<!doctype html") || text.startsWith("<html")) return "html";
+  return "code";
+}

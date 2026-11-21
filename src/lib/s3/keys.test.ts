@@ -109,3 +109,45 @@ describe("AC-43.2 keep both names", () => {
     expect(keepBothKey("README", (key) => key === "README (1)")).toBe("README (2)");
   });
 });
+
+import { looksBinary, mimeOf, sniffKind } from "./keys";
+
+const bytes = (...values: number[]) => Uint8Array.from(values);
+const text = (value: string) => new TextEncoder().encode(value);
+
+describe("FR-50 kind detection by magic bytes", () => {
+  it("knows images, documents, archives, video and audio from their signatures", () => {
+    expect(sniffKind(bytes(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a))).toBe("image");
+    expect(sniffKind(bytes(0xff, 0xd8, 0xff, 0xe0))).toBe("image");
+    expect(sniffKind(text("GIF89a"))).toBe("image");
+    expect(sniffKind(Uint8Array.from([...text("RIFF"), 0, 0, 0, 0, ...text("WEBP")]))).toBe("image");
+    expect(sniffKind(Uint8Array.from([...text("RIFF"), 0, 0, 0, 0, ...text("WAVE")]))).toBe("audio");
+    expect(sniffKind(text("%PDF-1.7"))).toBe("pdf");
+    expect(sniffKind(bytes(0x50, 0x4b, 0x03, 0x04))).toBe("archive");
+    expect(sniffKind(Uint8Array.from([0, 0, 0, 0x18, ...text("ftypmp42")]))).toBe("video");
+    expect(sniffKind(text("OggS\u0000"))).toBe("audio");
+    expect(sniffKind(text("ID3\u0004"))).toBe("audio");
+  });
+  it("tells SVG and HTML text from plain text", () => {
+    expect(sniffKind(text('<?xml version="1.0"?><svg xmlns="x"/>'))).toBe("svg");
+    expect(sniffKind(text("  <svg viewBox='0 0 1 1'/>"))).toBe("svg");
+    expect(sniffKind(text("<!DOCTYPE html><p>x"))).toBe("html");
+    expect(sniffKind(text("just some notes\nsecond line"))).toBe("code");
+  });
+  it("leaves binary data unknown", () => {
+    expect(sniffKind(bytes(1, 2, 3, 4, 5, 6, 7, 8))).toBe("unknown");
+    expect(looksBinary(bytes(65, 66, 0, 67))).toBe(true);
+    expect(looksBinary(text("tabs\tand\nnewlines\r\nare text"))).toBe(false);
+  });
+});
+
+describe("preview media types", () => {
+  it("answers by extension, case-insensitively, and nothing for the rest", () => {
+    expect(mimeOf("a.PNG")).toBe("image/png");
+    expect(mimeOf("clip.mp4")).toBe("video/mp4");
+    expect(mimeOf("song.mp3")).toBe("audio/mpeg");
+    expect(mimeOf("logo.svg")).toBe("image/svg+xml");
+    expect(mimeOf("data.bin")).toBeUndefined();
+    expect(mimeOf(".png")).toBeUndefined();
+  });
+});

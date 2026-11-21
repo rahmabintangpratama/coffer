@@ -25,6 +25,8 @@ export function createClient(config: ClientConfig): S3Client {
     requestChecksumCalculation: "WHEN_REQUIRED",
     responseChecksumValidation: "WHEN_REQUIRED",
     maxAttempts: config.maxAttempts ?? 3,
-    requestHandler: { requestTimeout: 30_000 },
+    // A signed request is never served from or revalidated by the browser's HTTP cache: the cache rewrites Range
+    // and adds If-None-Match, which breaks the signature (found when a 512-byte read preceded a 1 MiB read).
+    requestHandler: { requestTimeout: 30_000, cache: "no-store" },
   });
 }
