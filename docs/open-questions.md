@@ -103,7 +103,7 @@ These choices were not asked. Reverse any by opening a question.
 | D-10 | The trash prefix is hidden from Files, search and usage regardless of `showHiddenFiles`. | Avoids showing the buffer as normal files. |
 | D-11 | Home in MVP shows buckets only; Recent arrives with v1. | Recent is "starred and recent" in the v1 scope. |
 | D-12 | Demo mode (v1) uses an in-memory `StorageBackend`. | Same UI code path, zero network. |
-| D-13 | Root `CLAUDE.md` adds a two-line Claude Code note about skills; every other `CLAUDE.md` is only `@AGENTS.md`. | Only genuinely Claude-specific text goes there. |
+| D-13 | Root `CLAUDE.md` adds Claude-specific text only: the skills note and the subagent rules (what to delegate, what stays in the main model, subagents never touch git). Subagent definitions are committed in `.claude/agents/` with a minimal tool list and a model each. Every other `CLAUDE.md` is only `@AGENTS.md`. | Only genuinely Claude-specific text goes there; cheap models take mechanical read-only work to save tokens. |
 | D-14 | Auto `addressingStyle` picks path-style for IPs, localhost, ports and dotted bucket names. | Wildcard TLS and DNS limits. |
 | D-15 | Presign signing date uses the learned clock offset. | A wrong device clock must not produce dead links. |
 | D-16 | All saved profiles share one salt (one PBKDF2 derivation per unlock). | Usable unlock on phones; types unchanged. |
