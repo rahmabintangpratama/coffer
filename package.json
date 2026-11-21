@@ -1,0 +1,30 @@
+{
+  "name": "coffer",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Browser-only, mobile-first file manager for S3-compatible object storage.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@12.21.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.3.0",
+    "typescript": "6.0.3",
+    "vite": "8.3.8"
+  }
+}

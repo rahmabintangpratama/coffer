@@ -85,17 +85,14 @@ Current and previous major versions of Chrome, Edge and Firefox. Safari 16.4 or 
 
 ## Development
 
-Prerequisites: Node 22, pnpm and Docker (for a local MinIO). The commands below are **available after M0**, the first milestone of the [implementation plan](docs/implementation-plan.md). M0 updates this section in the same change that adds them.
+Prerequisites: Node 22, pnpm 12 (enable it with `corepack enable`) and Docker (for a local MinIO, from the next commits of M0). This table lists the commands that exist today. M0, the first milestone of the [implementation plan](docs/implementation-plan.md), adds the rest in the same changes that add the tools.
 
 | Task | Command |
 |---|---|
 | Install | `pnpm install --frozen-lockfile` |
 | Dev server | `pnpm dev` |
 | Build | `pnpm build` |
-| Typecheck, lint | `pnpm typecheck`, `pnpm lint` |
-| Unit tests | `pnpm test` |
-| Integration tests (MinIO) | `docker compose -f tests/integration/docker-compose.yml up -d`, then `pnpm test:integration` |
-| End-to-end tests | `pnpm test:e2e` |
+| Typecheck | `pnpm typecheck` |
 
 ## Documentation
 

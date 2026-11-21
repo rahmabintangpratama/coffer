@@ -34,14 +34,14 @@ Each directory with an `AGENTS.md` has a `CLAUDE.md` that imports it. Nested fil
 
 ## Commands
 
-Package manager: **pnpm**. All commands are **TBD until the scaffold exists**; update this table in the same change that adds each script.
+Package manager: **pnpm** 12 with Node 22 (`.nvmrc`; enable pnpm with `corepack enable`). Commands marked **TBD** do not exist yet; update this table in the same change that adds each script.
 
 | Task | Command |
 |---|---|
-| Install | `pnpm install --frozen-lockfile` (TBD) |
-| Dev server | `pnpm dev` (TBD) |
-| Build | `pnpm build` (TBD) |
-| Typecheck | `pnpm typecheck` (TBD) |
+| Install | `pnpm install --frozen-lockfile` |
+| Dev server | `pnpm dev` |
+| Build | `pnpm build` |
+| Typecheck | `pnpm typecheck` |
 | Lint | `pnpm lint` (TBD) |
 | Unit and component tests | `pnpm test` (TBD) |
 | Integration tests (needs MinIO) | `pnpm test:integration` (TBD) |
