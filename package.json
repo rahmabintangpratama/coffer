@@ -19,7 +19,8 @@
     "tokens:check": "node scripts/tokens/build.ts --check",
     "lint": "eslint .",
     "headers:check": "node scripts/headers/check.ts",
-    "copy:check": "node scripts/copy/check.ts"
+    "copy:check": "node scripts/copy/check.ts",
+    "test:integration": "vitest run --config vitest.integration.config.ts"
   },
   "dependencies": {
     "class-variance-authority": "0.7.1",
@@ -29,6 +30,7 @@
     "tailwind-merge": "3.7.1"
   },
   "devDependencies": {
+    "@aws-sdk/client-s3": "3.1173.0",
     "@eslint/js": "10.0.1",
     "@tailwindcss/vite": "4.3.5",
     "@testing-library/dom": "10.4.2",

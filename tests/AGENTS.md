@@ -4,7 +4,7 @@ Integration tests, end-to-end tests and shared fixtures. Unit and component test
 
 ## Layout
 
-- `integration/`: Vitest in Node against MinIO; `docker-compose.yml` is the fixture.
+- `integration/`: Vitest in Node against MinIO; `docker-compose.yml` is the fixture (fake credentials in `config.ts`). The official MinIO images are gone, so it runs the frozen `bitnamilegacy/minio` image; see OQ-32.
 - `e2e/`: Playwright specs.
 - `fixtures/`: fake credentials, hostile HTML, SVG and Markdown samples, sample files, provider payloads.
 

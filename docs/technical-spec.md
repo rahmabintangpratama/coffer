@@ -544,7 +544,7 @@ Enforcement: a bundle-size check (`size-limit` or Vite's report) in CI, Lighthou
 
 ### 15.2 MinIO fixture
 
-`tests/integration/docker-compose.yml` runs MinIO with a fixed fake root user, a test bucket and `MINIO_API_CORS_ALLOW_ORIGIN=http://localhost:5173` for browser e2e. Integration tests run in Node, where CORS does not apply. CORS failure cases in e2e use Playwright request interception (`page.route`) to return responses without CORS headers or abort the request, to cover `cors` versus `network`. Tests never use real cloud credentials; fixtures use fixed fake keys.
+`tests/integration/docker-compose.yml` runs MinIO (the frozen `bitnamilegacy/minio` image, because the official images are no longer published; OQ-32) with a fixed fake root user, a test bucket and `MINIO_API_CORS_ALLOW_ORIGIN=http://localhost:5173` for browser e2e. Integration tests run in Node, where CORS does not apply. CORS failure cases in e2e use Playwright request interception (`page.route`) to return responses without CORS headers or abort the request, to cover `cors` versus `network`. Tests never use real cloud credentials; fixtures use fixed fake keys.
 
 ### 15.3 Fault injection
 

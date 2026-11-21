@@ -44,9 +44,9 @@ Package manager: **pnpm** 12 with Node 22 (`.nvmrc`; enable pnpm with `corepack 
 | Typecheck | `pnpm typecheck` |
 | Lint | `pnpm lint` |
 | Unit and component tests | `pnpm test` |
-| Integration tests (needs MinIO) | `pnpm test:integration` (TBD) |
+| Integration tests (needs MinIO) | `pnpm test:integration` |
 | End-to-end tests | `pnpm test:e2e` (TBD) |
-| Start local MinIO | `docker compose -f tests/integration/docker-compose.yml up -d` (TBD) |
+| Start local MinIO | `docker compose -f tests/integration/docker-compose.yml up -d --wait` |
 | Generate token CSS from `design/tokens.json` | `pnpm tokens:build` |
 | Check generated CSS matches committed files | `pnpm tokens:check` |
 | Check copy keys used in code exist | `pnpm copy:check` |

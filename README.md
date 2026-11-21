@@ -85,7 +85,7 @@ Current and previous major versions of Chrome, Edge and Firefox. Safari 16.4 or 
 
 ## Development
 
-Prerequisites: Node 22, pnpm 12 (enable it with `corepack enable`) and Docker (for a local MinIO, from the next commits of M0). This table lists the commands that exist today. M0, the first milestone of the [implementation plan](docs/implementation-plan.md), adds the rest in the same changes that add the tools.
+Prerequisites: Node 22, pnpm 12 (enable it with `corepack enable`) and Docker (for a local MinIO). This table lists the commands that exist today. M0, the first milestone of the [implementation plan](docs/implementation-plan.md), adds the rest in the same changes that add the tools.
 
 | Task | Command |
 |---|---|
@@ -96,6 +96,7 @@ Prerequisites: Node 22, pnpm 12 (enable it with `corepack enable`) and Docker (f
 | Unit tests | `pnpm test` |
 | Generate token CSS from `design/tokens.json` | `pnpm tokens:build` |
 | Check generated CSS is current | `pnpm tokens:check` |
+| Integration tests (local MinIO) | `docker compose -f tests/integration/docker-compose.yml up -d --wait`, then `pnpm test:integration` |
 | Check that copy keys used in code exist | `pnpm copy:check` |
 | Check the security headers file | `pnpm headers:check` (after `pnpm build` it also checks `dist`) |
 

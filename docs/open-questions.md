@@ -64,7 +64,12 @@ Answered by the project owner. The **From** column gives the question that was o
 
 ## Open questions
 
-None. Every question so far is decided. Add new ones here with an owner and a recommended answer.
+### OQ-32: Which image runs the local S3 fixture
+- **Owner:** Eng
+- **Status:** Open
+- **Question:** The official `minio/minio` images are no longer published on Docker Hub or Quay (pulls fail), so the MinIO-based fixture in the plan cannot use them. M0 uses `bitnamilegacy/minio:2025.7.23-debian-12-r5`, a frozen legacy image: it works (list, put, get, delete and CORS via `MINIO_API_CORS_ALLOW_ORIGIN` verified), but it gets no updates and Docker Hub may remove it.
+- **Recommended:** Keep the legacy image for MVP tests behind the one compose file. Before it breaks, move to a maintained S3 server (for example Garage, SeaweedFS or RustFS) or a MinIO build from source, and re-run the integration suite; none of the tests depend on MinIO-only behavior except the global CORS environment variable, which the new server must replace. Note the same constraint for CI.
+- **Affects:** `tests/integration/docker-compose.yml`, CI, technical-spec 15.2
 
 ---
 
