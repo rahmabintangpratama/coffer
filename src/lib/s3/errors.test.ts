@@ -62,6 +62,10 @@ describe("toAppError", () => {
     expect(toAppError(behind).hint?.clockOffsetMinutes).toBe(-30);
   });
 
+  it("maps the vault's LockedError by name", () => {
+    expect(toAppError(Object.assign(new Error("locked"), { name: "LockedError" })).code).toBe("locked");
+  });
+
   it("passes an AppError through unchanged", () => {
     const original = new AppError("locked");
     expect(toAppError(original)).toBe(original);

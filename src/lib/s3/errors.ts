@@ -83,6 +83,7 @@ const BY_NAME: Record<string, AppErrorCode> = {
   MissingContentMD5: "unsupported",
   QuotaExceeded: "quota",
   AbortError: "aborted",
+  LockedError: "locked",
 };
 
 const BY_STATUS: Record<number, AppErrorCode> = {

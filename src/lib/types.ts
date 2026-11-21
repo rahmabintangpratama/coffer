@@ -102,6 +102,13 @@ export interface ConnectionProfile {
   lastUsedAt?: string;
 }
 
+/** Keys for one connection. Held only inside lib/storage/vault; never in React state, stores or props. */
+export interface Credentials {
+  accessKeyId: string;
+  secretAccessKey: string;
+  sessionToken?: string;
+}
+
 export type TestStepId = "reach" | "cors" | "list" | "write" | "read" | "clean";
 export type TestStatus = "pending" | "running" | "pass" | "fail" | "skipped";
 export type TestFailure = "cors" | "accessDenied" | "signatureDoesNotMatch" | "noSuchBucket" | "wrongRegion" | "network" | "mixedContent" | "unknown";

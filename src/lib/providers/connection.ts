@@ -1,4 +1,4 @@
-import type { AddressingStyle, ProviderPreset } from "@/lib/types";
+import type { AddressingStyle, Credentials, ProviderPreset } from "@/lib/types";
 import { buildEndpoint, hostLooksRight, isLocalHost, type EndpointProblem } from "./endpoint";
 import {
   ADVANCED_FIELDS,
@@ -12,11 +12,7 @@ import {
 /** S3 signs with a region even where the provider ignores it; this is the conventional stand-in. */
 export const FALLBACK_REGION = "us-east-1";
 
-export interface Credentials {
-  accessKeyId: string;
-  secretAccessKey: string;
-  sessionToken?: string;
-}
+export type { Credentials };
 
 // ---------------------------------------------------------------- region
 
