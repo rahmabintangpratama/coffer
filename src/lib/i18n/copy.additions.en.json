@@ -8,6 +8,11 @@
     "unstar": "Remove from starred"
   },
   "app": {
+    "notFound": {
+      "body": "This address doesn’t match a screen in Coffer.",
+      "cta": "Go to Home",
+      "title": "Page not found"
+    },
     "placeholder": "This screen is not built yet."
   },
   "conn": {

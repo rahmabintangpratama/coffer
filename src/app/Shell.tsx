@@ -1,5 +1,5 @@
-import { Outlet, useRouterState } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
+import { useLocation } from "wouter";
 import { t } from "@/lib/i18n";
 import { AppBar } from "./AppBar";
 import { BottomNav } from "./BottomNav";
@@ -7,6 +7,7 @@ import { MoreSheet } from "./MoreSheet";
 import { mainDestinations } from "./nav-items";
 import { NavDrawer } from "./NavDrawer";
 import { NavRail } from "./NavRail";
+import { isActiveRoute } from "./routes";
 import { Sidebar } from "./Sidebar";
 import { ToastHost } from "./ToastHost";
 import { useCompactLayout } from "./useCompactLayout";
@@ -16,7 +17,7 @@ import { useCompactLayout } from "./useCompactLayout";
  * top bar, bottom nav and drawer below 768 px; rail from 768 px; sidebar from
  * 1024 px. .cf-app sits directly inside .cf-root, which is the container.
  */
-export function Shell() {
+export function Shell({ children }: { children: ReactNode }) {
   const root = useRef<HTMLDivElement>(null);
   const main = useRef<HTMLElement>(null);
   const menuButton = useRef<HTMLButtonElement>(null);
@@ -26,12 +27,12 @@ export function Shell() {
   const [moreOpen, setMoreOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const destination = mainDestinations.find((item) => item.to === pathname);
+  const [pathname] = useLocation();
+  const destination = mainDestinations.find((item) => isActiveRoute(item.to, pathname));
 
   // One title per screen, so a screen reader hears where it is.
   useEffect(() => {
-    document.title = `${destination ? t(destination.labelKey) : t("app.name")} · ${t("app.name")}`;
+    document.title = destination ? `${t(destination.labelKey)} · ${t("app.name")}` : t("app.name");
   }, [destination]);
 
   // After a navigation, move focus to the page so keyboard and screen reader users start at the top of it.
@@ -92,7 +93,7 @@ export function Shell() {
             aria-label={t("main.label")}
             className="flex-1 p-4 outline-none @md:p-6"
           >
-            <Outlet />
+            {children}
           </main>
           <BottomNav
             moreRef={moreButton}

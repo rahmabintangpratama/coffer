@@ -2,8 +2,8 @@
 
 App shell: providers, router, layout shells. Layer rules are in [../AGENTS.md](../AGENTS.md).
 
-- `Shell.tsx` owns the three shells (bottom nav and drawer below 768 px, rail from 768, sidebar from 1024), chosen by the width of `.cf-root` ([ADR-003](../../docs/adr/ADR-003-container-queries.md)). `.cf-app` stays directly inside `.cf-root`.
-- Routing is TanStack Router with hash history (`router.tsx`). Keep route paths as string literals so `Link` is checked at compile time. Nothing about files goes in a real URL path.
+- `Shell.tsx` (it wraps the routed screen) owns the three shells (bottom nav and drawer below 768 px, rail from 768, sidebar from 1024), chosen by the width of `.cf-root` ([ADR-003](../../docs/adr/ADR-003-container-queries.md)). `.cf-app` stays directly inside `.cf-root`.
+- Routing is wouter with hash location (`App.tsx`). Every route is a string literal in `routes.ts`, and links take an `AppRoute`, so a typo is a compile error. Nothing about files goes in a real URL path. Unmatched hashes show `NotFoundScreen`.
 - Navigation destinations live in `nav-items.ts`; their labels are typed `CopyKey`, so a missing key fails typecheck.
 - Theme: `theme.ts` resolves the setting (system, light, dark) to `data-theme` on `<html>` and follows `prefers-color-scheme` live; `public/theme-init.js` does the first paint. Keep the two in step (same key, same rules).
 - Modal layers return focus to their opener explicitly (`returnFocusRef`), because Safari does not focus buttons on click.

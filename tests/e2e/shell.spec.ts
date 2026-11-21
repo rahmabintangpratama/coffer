@@ -76,6 +76,20 @@ test.describe("navigation shell", () => {
     }
   });
 
+  test("an unknown address shows a not-found screen with a way back", async ({ page }) => {
+    await page.goto("/#/no-such-screen");
+    await expect(page.getByRole("heading", { level: 1, name: "Page not found" })).toBeVisible();
+    await expect(page).toHaveTitle("Coffer");
+    await page.getByRole("link", { name: "Go to Home" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Home" })).toBeVisible();
+  });
+
+  test("a sub-path keeps its parent destination current", async ({ page }, testInfo) => {
+    test.skip(layoutFor(testInfo) === "compact", "checked on the rail and sidebar");
+    await page.goto("/#/files");
+    await expect(page.getByRole("navigation", { name: "Main navigation" }).locator('[aria-current="page"]')).toHaveText("Files");
+  });
+
   test("reloading keeps the screen (the path is in the hash)", async ({ page }, testInfo) => {
     await navigateTo(page, layoutFor(testInfo), "Files");
     await page.reload();

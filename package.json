@@ -26,7 +26,6 @@
     "commitlint": "commitlint"
   },
   "dependencies": {
-    "@tanstack/react-router": "1.170.46",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
     "intl-messageformat": "12.2.0",
@@ -34,6 +33,7 @@
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "tailwind-merge": "3.7.1",
+    "wouter": "3.13.0",
     "zustand": "5.1.0"
   },
   "devDependencies": {

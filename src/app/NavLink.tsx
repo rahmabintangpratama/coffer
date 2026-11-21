@@ -1,28 +1,30 @@
-import { Link } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import type { Destination } from "./nav-items";
+import { isActiveRoute } from "./routes";
 
 interface NavLinkProps {
   destination: Destination;
   label: string;
-  /** rail: icon over label. row: icon beside label. */
+  /** stacked: icon over label (rail, bottom bar). row: icon beside label. */
   layout: "stacked" | "row";
   onNavigate?: () => void;
   className?: string;
   /** Hide the visible label but keep it as the accessible name. */
   iconOnly?: boolean;
-  children?: ReactNode;
 }
 
-/** A link to a destination. TanStack Router sets aria-current="page" and data-status="active". */
+/** A link to a destination. It marks itself with aria-current="page" and data-status="active". */
 export function NavLink({ destination, label, layout, onNavigate, className, iconOnly = false }: NavLinkProps) {
+  const [location] = useLocation();
+  const active = isActiveRoute(destination.to, location);
   const Icon = destination.icon;
   return (
     <Link
-      to={destination.to}
-      activeOptions={{ exact: destination.to === "/" }}
+      href={destination.to}
       {...(onNavigate ? { onClick: onNavigate } : {})}
+      aria-current={active ? "page" : undefined}
+      data-status={active ? "active" : "inactive"}
       className={cn(
         "group flex items-center rounded-md text-fg",
         "min-h-(--cf-size-touch-min) min-w-(--cf-size-touch-min)",

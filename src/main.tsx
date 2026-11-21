@@ -1,7 +1,6 @@
-import { RouterProvider } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { router } from "@/app/router";
+import { App } from "@/app/App";
 import { initTheme } from "@/app/theme";
 import "@/styles/tailwind.css";
 import "@/styles/fonts.css";
@@ -16,6 +15,6 @@ initTheme();
 
 createRoot(container).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <App />
   </StrictMode>,
 );

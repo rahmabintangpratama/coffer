@@ -18,7 +18,7 @@ Application code. Project-wide rules are in [../AGENTS.md](../AGENTS.md); archit
 ## Entry and routing
 
 - `main.tsx` imports `styles/tailwind.css`, mounts `<div class="cf-root"><div class="cf-app">`.
-- Hash routing (TanStack Router). Keys live only in the fragment. Do not use `history.pushState` paths.
+- Hash routing with wouter (`wouter/use-hash-location`). All routes are in `app/routes.ts`; link only to `AppRoute` values. Keys live only in the fragment. Do not use `history.pushState` paths.
 - Routes: `files`, `trash`, `starred`, `storage`, `settings/*`, `home`; preview and details are search params.
 
 ## State boundaries
