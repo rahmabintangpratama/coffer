@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, truncateSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import AxeBuilder from "@axe-core/playwright";
-import { GetObjectCommand, ListMultipartUploadsCommand, ListObjectsV2Command, PutObjectCommand } from "@aws-sdk/client-s3";
+import { GetObjectCommand, HeadObjectCommand, ListMultipartUploadsCommand, ListObjectsV2Command, PutObjectCommand } from "@aws-sdk/client-s3";
 import { expect, type Page, test } from "@playwright/test";
 import { createClient } from "../integration/client";
 import { admin } from "../integration/config";
@@ -163,6 +163,29 @@ test.describe("upload", () => {
     await expect(page.getByRole("heading", { level: 2, name: "Upload interrupted" })).toBeVisible();
     await expect.poll(incomplete, { timeout: 20_000 }).toBe(0);
   });
+});
+
+test("D-36 reloading a second tab does not abort an upload that is still running in the first", async ({ page, context }) => {
+  test.setTimeout(120_000);
+  const folder = unique();
+  await enterApp(page, "/files");
+  await openFolder(page, folder);
+  // Each part waits 4 s, so the upload is still running while the second tab loads.
+  await slowParts(page, 4000);
+  await filesInput(page).setInputFiles(bigFile("shared.bin", 40));
+  await expect.poll(incomplete, { timeout: 20_000 }).toBeGreaterThan(0);
+
+  const other = await context.newPage();
+  await enterApp(other, "/files");
+  await expect(other.getByRole("grid").or(other.getByRole("heading", { name: /This folder is empty|has no files yet/ }))).toBeVisible({ timeout: 30_000 });
+  // The second tab found the stored record, saw its lock held and left it alone; a reload of that tab does the same.
+  await other.reload();
+  await other.close();
+
+  await expect(page.getByRole("heading", { level: 2, name: "Uploaded 1 item" })).toBeVisible({ timeout: 90_000 });
+  const head = await s3.send(new HeadObjectCommand({ Bucket: E2E_BUCKET, Key: `${folder}/shared.bin` }));
+  expect(head.ContentLength).toBe(40 * MIB);
+  expect(await incomplete()).toBe(0);
 });
 
 test.describe("conflicts (FR-43)", () => {

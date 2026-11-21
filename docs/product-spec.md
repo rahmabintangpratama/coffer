@@ -424,7 +424,7 @@ The UI never hides these. Each one is surfaced where it affects the person.
 - AC-41.4 Given a small file, Then it uploads with a single `PutObject`.
 - AC-41.5 Given a multipart upload was running when the page closed or reloaded, When the app next loads (and the connection is unlocked), Then the stored `uploadId` is aborted with `AbortMultipartUpload`, the task shows as interrupted, and no incomplete multipart upload of ours remains at the provider. In MVP there is no resume.
 
-**Edge cases:** parts are at least 5 MiB except the last; an object over 5 TiB is rejected up front. If the abort cannot run (offline, locked, or no connection to that endpoint and bucket yet) the record is kept and retried on a later load or unlock ([D-36](open-questions.md#decisions-made-on-the-owners-behalf)), and the lifecycle-rule guidance in the technical spec applies. **Screens:** `S26_Uploading`, `T13_Transfers`
+**Edge cases:** parts are at least 5 MiB except the last; an object over 5 TiB is rejected up front. An upload still running in another tab is not aborted (it holds a Web Lock, D-36). If the abort cannot run (offline, locked, or no connection to that endpoint and bucket yet) the record is kept and retried on a later load or unlock ([D-36](open-questions.md#decisions-made-on-the-owners-behalf)), and the lifecycle-rule guidance in the technical spec applies. **Screens:** `S26_Uploading`, `T13_Transfers`
 
 #### FR-42 Resume after reload (v1; replaces the MVP abort-on-reload behavior)
 **Story:** As a user on a flaky connection, I want to continue an interrupted upload.

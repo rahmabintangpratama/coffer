@@ -51,21 +51,28 @@ async function run(id: string, job: Job): Promise<void> {
   job.controller = controller;
   store.patch(id, { status: "running", bytesDone: 0 });
   try {
-    const [s3, { uploadStore }] = await Promise.all([import("@/lib/s3"), import("@/lib/storage/uploads")]);
-    pool ??= new s3.RequestPool(() => getConcurrency());
+    const [s3, { uploadStore }, { withUploadLock }] = await Promise.all([
+      import("@/lib/s3"),
+      import("@/lib/storage/uploads"),
+      import("@/lib/storage/upload-locks"),
+    ]);
+    const shared = (pool ??= new s3.RequestPool(() => getConcurrency()));
     const client: S3Handle = s3.clientFor(job.connection);
-    await s3.uploadObject({
-      client,
-      bucket: job.connection.bucket ?? "",
-      key: job.key,
-      body: job.file,
-      pool,
-      store: uploadStore,
-      connection: { id: job.connection.id, endpoint: job.connection.endpoint },
-      signal: controller.signal,
-      id,
-      onProgress: (bytesDone) => { useTransfers.getState().patch(id, { bytesDone }); },
-    });
+    // The lock is taken before the record is written and kept until the upload ends, so another tab never sees a record without it (D-36).
+    await withUploadLock(id, () =>
+      s3.uploadObject({
+        client,
+        bucket: job.connection.bucket ?? "",
+        key: job.key,
+        body: job.file,
+        pool: shared,
+        store: uploadStore,
+        connection: { id: job.connection.id, endpoint: job.connection.endpoint },
+        signal: controller.signal,
+        id,
+        onProgress: (bytesDone) => { useTransfers.getState().patch(id, { bytesDone }); },
+      }),
+    );
     useTransfers.getState().patch(id, { status: "done", bytesDone: job.file.size });
     jobs.delete(id);
     finishBatch(job.batch, true);
