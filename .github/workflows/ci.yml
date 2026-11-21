@@ -89,6 +89,9 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Bundle budgets
+        run: pnpm size:check
+
       - name: Security headers
         run: pnpm headers:check
 

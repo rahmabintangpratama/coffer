@@ -53,6 +53,7 @@ Package manager: **pnpm** 12 with Node 22 only (`engines` is `>=22 <23` and `eng
 | Print what every provider preset resolves to | `pnpm demo:presets` |
 | Print the connection test steps in a real browser (needs the S3 fixture) | `pnpm demo:connection-test` |
 | Check `public/_headers` and `dist/_headers` against the spec | `pnpm headers:check` |
+| Check the bundle budgets and that the lazy libraries (pdf.js, Markdown, DOMPurify) are outside the initial bundle (after `pnpm build`) | `pnpm size:check` |
 
 ## Conventions
 
