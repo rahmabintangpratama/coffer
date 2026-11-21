@@ -41,3 +41,6 @@ export {
 } from "./upload";
 export { PREVIEW_SECONDS, presignView, readObject } from "./preview";
 export { looksBinary, mimeOf, sniffKind } from "./keys";
+export { COPY_SINGLE_LIMIT, copyObject, copyPartSizeFor, copySourceOf, type CopyOptions } from "./copy";
+export { countUnder, listUnder, type ObjectInfo } from "./list-all";
+export { OPERATION_CONCURRENCY, runOperation, targetKeyOf, verifies, type OperationOptions } from "./operations";
