@@ -13,6 +13,7 @@ Integration tests, end-to-end tests and shared fixtures. Unit and component test
 - **Never use real cloud credentials.** Use the fixed fake keys in `tests/integration/config.ts`. A test that needs a real provider belongs in the manual compatibility matrix, not here.
 - Name tests after the requirement: `AC-36.1 ...`. Group by FR.
 - Integration: use a fresh bucket prefix per test; clean up in `afterEach`; inject faults through the S3 test middleware (crash after copy, after verify, mid-multipart, `SlowDown`, expired token).
+- E2E runs against the production build served by `scripts/serve/dist-server.ts`, which applies `dist/_headers`; a CSP violation in the console fails the shell tests.
 - E2E viewport matrix: **375, 768 and 1440**, light and dark for visual and axe checks. Chromium for every spec; WebKit and Firefox for smoke and layout.
 - Every e2e screen runs axe (serious and critical must be zero). Add keyboard-only flows for every FR with a keyboard path.
 - E2E asserts no secret appears in the DOM, URL, storage dump or network log (other than signed provider requests).
