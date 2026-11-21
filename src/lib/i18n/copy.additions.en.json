@@ -8,6 +8,10 @@
     "unstar": "Remove from starred"
   },
   "app": {
+    "loadError": {
+      "body": "Check your connection and reload the page.",
+      "title": "This screen didn’t load"
+    },
     "notFound": {
       "body": "This address doesn’t match a screen in Coffer.",
       "cta": "Go to Home",
@@ -43,6 +47,23 @@
     }
   },
   "form": {
+    "error": {
+      "endpoint": {
+        "credentials": "Remove the username and password from the endpoint address.",
+        "insecure": "Use an https address. Plain http only works for localhost.",
+        "invalid": "That isn’t a valid address. Start with https://.",
+        "label": "One part of the address has a character it can’t contain. Use letters, digits and hyphens.",
+        "missing": "Enter the endpoint URL.",
+        "query": "Remove the ? and anything after it from the endpoint address."
+      },
+      "prefix": "Use a folder path such as photos/2026, with no “..” and no empty parts.",
+      "region": "Enter a region. This endpoint doesn’t tell Coffer which one to sign with.",
+      "required": "{field} is required."
+    },
+    "jur": {
+      "default": "Default",
+      "fedramp": "FedRAMP"
+    },
     "prefix": {
       "hint": "Optional. Coffer opens in this folder and can’t go above it. Use it for a key limited to one folder."
     },
@@ -63,10 +84,20 @@
   },
   "ob": {
     "cors": {
+      "anyBucket": "the bucket you want to use",
       "copyRule": "Copy rule",
+      "originLabel": "Allowed origin",
+      "ruleLabel": "Rule format",
+      "stepOpen": "Open the CORS settings for {target} in your {provider} account.",
       "stillFailing": "Still failing? Some providers send error responses without CORS headers, so a wrong key can look like a CORS problem. Check the key and the rule, then try again.",
       "tabJson": "JSON",
       "tabXml": "XML"
+    },
+    "cred": {
+      "advancedHint": "Most connections don’t need these.",
+      "browserWarn": "{provider} may not allow browser access. Coffer will try, but the CORS check can fail even with a correct rule.",
+      "formLabel": "Connection details",
+      "hostWarnTitle": "Check the endpoint"
     },
     "fail": {
       "clean": {
@@ -74,7 +105,33 @@
         "next": "Rename, move and delete need delete access. Give the key delete access, then try again.",
         "title": "This key can’t delete files",
         "why": "The test file was written, but the key isn’t allowed to delete it."
+      },
+      "localNetwork": {
+        "cta": "Test again",
+        "next": "Open the site settings for this page, set Local network access to Allow, then test again. You can find them by clicking the icon at the left of the address bar.",
+        "title": "Your browser blocked access to your local network",
+        "why": "{endpoint} is on this device or your local network, and the browser needs your permission to reach it."
+      },
+      "missing": {
+        "cta": "Edit details",
+        "next": "Check the bucket name and the endpoint, then try again.",
+        "title": "Bucket not found",
+        "why": "{bucket} doesn’t exist at {endpoint}, or this key can’t see it."
+      },
+      "sig": {
+        "whyUnknown": "The secret key may have a stray space, or your device clock may be wrong."
+      },
+      "unknown": {
+        "cta": "Try again",
+        "next": "Check the endpoint, region and keys, then try again.",
+        "title": "Something went wrong",
+        "why": "The provider answered in a way Coffer didn’t expect."
       }
+    },
+    "localNetwork": {
+      "body": "{endpoint} is on this device or your local network. Choose Allow when the browser asks, so Coffer can run the test.",
+      "cta": "Continue",
+      "title": "Your browser will ask to reach your local network"
     },
     "locked": {
       "stop": "Stop transfers and lock",
@@ -82,7 +139,19 @@
     },
     "paste": {
       "expiryIgnored": "Ignored the credential expiration because it isn’t a future time.",
-      "noMatch": "Nothing recognized. Paste AWS-style environment lines, an rclone remote, or an endpoint."
+      "filled": "{count, plural, one {Filled # field.} other {Filled # fields.}}",
+      "noMatch": "Nothing recognized. Paste AWS-style environment lines, an rclone remote, or an endpoint.",
+      "providerMismatch": "This rclone remote names a different provider than {provider}. Coffer filled what it could, so check each value."
+    },
+    "pick": {
+      "listLabel": "Buckets",
+      "manualLabel": "Bucket name",
+      "noMatch": "No bucket matches your search.",
+      "none": "This key can’t see any buckets. Type the name of the one you want to open.",
+      "title": "Choose a bucket"
+    },
+    "provider": {
+      "listLabel": "Providers"
     },
     "ro": {
       "unverified": "This bucket is empty, so Coffer couldn’t confirm that reading works."
@@ -90,6 +159,17 @@
     "save": {
       "strong": "Strong. 16 characters or more is best.",
       "tooShort": "Use at least 12 characters. A longer passphrase is harder to guess."
+    },
+    "status": {
+      "fail": "Failed",
+      "pass": "Passed",
+      "pending": "Waiting",
+      "running": "Running",
+      "skipped": "Skipped"
+    },
+    "stepsLabel": "Connection checks",
+    "welcome": {
+      "factsLabel": "What Coffer does"
     }
   },
   "search": {

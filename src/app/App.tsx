@@ -1,13 +1,49 @@
+import { lazy, Suspense } from "react";
 import { Route, Router, Switch } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
+import { t } from "@/lib/i18n";
+import { CopyBoundary } from "./CopyBoundary";
 import { NotFoundScreen } from "./screens/NotFoundScreen";
 import { PlaceholderScreen } from "./screens/PlaceholderScreen";
 import { SettingsScreen } from "./screens/SettingsScreen";
 import { routes } from "./routes";
+import { useSession } from "./session";
 import { Shell } from "./Shell";
 
-/** The router and the screen for each route. Paths come from routes.ts. */
+// Onboarding, the provider presets and the form are not needed once connected, so they are one lazy chunk.
+const OnboardingFlow = lazy(() => import("@/features/onboarding").then((module) => ({ default: module.OnboardingFlow })));
+const onboardingGroups = ["ob", "form", "conn"] as const;
+
+function LoadError() {
+  return (
+    <main className="cf-root mx-auto max-w-lg p-6">
+      <h1 className="text-xl font-semibold">{t("app.loadError.title")}</h1>
+      <p className="mt-2 text-fg-muted">{t("app.loadError.body")}</p>
+    </main>
+  );
+}
+
+/** Onboarding until a connection exists, then the router and the screen for each route. Paths come from routes.ts. */
 export function App() {
+  const connection = useSession((state) => state.connection);
+  const connect = useSession((state) => state.connect);
+
+  if (!connection) {
+    return (
+      <CopyBoundary groups={onboardingGroups} fallback={<div className="cf-root min-h-dvh bg-app" aria-busy="true" />} errorFallback={<LoadError />}>
+        <Suspense fallback={<div className="cf-root min-h-dvh bg-app" aria-busy="true" />}>
+          <OnboardingFlow
+            onConnected={(summary) => {
+              connect(summary);
+              // The app lands on Files; a hash route, so nothing about the connection goes in the URL path.
+              window.location.hash = `#${routes.files}`;
+            }}
+          />
+        </Suspense>
+      </CopyBoundary>
+    );
+  }
+
   return (
     <Router hook={useHashLocation}>
       <Shell>

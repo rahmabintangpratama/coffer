@@ -23,9 +23,12 @@ export function EndpointPreview({ label, note, editLabel, value, onChange, warni
   const labelId = useId();
   if (editing) {
     return (
-      <Field label={label} hint={note} error={error}>
-        <TextInput mono value={value} onChange={(event) => { onChange(event.target.value); }} autoCapitalize="none" autoCorrect="off" spellCheck={false} />
-      </Field>
+      <div data-component="EndpointPreview" className="flex flex-col gap-1">
+        <Field label={label} hint={note} error={error}>
+          <TextInput mono value={value} onChange={(event) => { onChange(event.target.value); }} autoCapitalize="none" autoCorrect="off" spellCheck={false} />
+        </Field>
+        {warning ? <p className="text-sm text-warning-fg">{warning}</p> : null}
+      </div>
     );
   }
   return (
@@ -35,7 +38,7 @@ export function EndpointPreview({ label, note, editLabel, value, onChange, warni
       </span>
       <div className="flex items-center gap-2 rounded-sm border border-line bg-subtle px-3 py-2">
         <output aria-labelledby={labelId} className="min-w-0 flex-1 font-mono text-base break-all">
-          {value === "" ? "—" : value}
+          {value === "" ? "-" : value}
         </output>
         <Button variant="ghost" size="sm" onClick={() => { setEditing(true); }}>
           {editLabel}

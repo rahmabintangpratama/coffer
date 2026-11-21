@@ -102,6 +102,9 @@ export interface ConnectionProfile {
   lastUsedAt?: string;
 }
 
+/** T-10: a connection without its keys. Safe for React state, stores and props; the keys stay in lib/storage/vault. */
+export type ConnectionSummary = Omit<ConnectionProfile, "credentials">;
+
 /** Keys for one connection. Held only inside lib/storage/vault; never in React state, stores or props. */
 export interface Credentials {
   accessKeyId: string;
