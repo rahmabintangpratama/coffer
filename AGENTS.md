@@ -42,7 +42,7 @@ Package manager: **pnpm** 12 with Node 22 (`.nvmrc`; enable pnpm with `corepack 
 | Dev server | `pnpm dev` |
 | Build | `pnpm build` |
 | Typecheck | `pnpm typecheck` |
-| Lint | `pnpm lint` (TBD) |
+| Lint | `pnpm lint` |
 | Unit and component tests | `pnpm test` |
 | Integration tests (needs MinIO) | `pnpm test:integration` (TBD) |
 | End-to-end tests | `pnpm test:e2e` (TBD) |

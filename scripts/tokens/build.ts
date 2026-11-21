@@ -16,7 +16,7 @@ const check = process.argv.includes("--check");
 
 if (check) {
   // Regenerate in memory and compare with the committed files. Never writes.
-  const stale = (Object.keys(outputs) as Array<keyof typeof outputs>).filter((key) => {
+  const stale = (Object.keys(outputs) as (keyof typeof outputs)[]).filter((key) => {
     try {
       return readFileSync(outputs[key], "utf8") !== generated[key];
     } catch {
@@ -31,7 +31,7 @@ if (check) {
   console.log("Token CSS matches design/tokens.json.");
 } else {
   mkdirSync(dirname(outputs.tokensCss), { recursive: true });
-  for (const key of Object.keys(outputs) as Array<keyof typeof outputs>) {
+  for (const key of Object.keys(outputs) as (keyof typeof outputs)[]) {
     writeFileSync(outputs[key], generated[key]);
     console.log(`Wrote ${relative(repo, outputs[key])}`);
   }

@@ -10,7 +10,7 @@ const tokens = JSON.parse(read("design/tokens.json")) as TokenTree;
 
 // Differences between the design package's CSS and the generated CSS that are
 // understood and accepted. Keep this list short; every entry needs a reason.
-const KNOWN_DESIGN_DEVIATIONS: ReadonlyArray<{ design: string; generated: string; reason: string }> = [
+const KNOWN_DESIGN_DEVIATIONS: readonly { design: string; generated: string; reason: string }[] = [
   {
     design: "var(--cf-inverse-accent)",
     generated: "var(--cf-color-inverse-accent)",

@@ -37,7 +37,7 @@ const stepValue = (key: string) => Number.parseFloat(key.replace("-", "."));
  * `0, 0-5, 1, 1-5`; a group made only of numeric steps is therefore ordered by
  * value (`0-5` means 0.5), which is also the order used in tokens.json.
  */
-function children(node: unknown): Array<[string, unknown]> {
+function children(node: unknown): [string, unknown][] {
   if (!isRecord(node)) return [];
   const entries = Object.entries(node).filter(([key]) => !key.startsWith("$"));
   return entries.length > 0 && entries.every(([key]) => NUMERIC_STEP.test(key))
@@ -45,7 +45,7 @@ function children(node: unknown): Array<[string, unknown]> {
     : entries;
 }
 
-function walk(node: unknown, path: string[] = []): Array<{ path: string[]; leaf: TokenLeaf }> {
+function walk(node: unknown, path: string[] = []): { path: string[]; leaf: TokenLeaf }[] {
   if (isLeaf(node)) return [{ path, leaf: node }];
   return children(node).flatMap(([key, child]) => walk(child, [...path, key]));
 }
@@ -95,21 +95,21 @@ function rootDeclarations(tokens: TokenTree): string[] {
   const emit = (path: string[], leaf: TokenLeaf) =>
     lines.push(decl(varName(path), css(tokens, leaf.$value)));
 
-  for (const { path, leaf } of walk(tokens["primitive"], ["primitive"])) emit(path, leaf);
-  for (const { path, leaf } of walk(tokens["color"], ["color"])) emit(path, leaf);
+  for (const { path, leaf } of walk(tokens.primitive, ["primitive"])) emit(path, leaf);
+  for (const { path, leaf } of walk(tokens.color, ["color"])) emit(path, leaf);
 
-  const font = tokens["font"];
-  for (const { path, leaf } of walk(isRecord(font) ? font["family"] : undefined, ["font", "family"])) {
+  const font = tokens.font;
+  for (const { path, leaf } of walk(isRecord(font) ? font.family : undefined, ["font", "family"])) {
     emit(path, leaf);
   }
   // Type scale: one size and one line height per step, in typography order.
-  for (const [step] of children(tokens["typography"])) {
+  for (const [step] of children(tokens.typography)) {
     lines.push(decl(`--cf-font-size-${step}`, css(tokens, lookup(tokens, `font.size.${step}`).$value)));
     lines.push(
       decl(`--cf-line-height-${step}`, css(tokens, lookup(tokens, `font.line-height.${step}`).$value)),
     );
   }
-  for (const { path, leaf } of walk(isRecord(font) ? font["weight"] : undefined, ["font", "weight"])) {
+  for (const { path, leaf } of walk(isRecord(font) ? font.weight : undefined, ["font", "weight"])) {
     emit(path, leaf);
   }
   for (const group of ["space", "radius", "border", "shadow", "motion", "z", "size"]) {
@@ -121,11 +121,11 @@ function rootDeclarations(tokens: TokenTree): string[] {
 
 function darkDeclarations(tokens: TokenTree): string[] {
   const lines: string[] = [];
-  for (const { path, leaf } of walk(tokens["color"], ["color"])) {
+  for (const { path, leaf } of walk(tokens.color, ["color"])) {
     const dark = extension(leaf, "coffer.dark");
     if (dark !== undefined) lines.push(decl(varName(path), css(tokens, dark)));
   }
-  for (const { path, leaf } of walk(tokens["shadow"], ["shadow"])) {
+  for (const { path, leaf } of walk(tokens.shadow, ["shadow"])) {
     const dark = extension(leaf, "coffer.dark");
     if (dark !== undefined) lines.push(decl(varName(path), css(tokens, dark)));
   }
@@ -191,10 +191,10 @@ function elevatedDeclarations(tokens: TokenTree, theme: Theme): string[] {
 function inverseFocus(tokens: TokenTree): string {
   const leaf = lookup(tokens, "color.border.focus");
   const scope = extension(leaf, "coffer.inverse");
-  if (!isRecord(scope) || scope["light"] === undefined) {
+  if (!isRecord(scope) || scope.light === undefined) {
     throw new Error("color.border.focus has no coffer.inverse value");
   }
-  return decl("--cf-color-border-focus", css(tokens, scope["light"]));
+  return decl("--cf-color-border-focus", css(tokens, scope.light));
 }
 
 function breakpointPx(tokens: TokenTree, name: string): string {
@@ -207,7 +207,7 @@ function atBreakpointRule(tokens: TokenTree): string[] {
   const sizes = ["font.size.base", "font.line-height.base"].map((dotted) => {
     const leaf = lookup(tokens, dotted);
     const at = extension(leaf, "coffer.atBreakpoint");
-    const value = isRecord(at) ? at["lg"] : undefined;
+    const value = isRecord(at) ? at.lg : undefined;
     if (typeof value !== "string") throw new Error(`${dotted} has no coffer.atBreakpoint.lg value`);
     const step = dotted.startsWith("font.size") ? "--cf-font-size-base" : "--cf-line-height-base";
     return `${step}: ${value};`;
@@ -229,7 +229,7 @@ function tokensCss(tokens: TokenTree): string {
     `  :root { ${durations.map((name) => `--cf-motion-duration-${name}: 0ms;`).join(" ")} }`,
     "}",
   ].join("\n");
-  const breakpoints = children(tokens["breakpoint"])
+  const breakpoints = children(tokens.breakpoint)
     .map(([name]) => `${name} ${breakpointPx(tokens, name)}`)
     .join(", ");
 
@@ -286,14 +286,14 @@ function tailwindTheme(tokens: TokenTree): string {
   for (const [name] of children(lookup2(tokens, "font.family"))) {
     lines.push(decl(`--font-${name}`, `var(--cf-font-${name})`));
   }
-  for (const [step] of children(tokens["typography"])) {
+  for (const [step] of children(tokens.typography)) {
     lines.push(decl(`--text-${step}`, `var(--cf-font-size-${step})`));
     lines.push(decl(`--text-${step}--line-height`, `var(--cf-line-height-${step})`));
   }
-  for (const [name] of children(tokens["radius"])) {
+  for (const [name] of children(tokens.radius)) {
     lines.push(decl(`--radius-${name}`, `var(--cf-radius-${name})`));
   }
-  for (const [name] of children(tokens["shadow"])) {
+  for (const [name] of children(tokens.shadow)) {
     lines.push(decl(`--shadow-${name}`, `var(--cf-shadow-${name})`));
   }
   for (const [name] of children(lookup2(tokens, "motion.easing"))) {

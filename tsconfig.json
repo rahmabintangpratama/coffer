@@ -24,5 +24,5 @@
       "@design/*": ["./design/*"]
     }
   },
-  "include": ["src", "tests", "scripts", "*.config.ts"]
+  "include": ["src", "tests", "scripts", "*.config.ts", "eslint.rules.d.ts"]
 }

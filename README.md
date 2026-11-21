@@ -92,7 +92,7 @@ Prerequisites: Node 22, pnpm 12 (enable it with `corepack enable`) and Docker (f
 | Install | `pnpm install --frozen-lockfile` |
 | Dev server | `pnpm dev` |
 | Build | `pnpm build` |
-| Typecheck | `pnpm typecheck` |
+| Typecheck, lint | `pnpm typecheck`, `pnpm lint` |
 | Unit tests | `pnpm test` |
 | Generate token CSS from `design/tokens.json` | `pnpm tokens:build` |
 | Check generated CSS is current | `pnpm tokens:check` |

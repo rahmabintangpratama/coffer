@@ -1,7 +1,7 @@
 // Tailwind alias table: `--color-<alias>` points at the Coffer semantic color
 // `--cf-color-<path>`. The order is part of the output and is checked by the
 // golden test; add new aliases at the end of the group they belong to.
-export const COLOR_ALIASES: ReadonlyArray<readonly [alias: string, path: string]> = [
+export const COLOR_ALIASES: readonly (readonly [alias: string, path: string])[] = [
   ["app", "bg.app"],
   ["surface", "bg.surface"],
   ["elevated", "bg.elevated"],
