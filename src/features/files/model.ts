@@ -90,7 +90,8 @@ export function prefixFromPath(path: string): string {
       return part;
     }
   });
-  return `${decoded.filter((part) => part !== "").join("/")}/`;
+  const parts = decoded.filter((part) => part !== "");
+  return parts.length === 0 ? "" : `${parts.join("/")}/`;
 }
 
 /** The hash path for a folder prefix; each segment is encoded so `#`, `?` and `%` in names survive. */

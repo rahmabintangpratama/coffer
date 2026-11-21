@@ -78,8 +78,10 @@ describe("AC-22.5 paths", () => {
   it("does not decode twice: a literal %41 stays", () => {
     expect(prefixFromPath(pathFromPrefix("x/%41/"))).toBe("x/%41/");
   });
-  it("maps the files root to the empty prefix", () => {
+  it("maps the files root, and a path with no folder in it, to the empty prefix", () => {
     expect(prefixFromPath("/files")).toBe("");
+    expect(prefixFromPath("/files/")).toBe("");
+    expect(prefixFromPath("/")).toBe("");
     expect(pathFromPrefix("")).toBe("/files");
   });
   it("builds breadcrumb parts with the prefix that opens each", () => {

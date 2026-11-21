@@ -97,6 +97,8 @@ describe("the app bar is route-aware (components.md: SearchPill, FilterChips, Se
     listPage.mockResolvedValue(files(["a.txt"]));
     renderApp(true);
     await screen.findByRole("searchbox");
+    // Let the list mount before the route changes, so nothing mounts after the test has ended.
+    await screen.findByRole("row", { name: /a\.txt/ });
     window.location.hash = "#/";
     await waitFor(() => { expect(screen.queryByRole("searchbox")).toBeNull(); });
     expect(screen.getByText("Coffer")).toBeInTheDocument();
