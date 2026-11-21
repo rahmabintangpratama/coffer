@@ -15,6 +15,7 @@ The only module that imports the AWS SDK. No UI imports (no React, no `component
 - `connection-test.ts` runs the six steps and reports each through `onStep`. Pass a client made with `maxAttempts: 1` so a CORS block fails at once. A signed call that gets no response after the no-cors probe passed is CORS; otherwise it is a network failure.
 - The test file is `{prefix}.coffer-test-<16 hex>.txt`. Write denied with list and read passing is `readOnly`; delete denied is `failed` (C-20, C-21).
 - `cors.ts` builds the rule from the app origin only; it refuses `*`.
+- `local-network.ts` reads Chrome's `loopback-network` and `local-network` permissions. `needsLocalNetworkPermission(page host, endpoint host)` is true only when the endpoint is more private than the page; the Permissions API answers "prompt" even for a localhost page reaching localhost. A failed reach while access is not granted is `localNetworkDenied`.
 
 ## Errors
 

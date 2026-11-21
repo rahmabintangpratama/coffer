@@ -1,7 +1,7 @@
 # Coffer MVP implementation plan
 
 - **Purpose:** Split the MVP into milestones of one to three days. Each milestone lists its requirements, deliverables, tests and an exit check that can be demoed.
-- **Status:** Approved. M0, M1 and M2a are complete (2026-11-21); M2b has not started.
+- **Status:** Approved. M0, M1, M2a and M2b are complete (2026-11-21); M3 has not started.
 - **Last updated:** 2026-11-21
 - **Source files in `design/`:** [`HANDOFF.md`](../design/HANDOFF.md), [`screens.md`](../design/screens.md), [`components.md`](../design/components.md), [`tokens.json`](../design/tokens.json)
 - **Related:** [product-spec.md](product-spec.md) (FR, AC, release plan), [technical-spec.md](technical-spec.md), [open-questions.md](open-questions.md)
@@ -104,6 +104,8 @@ Total: 35 days plus buffer. Every MVP FR in the product spec appears in at least
 **AGENTS.md commands landing:** none new.
 
 ## M2b: Onboarding screens (3 days)
+
+**Status: complete.** Differences from the plan below: the app mark and a brand kit landed first (C-53); a Connected screen with an `Open bucket` button replaces the automatic jump (D-31); a blocked bucket list asks for the name (D-28); the Welcome sample list is not built (D-30); Check again re-runs all steps (D-32); going back clears the secret fields (D-27); the local network pre-prompt, remediation and `localNetworkDenied` are built (C-54) and the private-IP spike kept the loopback-only rule (D-29, OQ-36). Input, Field, Segmented, Tabs and StepList are the shared components; no `Input` component is named in the design. The first-route JavaScript is 100.5 KB gzip (budget 120); onboarding is a 29 KB lazy chunk and the S3 client a 70 KB one.
 
 **Requirements:** FR-1, FR-2, FR-3 (UI), FR-4 (UI), FR-5 (UI), FR-6, FR-7, FR-12 (token UI), FR-110 (offer screen).
 
@@ -251,6 +253,7 @@ Total: 35 days plus buffer. Every MVP FR in the product spec appears in at least
 - CSP verified in real browsers: no violations in the console (this closes the C-31 verification task).
 - Full WebKit suite and a manual pass on a real iPhone (iOS Safari 16.4 or later).
 - Performance: Lighthouse CI and the bundle-size check against the budgets in technical-spec 14.
+- **Local Network Access checks** in Chrome stable, Edge, Safari and Firefox (technical-spec 15.5), results recorded; this closes the manual part of OQ-35 and informs OQ-36.
 - Provider compatibility matrix run for the Popular presets (R2, B2, Wasabi, S3, DO Spaces, MinIO) and the custom preset, results documented.
 - Run the antislop rules over UI and copy.
 - **Run the Cloudflare `security-audit` skill in full audit mode** on the codebase (local, sandboxed, no live endpoints); resolve each confirmed finding or record it with an owner.

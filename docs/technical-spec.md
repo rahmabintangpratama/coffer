@@ -120,6 +120,8 @@ Imports point down only. Violations fail lint.
 | T-6 | Document `Settings.uploadConcurrency` as parallel parts (copy `beh.parts`), not parallel files. | Name versus label mismatch. |
 | T-8 | Add `"interrupted"` to `UploadStatus` (MVP). `needsFile` is used only from v1, when resume exists. | MVP aborts uploads on reload instead of resuming ([C-43](open-questions.md#owner-confirmed-decisions)). |
 | T-7 | **Applied in M2a.** Add `ConnectionProfile.prefix?: string` (empty or ending in `/`): the connection root and start folder ([D-19](open-questions.md#decisions-made-on-the-owners-behalf)). | Prefix-scoped keys; test file and Trash live under it. |
+| T-9 | **Applied in M2a.** Add `"localNetworkDenied"` to `TestFailure`: a loopback or private endpoint, and the browser has not allowed local network access ([C-54](open-questions.md#owner-confirmed-decisions)). | A denied permission and a stopped server look the same to `fetch`. |
+| T-10 | **Applied in M2b.** Add `ConnectionSummary = Omit<ConnectionProfile, "credentials">`, the only form of a connection that React state, stores and props may hold. | Keys stay inside `lib/storage/vault` ([src/AGENTS.md](../src/AGENTS.md)). |
 
 ---
 
@@ -170,6 +172,8 @@ Imports point down only. Violations fail lint.
 Runs in `src/lib/s3/connection-test.ts` and returns `ConnectionTestResult` while emitting step updates for the progress list (`aria-live="polite"`). Test keys use the name `.coffer-test-<random 16 hex>.txt` under the connection's start folder when one is set, otherwise in the bucket root ([C-37](open-questions.md#owner-confirmed-decisions)); the name has 64 random bits, so it cannot realistically collide with an existing key and no extra request checks for one.
 
 **Step 0: pre-flight (no request).** Validate the endpoint. If the page is `https:` and the endpoint is `http:` and not localhost, fail with `mixedContent` (message `ob.fail.net.*`).
+
+**Local network access (C-54, D-29).** Before step 1, when the endpoint is loopback or a private address and the page's own address is less private, the screen reads the `loopback-network` or `local-network` permission (feature-detected, in try/catch). `prompt` shows the pre-prompt (`ob.localNetwork.*`) and waits for `Continue`; `denied` shows the remediation (`ob.fail.localNetwork.*`); `granted` and `unsupported` run. If step 1 then fails while access is still not granted, the failure is `localNetworkDenied`. The spike found that private-IP http stays blocked by the CSP, so only loopback http is allowed (D-29, [OQ-36](open-questions.md#oq-36-http-to-private-ip-endpoints)).
 
 **Step 1: Reach endpoint.** `fetch(endpoint, { method: "HEAD", mode: "no-cors", cache: "no-store" })` with a 10 s timeout. A `no-cors` request resolves with an opaque response when any HTTP server answers (even 403), and rejects only on DNS, TLS, connection or mixed-content failure. Resolve = `pass`; reject = `fail` with `failure: "network"`. This is how a CORS block is told apart from "unreachable": CORS blocks reject the credentialed `cors` request but not the `no-cors` probe.
 
@@ -572,7 +576,10 @@ Manual, with a throwaway bucket and a scoped key per provider, run before each r
 | Session token (where applicable) | Token signing and expiry cap |
 | Read-only key detection | `AccessDenied` shape on write |
 | Wrong region and wrong bucket errors | Error mapping |
-| A local or LAN endpoint reached from the deployed HTTPS origin, in Chrome, Safari and Firefox | Local network access permission and mixed-content rules ([OQ-35](open-questions.md#oq-35-chromes-local-network-access-permission)) |
+| Chrome stable: deployed HTTPS origin to `http://localhost:9000` and to a LAN address; check the pre-prompt, Allow, Block and a later change in site settings; confirm that a LAN `http` endpoint is rejected by the form | Local network access permission, `localNetworkDenied`, D-29 |
+| Edge: the same as Chrome | Local network access permission |
+| Safari (macOS and iOS): deployed HTTPS origin to `http://localhost:9000`; no prompt is expected; record what happens | No local network prompt |
+| Firefox: the same as Safari | No local network prompt |
 | Unicode, spaces and `#?%+` in keys | Encoding |
 
 Presets with known quirks to record: Oracle OCI (browser CORS not supported), Alibaba OSS (virtual-hosted only), Tencent COS (bucket suffix), Supabase (session token mode), GCS (HMAC interoperability), IDrive e2 (per-account endpoint).

@@ -19,6 +19,8 @@ Integration tests, end-to-end tests and shared fixtures. Unit and component test
 - Every e2e screen runs axe (serious and critical must be zero). Add keyboard-only flows for every FR with a keyboard path.
 - E2E asserts no secret appears in the DOM, URL, storage dump or network log (other than signed provider requests).
 - Browser tests that call the S3 fixture serve their page from a real loopback server (`tests/e2e/connection-test.spec.ts`), not `page.route()`: Chromium blocks requests from a page it did not load from the network to loopback (OQ-35). Run the library code in the page by bundling an entry with `tests/e2e/bundle.ts`.
+- Every spec that needs the app shell calls `enterApp(page, route)` (`tests/e2e/helpers.ts`), which connects to the S3 fixture through the real onboarding screens. Sessions are memory-only, so a reload or `page.goto` drops the keys: change route with `goToRoute`. `global-setup.ts` creates the shared bucket `coffer-e2e-app` (CORS for `http://127.0.0.1:4173`) and the users.
+- Local Network Access specs serve the app under a fake public origin with `page.route()` (`local-network.spec.ts`) and grant `local-network-access` with `context.grantPermissions`. They run in Chromium only.
 - XSS fixtures (hostile names, HTML, SVG, Markdown) must stay inert; add one when a new renderer lands.
 - CORS: set rules per bucket with `PutBucketCors` (one bucket with a rule, one without); use Playwright route interception for `cors` versus `network` cases. Do not rely on a global CORS setting.
 - No fixed sleeps; wait on conditions. Tests must pass offline from the repo plus Docker.

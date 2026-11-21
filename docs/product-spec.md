@@ -42,7 +42,7 @@ The UI never hides these. Each one is surfaced where it affects the person.
 **Acceptance**
 - AC-1.1 Given no saved connections, When the app opens, Then the Welcome screen shows the headline, three facts and `Connect a bucket`. `Explore with sample files` appears from v1 (FR-120) and is hidden in MVP.
 - AC-1.2 Given saved connections exist, When the app opens, Then the person lands on Unlock (FR-9), not Welcome.
-- AC-1.3 Given a 1440 px viewport, When Welcome is shown, Then a sample file list appears at the right; at 375 px it does not and no horizontal scroll occurs at 360 px.
+- AC-1.3 Given a 1440 px viewport, When Welcome is shown, Then a sample file list appears at the right; at 375 px it does not and no horizontal scroll occurs at 360 px. (The list is not built in the MVP, [D-30](open-questions.md#decisions-made-on-the-owners-behalf); the no-scroll part applies.)
 
 **States:** success only.
 **Edge cases:** the provider count in `ob.factProviders` comes from the number of presets in `providers.json`.
@@ -96,12 +96,14 @@ The UI never hides these. Each one is surfaced where it affects the person.
 **Story:** As a user, I want Coffer to check my connection and tell me exactly what is wrong, so that I can fix it without guessing.
 **Acceptance**
 - AC-5.1 Given valid details, When the person taps `Connect`, Then the six steps (Reach endpoint, Check CORS, List objects, Write a test file, Read it back, Clean up) run automatically, each with a text status.
-- AC-5.2 Given all steps pass, When the test ends, Then "Connected" shows with `Choose a bucket` (or opens the bucket directly when one was given).
+- AC-5.2 Given all steps pass, When the test ends, Then "Connected" shows with `Choose a bucket` (or `Open bucket` when one was given, [D-31](open-questions.md#decisions-made-on-the-owners-behalf)).
 - AC-5.3 Given the endpoint cannot be reached, When step 1 fails, Then the message names the endpoint, explains (for example "browsers block http endpoints on https pages") and offers `Edit endpoint`.
 - AC-5.4 Given a signature error, When step 3 fails, Then the screen says the secret may have a stray space or the device clock is off, with the offset in minutes when known.
 - AC-5.5 Given the bucket is in another region, When listing fails, Then the screen offers `Use {region}` and re-tests on tap.
 - AC-5.6 Given AccessDenied on listing, When it fails, Then the message says the key is valid but cannot list `{bucket}` and what to do.
 - AC-5.7 Given the test writes a file, When the test finishes, Then the test object is deleted (step 6). If deletion fails, the outcome is `failed` with `accessDenied` on the clean step.
+- AC-5.8 Given an endpoint on localhost or a private address and a page on a less private address, When the browser would ask for local network access, Then a short explanation shows before any request, never on page load, and `Continue` starts the test ([C-54](open-questions.md#owner-confirmed-decisions)).
+- AC-5.9 Given local network access is denied or the prompt was dismissed and the request fails, Then the failure is `localNetworkDenied` with how to allow it in site settings, not a generic network error.
 
 **States:** running, each step pending/running/pass/fail/skipped, ok, failed, readOnly.
 **Edge cases:** steps after a failure show `skipped`. The test never touches existing keys. The test file is written under the connection's start folder when one is set, otherwise in the bucket root. Test key naming and the CORS-versus-network detection are in [technical-spec.md](technical-spec.md#5-connection-test-algorithm).
@@ -125,6 +127,7 @@ The UI never hides these. Each one is surfaced where it affects the person.
 - AC-7.1 Given the key can list N buckets, When the picker shows, Then it lists them with a search field and the text "This key can access N buckets. A key limited to one bucket is safer."
 - AC-7.2 Given a bucket was supplied in the form, or only one exists, When the test passes, Then the picker is skipped.
 - AC-7.3 Given the key cannot list buckets, When the picker would show, Then it offers manual entry only.
+- AC-7.4 Given no bucket was entered and the first signed call is blocked by CORS or denied, When the test ends, Then the person types the bucket name and the CORS help shows for that bucket if it is blocked ([D-28](open-questions.md#decisions-made-on-the-owners-behalf)).
 
 **States:** loading, list, search no-result, manual entry.
 **Edge cases:** more than 50 buckets shows "and N more" with search. Providers that return 403 for `ListBuckets` fall to manual entry.
