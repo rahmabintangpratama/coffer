@@ -12,7 +12,7 @@ import type { ConnectionSummary } from "@/lib/types";
  */
 export async function abortInterruptedUploads(connection: ConnectionSummary): Promise<void> {
   const { uploadStore } = await import("@/lib/storage/uploads");
-  const { heldUploadIds } = await import("@/lib/storage/upload-locks");
+  const { heldUploadIds } = await import("@/lib/storage/locks");
   const active = new Set(useTransfers.getState().transfers.map((transfer) => transfer.id));
   // IndexedDB is shared by every tab: a record whose lock is held belongs to an upload that is still running somewhere (D-36).
   const held = await heldUploadIds();

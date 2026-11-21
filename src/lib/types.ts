@@ -189,6 +189,19 @@ export interface OperationJournalEntry {
   updatedAt: string;
 }
 
+/** T-11: the journal's own fields (technical-spec 8) on top of the design's entry. */
+export interface JournalEntry extends OperationJournalEntry {
+  /** The provider endpoint: a memory-only connection has a new id every session, so a later session matches by endpoint and bucket (D-41). */
+  endpoint: string;
+  phase: "planning" | "copying" | "deleting" | "finished";
+  /** The last source key whose object is fully processed, in key order: a resume lists from here. */
+  cursor?: string;
+  /** Objects that could not be processed; a resume tries them again. */
+  failures?: { key: string; code: string }[];
+  /** The entry this one reverses (Undo). */
+  undoOf?: string;
+}
+
 export type ShareExpiry = "15m" | "30m" | "1h" | "1d" | "7d";
 /** Longest allowed link life: min(7 days, time left on the session token). Choices longer than this are disabled. */
 export interface ShareLimits { maxSeconds: number; reason: "presignLimit" | "sessionToken" }

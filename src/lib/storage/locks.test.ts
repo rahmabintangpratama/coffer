@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { heldUploadIds, UPLOAD_LOCK_PREFIX, withUploadLock } from "./upload-locks";
+import { heldUploadIds, UPLOAD_LOCK_PREFIX, withUploadLock } from "./locks";
 
 /** A minimal Web Locks stand-in: exclusive, named, released when the task settles. */
 function fakeLocks() {

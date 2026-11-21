@@ -54,7 +54,7 @@ async function run(id: string, job: Job): Promise<void> {
     const [s3, { uploadStore }, { withUploadLock }] = await Promise.all([
       import("@/lib/s3"),
       import("@/lib/storage/uploads"),
-      import("@/lib/storage/upload-locks"),
+      import("@/lib/storage/locks"),
     ]);
     const shared = (pool ??= new s3.RequestPool(() => getConcurrency()));
     const client: S3Handle = s3.clientFor(job.connection);

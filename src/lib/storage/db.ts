@@ -1,4 +1,5 @@
 import { type DBSchema, type IDBPDatabase, openDB } from "idb";
+import type { JournalEntry } from "@/lib/types";
 
 export const DB_NAME = "coffer";
 
@@ -20,7 +21,7 @@ export interface UploadRecord {
 
 export interface CofferDb extends DBSchema {
   connections: { key: string; value: { id: string } };
-  journal: { key: string; value: { id: string } };
+  journal: { key: string; value: JournalEntry };
   uploads: { key: string; value: UploadRecord };
   starred: { key: [string, string, string]; value: { connectionId: string; bucket: string; key: string } };
   recent: { key: [string, string, string]; value: { connectionId: string; bucket: string; key: string } };

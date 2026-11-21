@@ -31,3 +31,29 @@ export async function heldUploadIds(): Promise<ReadonlySet<string> | null> {
   }
   return held;
 }
+
+/** The prefix of the lock a running operation (move, rename, copy) holds on its journal entry. */
+export const OPERATION_LOCK_PREFIX = "coffer-op:";
+
+/**
+ * Run `task` while holding the lock for operation `id`. The journal is shared by every
+ * tab, so a running entry in it may belong to another tab; on load only entries whose
+ * lock is free count as interrupted (D-41, the same rule as uploads in D-36).
+ */
+export async function withOperationLock<T>(id: string, task: () => Promise<T>): Promise<T> {
+  const manager = locks();
+  if (!manager) return task();
+  return manager.request(`${OPERATION_LOCK_PREFIX}${id}`, task);
+}
+
+/** Entry ids whose operation lock is held right now, here or in another tab; null when the lock state cannot be read. */
+export async function heldOperationIds(): Promise<ReadonlySet<string> | null> {
+  const manager = locks();
+  if (!manager) return null;
+  const state = await manager.query();
+  const held = new Set<string>();
+  for (const lock of state.held ?? []) {
+    if (lock.name?.startsWith(OPERATION_LOCK_PREFIX)) held.add(lock.name.slice(OPERATION_LOCK_PREFIX.length));
+  }
+  return held;
+}
