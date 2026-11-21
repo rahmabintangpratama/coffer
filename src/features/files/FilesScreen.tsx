@@ -1,8 +1,10 @@
 import { useQueryClient } from "@tanstack/react-query";
+import { Download } from "lucide-react";
 import { type DragEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { Banner } from "@/components/Banner";
 import { Button } from "@/components/Button";
+import { SEARCH_PILL_ID } from "@/components/SearchPill";
 import { ContextMenuArea } from "@/components/ActionMenu";
 import { useLayout } from "@/components/layout";
 import { Skeleton } from "@/components/Skeleton";
@@ -19,9 +21,9 @@ import { FileList } from "./FileList";
 import { ListBanners } from "./ListBanners";
 import { NewFolderDialog } from "./NewFolderDialog";
 import { NewMenu } from "./NewMenu";
-import { filterItems, type Filters, hasFilters, type Item, noFilters, pathFromPrefix, prefixFromPath, sortItems, withoutHidden } from "./model";
-import { SelectionBar } from "./SelectionBar";
-import { FilterChips, SearchPill, ViewControls } from "./Toolbar";
+import { filterItems, hasFilters, type Item, noFilters, pathFromPrefix, prefixFromPath, sortItems, withoutHidden } from "./model";
+import { ViewControls } from "./Toolbar";
+import { useFilesChrome } from "./chrome";
 import { useListing } from "./useListing";
 import { usePullToRefresh } from "./usePullToRefresh";
 import { useSelection } from "./selection";
@@ -58,7 +60,8 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
   const bucket = connection.bucket ?? "";
   const folderLabel = relative === "" ? bucket : (relative.slice(0, -1).split("/").at(-1) ?? bucket);
   const listing = useListing(connection, root + relative);
-  const [filters, setFilters] = useState<Filters>(noFilters);
+  const filters = useFilesChrome((state) => state.filters);
+  const setFilters = useFilesChrome((state) => state.setFilters);
   const [detailsKey, setDetailsKey] = useState<string | null>(null);
   const [contextItem, setContextItem] = useState<Item | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -67,7 +70,6 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
   const queryClient = useQueryClient();
   const hasTransfers = useTransfers((state) => state.transfers.length + state.interrupted.length > 0);
   const writable = connection.access === "readWrite";
-  const search = useRef<HTMLInputElement>(null);
   const selection = useSelection();
   const [, navigate] = useLocation();
 
@@ -84,6 +86,14 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
   }, [listing.items, settings.showHiddenFiles, settings.sort, filters]);
 
   const selected = useMemo(() => visible.filter((item) => selection.keys.has(item.key)), [visible, selection.keys]);
+  const activate = useFilesChrome((state) => state.activate);
+  const deactivate = useFilesChrome((state) => state.deactivate);
+  const setSelection = useFilesChrome((state) => state.setSelection);
+  // The app bar shows this folder's search and chips for as long as the screen is mounted.
+  useEffect(() => {
+    activate(folderLabel);
+    return deactivate;
+  }, [activate, deactivate, folderLabel]);
   const detailsFile = useMemo<FileItem | null>(() => {
     const found = listing.items.find((item) => item.key === detailsKey);
     return found?.kind === "file" ? found : null;
@@ -116,11 +126,20 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
     [connection, visible, notify],
   );
 
+  // The selection bar is drawn by the app bar; it is told what is selected and which actions apply (AC-30.3).
+  useEffect(() => {
+    const onlyFiles = selected.every((item) => item.kind === "file");
+    setSelection(selected.length, [
+      { id: "download", label: t("act.download"), icon: <Download aria-hidden="true" className="size-5" />, disabled: !onlyFiles, onSelect: () => { handlers.download(selected); } },
+    ]);
+  }, [selected, handlers, setSelection]);
+
   const openFolder = useCallback(
     (folder: FolderItem) => { navigate(pathFromPrefix(folder.key.slice(root.length))); },
     [navigate, root.length],
   );
-  const focusSearch = useCallback(() => { search.current?.focus(); }, []);
+  // The pill is in the app bar, away from the list that owns the "/" shortcut, so it is found by its id.
+  const focusSearch = useCallback(() => { document.getElementById(SEARCH_PILL_ID)?.focus(); }, []);
   const onContextItem = useCallback(
     (item: Item) => {
       if (actionsFor(item, handlers).length === 0) return false;
@@ -220,21 +239,12 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
     <section data-component="FilesScreen" className="relative flex gap-6" {...dragHandlers}>
       <div className="flex min-w-0 flex-1 flex-col gap-3">
         <h1 className="sr-only">{t("nav.files")}</h1>
-        <SearchPill value={filters.query} onChange={(query) => { setFilters({ ...filters, query }); }} placeholder={t("search.placeholderFolder", { folder: folderLabel })} inputRef={search} />
-        <FilterChips filters={filters} onChange={setFilters} />
-        {/* The selection bar takes the place of the path and view controls, so selecting never moves the list under the pointer. */}
         <div className="flex min-h-(--cf-size-touch-min) flex-wrap items-center justify-between gap-2">
-          {selected.length > 0 ? (
-            <SelectionBar selected={selected} onDownload={handlers.download} />
-          ) : (
-            <>
-              <Breadcrumb rootLabel={bucket} prefix={relative} menu={[]} />
-              <div className="flex items-center gap-2">
-                <ViewControls sort={settings.sort} view={settings.view} onSort={(sort) => { onSettings({ sort }); }} onView={(view) => { onSettings({ view }); }} onRefresh={() => void refresh()} refreshing={refreshing} />
-                {writable && <NewMenu onNewFolder={() => { setNewFolderOpen(true); }} onFiles={(candidates) => void upload(candidates)} raised={hasTransfers} />}
-              </div>
-            </>
-          )}
+          <Breadcrumb rootLabel={bucket} prefix={relative} menu={[]} />
+          <div className="flex items-center gap-2">
+            <ViewControls sort={settings.sort} view={settings.view} onSort={(sort) => { onSettings({ sort }); }} onView={(view) => { onSettings({ view }); }} onRefresh={() => void refresh()} refreshing={refreshing} />
+            {writable && <NewMenu onNewFolder={() => { setNewFolderOpen(true); }} onFiles={(candidates) => void upload(candidates)} raised={hasTransfers} />}
+          </div>
         </div>
         {!listing.isPending && !listing.error && (
           <ListBanners

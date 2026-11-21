@@ -7,6 +7,7 @@ import { LayoutContext } from "@/components/layout";
 import { AppError } from "@/lib/s3/errors";
 import type { ListPage } from "@/lib/s3/list";
 import type { ConnectionSummary } from "@/lib/types";
+import FilesAppBar from "./AppBarContent";
 import { FilesScreen } from "./FilesScreen";
 import { useSelection } from "./selection";
 
@@ -31,6 +32,10 @@ function renderScreen(layout: "compact" | "rail" = "compact", over: Partial<Para
   return render(
     <QueryClientProvider client={client}>
       <LayoutContext value={layout}>
+        {/* The search pill, chips and selection bar live in the app bar; its Files content is rendered here without the shell. */}
+        <header>
+          <FilesAppBar menuButton={null} brand={null} />
+        </header>
         <FilesScreen connection={connection} settings={settings} onSettings={vi.fn()} notify={vi.fn()} {...over} />
       </LayoutContext>
     </QueryClientProvider>,
@@ -189,5 +194,16 @@ describe("FR-30 and FR-23 in the screen", () => {
     useSelection.getState().set("a.txt");
     await userEvent.click(screen.getByRole("row", { name: /b\.txt/ }));
     expect(screen.getByRole("toolbar", { name: "Selection actions" })).toHaveTextContent("2 selected");
+  });
+});
+
+describe("AC-30.3 actions that do not apply are disabled", () => {
+  it("Download is disabled when a folder is selected", async () => {
+    listPage.mockResolvedValue(page(["a.txt"], undefined, ["dir"]));
+    renderScreen();
+    await screen.findByRole("row", { name: /dir/ });
+    useSelection.getState().selectAll(["dir/", "a.txt"]);
+    const toolbar = await screen.findByRole("toolbar", { name: "Selection actions" });
+    expect(within(toolbar).getByRole("button", { name: "Download" })).toBeDisabled();
   });
 });

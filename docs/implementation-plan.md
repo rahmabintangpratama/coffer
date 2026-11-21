@@ -133,7 +133,7 @@ Total: 35 days plus buffer. Every MVP FR in the product spec appears in at least
 - Download through a presigned URL (short-lived, `attachment`).
 - All states from `T10_FileStates` and `T10b_FileStates`.
 
-**Status: complete.** Differences from the plan below: see [D-35](open-questions.md#decisions-made-on-the-owners-behalf) (placement of search and selection bar, no folder menu yet, details from state, test-only cap variable). The Files route is its own 49.7 KB gzip chunk, the S3 chunk is 72.9 KB, and the first route stays under budget. Pull-to-refresh and touch long-press selection are built but covered by unit tests only; the e2e matrix runs no touch gestures yet (M10 manual pass).
+**Status: complete.** Differences from the plan below: see [D-35](open-questions.md#decisions-made-on-the-owners-behalf) (no folder menu yet, details from state, test-only cap variable); the search pill, chips and selection bar are in the route-aware app bar after review. The Files route is its own 49.7 KB gzip chunk, the S3 chunk is 72.9 KB, and the first route stays under budget. Pull-to-refresh and touch long-press selection are built but covered by unit tests only; the e2e matrix runs no touch gestures yet (M10 manual pass).
 
 **Tests:** unit for key decoding, sorting and filters; integration listing 5,000 objects with delimiter, awkward keys (`#?%+`, spaces, Unicode, 1,024 bytes) and pagination; e2e scrolling a 5,000-item fixture within the performance budget, selection on touch and pointer, download works; axe and keyboard.
 
