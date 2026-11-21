@@ -108,6 +108,12 @@ describe("ConnectingScreen: running and success (O40, O41)", () => {
     expect(onConnected.mock.calls[0]?.[0].buckets).toBeNull();
   });
 
+  it("D-28 treats a CORS block on the bucket list as 'cannot list', not as a missing rule for a bucket nobody named", async () => {
+    const { onConnected } = setup(run("failed", { id: "cors", failure: "cors" }), { plan: { bucket: undefined } });
+    await userEvent.click(await screen.findByRole("button", { name: "Choose a bucket" }));
+    expect(onConnected.mock.calls[0]?.[0].buckets).toBeNull();
+  });
+
   it("has no accessibility violations on success", async () => {
     const { container } = setup(run("ok"));
     await screen.findByText("Connected");

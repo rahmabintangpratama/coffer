@@ -175,7 +175,11 @@ export function ConnectingScreen({ preset, plan, connectionId, onEdit, onConnect
   const { run } = phase;
   const failedStep = run.steps.find((step) => step.status === "fail");
   // A key that cannot list buckets is fine when no bucket was given: the person types the name (AC-7.3).
-  const cannotListBuckets = bucket === undefined && failedStep?.id === "list" && failedStep.failure === "accessDenied";
+  // Listing buckets is a service-level call, and many providers cannot add CORS headers to it, so a CORS block
+  // at this point says nothing about the bucket the person wants; the CORS help comes after they name it (D-28).
+  const cannotListBuckets =
+    bucket === undefined &&
+    ((failedStep?.id === "list" && failedStep.failure === "accessDenied") || (failedStep?.id === "cors" && failedStep.failure === "cors"));
 
   if (run.outcome === "ok" || cannotListBuckets) {
     return (
