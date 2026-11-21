@@ -433,7 +433,7 @@ Notes:
 |---|---|
 | File and folder names | Rendered as React text nodes only. Never `dangerouslySetInnerHTML`, never interpolated into HTML strings, never used as an `href` without `new URL` validation. Truncation is CSS-only. |
 | Keys in the URL | Only in the hash fragment, percent-encoded. |
-| HTML files | Source view as text. "Render in sandbox": `<iframe sandbox="" src="blob:…">`, no `allow-*` tokens, so no scripts, forms, popups or same-origin. The iframe inherits the page CSP. |
+| HTML files | Source view as text. "Render in sandbox": `<iframe sandbox="" srcdoc="…">` ([D-39](open-questions.md#decisions-made-on-the-owners-behalf)), no `allow-*` tokens, so no scripts, forms, popups or same-origin. The document inherits the page CSP and starts with a meta CSP of `default-src 'none'`, so remote images, styles and frames are never requested. |
 | SVG | Only as `<img src="blob:…">` with an explicit `image/svg+xml` blob type, size cap 2 MiB. Never inline, never `<object>`, `<embed>` or `<iframe>`. |
 | Markdown | `markdown-it` with `html: false`, then DOMPurify with a strict allowlist (no `style`, no `iframe`, no `form`), remote images removed (no tracking requests), links `rel="noopener noreferrer" target="_blank"`, schemes `http`, `https`, `mailto` only. |
 | Text and code | `textContent` into a `<pre>`; control characters are shown as visible symbols. |
@@ -529,7 +529,7 @@ Target **WCAG 2.2 AA** ([`design/accessibility.md`](../design/accessibility.md))
 | List virtualization | always virtualized; overscan 8 rows; grid virtualized by row |
 | Memory | 100,000 loaded keys must stay under about 150 MB of JS heap (store keys compactly) |
 
-Measured after M1 follow-ups ([C-50](open-questions.md#owner-confirmed-decisions), [C-51](open-questions.md#owner-confirmed-decisions), [C-52](open-questions.md#owner-confirmed-decisions)): the first route is **100.0 KB gzip** of JavaScript (and 8.2 KB of CSS), inside the 120 KB budget. Copy for features loads as separate chunks.
+After M5b the first route is **118.4 KiB gzip** of JavaScript (`pnpm size:check`), against the 120 KiB budget: the Files route, TanStack Query and the app bar chrome grew it from 100.0 KiB. pdf.js (147.8 KiB), its worker (387.6 KiB), markdown-it (39.8 KiB) and DOMPurify (11.1 KiB) are lazy chunks. Measured after M1 follow-ups ([C-50](open-questions.md#owner-confirmed-decisions), [C-51](open-questions.md#owner-confirmed-decisions), [C-52](open-questions.md#owner-confirmed-decisions)): the first route is **100.0 KB gzip** of JavaScript (and 8.2 KB of CSS), inside the 120 KB budget. Copy for features loads as separate chunks.
 
 Enforcement: a bundle-size check (`size-limit` or Vite's report) in CI, Lighthouse CI against the preview deployment, and a Playwright performance test that renders a 5,000-item fixture and scrolls it.
 

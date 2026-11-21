@@ -1,7 +1,7 @@
 # Coffer MVP implementation plan
 
 - **Purpose:** Split the MVP into milestones of one to three days. Each milestone lists its requirements, deliverables, tests and an exit check that can be demoed.
-- **Status:** Approved. M0, M1, M2a, M2b, M3, M4 and M5a are complete (2026-11-21); M5b has not started.
+- **Status:** Approved. M0, M1, M2a, M2b, M3, M4, M5a and M5b are complete (2026-11-21); M6a has not started.
 - **Last updated:** 2026-11-21
 - **Source files in `design/`:** [`HANDOFF.md`](../design/HANDOFF.md), [`screens.md`](../design/screens.md), [`components.md`](../design/components.md), [`tokens.json`](../design/tokens.json)
 - **Related:** [product-spec.md](product-spec.md) (FR, AC, release plan), [technical-spec.md](technical-spec.md), [open-questions.md](open-questions.md)
@@ -182,6 +182,8 @@ Total: 35 days plus buffer. Every MVP FR in the product spec appears in at least
 **Requirements:** FR-53, FR-55, FR-56.
 
 **Deliverables:** `pdfjs-dist` as a lazy chunk with a bundled worker and scripting disabled, page navigation, size limit; Markdown with `markdown-it` (`html: false`) and DOMPurify (no remote images, safe link schemes, `rel` set); HTML as source with "Render in sandbox" in an iframe with `sandbox=""` from a `blob:` URL and the notice about styles; bundle-size budget check for the lazy chunks.
+
+**Status: complete.** Differences from the plan below: the HTML sandbox uses `srcdoc` with its own CSP meta, not a `blob:` URL ([D-39](open-questions.md#decisions-made-on-the-owners-behalf)); `pnpm size:check` was added to CI and to the Commands table. The first route is 118.4 KiB gzip against the 120 KiB budget: little room is left for M6 to M9.
 
 **Tests:** hostile fixtures (script tags, event handlers, `javascript:` links, remote images, nested iframes, `<meta refresh>`) must stay inert in Markdown and the sandbox; a PDF with embedded script does not run it; the lazy chunks are absent from the initial bundle; axe.
 
