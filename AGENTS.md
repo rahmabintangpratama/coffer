@@ -57,6 +57,7 @@ Package manager: **pnpm** 12 with Node 22 only (`engines` is `>=22 <23` and `eng
 | Lint a commit message range | `pnpm commitlint --from <sha> --to <sha>` |
 | Install the git hooks (runs by itself after `pnpm install`) | `pnpm prepare` |
 | Check the bundle budgets and that the lazy libraries (pdf.js, Markdown, DOMPurify) are outside the initial bundle (after `pnpm build`) | `pnpm size:check` |
+| Break the initial bundle down by package and folder (writes `bundle-stats.json`, which is ignored) | `pnpm size:analyze` |
 | Check that `dist/` holds only the C-22 allowlist, `index.html` and hashed `assets/` (after `pnpm build`) | `pnpm dist:check` |
 
 ## Conventions

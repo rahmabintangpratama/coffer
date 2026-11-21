@@ -183,7 +183,7 @@ Total: 35 days plus buffer. Every MVP FR in the product spec appears in at least
 
 **Deliverables:** `pdfjs-dist` as a lazy chunk with a bundled worker and scripting disabled, page navigation, size limit; Markdown with `markdown-it` (`html: false`) and DOMPurify (no remote images, safe link schemes, `rel` set); HTML as source with "Render in sandbox" in an iframe with `sandbox=""` from a `blob:` URL and the notice about styles; bundle-size budget check for the lazy chunks.
 
-**Status: complete.** Differences from the plan below: the HTML sandbox uses `srcdoc` with its own CSP meta, not a `blob:` URL ([D-39](open-questions.md#decisions-made-on-the-owners-behalf)); `pnpm size:check` was added to CI and to the Commands table. The first route is 118.4 KiB gzip against the 120 KiB budget: little room is left for M6 to M9.
+**Status: complete.** Differences from the plan below: the HTML sandbox uses `srcdoc` with its own CSP meta, not a `blob:` URL ([D-39](open-questions.md#decisions-made-on-the-owners-behalf)); `pnpm size:check` was added to CI and to the Commands table. After review the connected app is a lazy chunk and the entry is 81.6 KiB gzip against the 120 KiB budget ([D-40](open-questions.md#decisions-made-on-the-owners-behalf)); Welcome in total is 128.5 KiB.
 
 **Tests:** hostile fixtures (script tags, event handlers, `javascript:` links, remote images, nested iframes, `<meta refresh>`) must stay inert in Markdown and the sandbox; a PDF with embedded script does not run it; the lazy chunks are absent from the initial bundle; axe.
 
