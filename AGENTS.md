@@ -53,7 +53,11 @@ Package manager: **pnpm** 12 with Node 22 only (`engines` is `>=22 <23` and `eng
 | Print what every provider preset resolves to | `pnpm demo:presets` |
 | Print the connection test steps in a real browser (needs the S3 fixture) | `pnpm demo:connection-test` |
 | Check `public/_headers` and `dist/_headers` against the spec | `pnpm headers:check` |
+| Preview the built site | `pnpm preview` |
+| Lint a commit message range | `pnpm commitlint --from <sha> --to <sha>` |
+| Install the git hooks (runs by itself after `pnpm install`) | `pnpm prepare` |
 | Check the bundle budgets and that the lazy libraries (pdf.js, Markdown, DOMPurify) are outside the initial bundle (after `pnpm build`) | `pnpm size:check` |
+| Check that `dist/` holds only the C-22 allowlist, `index.html` and hashed `assets/` (after `pnpm build`) | `pnpm dist:check` |
 
 ## Conventions
 
@@ -89,7 +93,10 @@ Package manager: **pnpm** 12 with Node 22 only (`engines` is `>=22 <23` and `eng
 - CI is the source of truth for the full gate set. Do not re-run all gates in a clean clone locally.
 - Locally, run only what the change touches: affected unit tests (`vitest related` or `--changed`) and affected e2e specs in one browser at one viewport. The full e2e matrix runs in CI only.
 - The pre-push hook (typecheck, lint, unit) is the local gate. Do not repeat it by hand right before pushing.
-- After pushing, wait for CI with a single `gh run watch --exit-status` on the latest run. Never poll in loops, and never run a second watch for the same push.
+- After pushing, wait for CI with this procedure, once per push, and never poll in loops:
+  1. Get the run ID of the exact commit: `gh run list --commit <sha> --limit 1 --json databaseId -q '.[0].databaseId'`. The run can take a few seconds to appear; repeat only that command until it prints an ID.
+  2. `gh run watch <id> --exit-status`. A non-zero exit means stop and diagnose (`gh run view <id> --log-failed`); do not start the next piece of work on a red run.
+  3. Read the flaky list in the run summary (the `e2e-report` job). A flaky test is a finding to fix or to record, not noise.
 - Do not re-verify deterministic outputs (scripts, generators, CI results). Verify only judgment claims from subagents.
 - Prove a test meaningful (it fails without the feature) only for a new kind of test, not for every test.
 - Record a D-entry only for decisions that change behavior, scope or contracts. Small implementation choices go in commit messages.

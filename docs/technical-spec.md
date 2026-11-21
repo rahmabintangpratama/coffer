@@ -586,7 +586,7 @@ Presets with known quirks to record: Oracle OCI (browser CORS not supported), Al
 
 ### 15.6 CI
 
-On every PR: typecheck, lint (including token, string and layer rules), **copy-key check (every key used in code exists in the merged copy)**, **`pnpm tokens:check` (generated token CSS must equal the committed files)**, unit and component tests, integration against the S3 fixture, build, `_headers` check, bundle-size check, e2e (Chromium and WebKit) with axe. Nightly or per release: Firefox e2e, Lighthouse, and a manual pass on a real iPhone (iOS Safari 16.4 or later is mandatory).
+On every PR: typecheck, lint (including token, string and layer rules), **copy-key check (every key used in code exists in the merged copy)**, **`pnpm tokens:check` (generated token CSS must equal the committed files)**, unit and component tests, integration against the S3 fixture, build, `_headers` check, bundle-size check, `dist/` allowlist check, e2e (Chromium and WebKit) with axe. The e2e tests run as six parallel jobs, one per browser and width (each with its own S3 fixture), with two workers each, a 30 s test timeout, one retry and a trace for every failed attempt; a final job merges the reports and writes the flaky and failed tests into the run summary, so a test that needed its retry is listed and never counted as a plain pass. Every job has a `timeout-minutes` (10, and 20 for e2e). Nightly or per release: Firefox e2e, Lighthouse, and a manual pass on a real iPhone (iOS Safari 16.4 or later is mandatory).
 
 ### 15.7 Verify contrast in a real browser (task)
 
