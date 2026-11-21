@@ -20,7 +20,7 @@ import { Shell } from "./Shell";
 // Browsing is its own chunk too: the listing code, the virtualizer and the menus load when Files opens.
 const FilesRoute = lazy(() => import("./screens/FilesRoute"));
 const HomeScreen = lazy(() => import("@/features/files").then((module) => ({ default: module.HomeScreen })));
-const filesGroups = ["files", "det", "filter", "search", "sel", "kind", "col", "view", "sort", "row", "menu", "home", "type", "dlg", "conf", "upl", "drop", "pv"] as const;
+const filesGroups = ["files", "det", "filter", "search", "sel", "kind", "col", "view", "sort", "row", "menu", "home", "type", "dlg", "conf", "upl", "drop", "pv", "op", "ro"] as const;
 
 // The upload queue reads how many parts may be in flight from the settings at the moment each part starts.
 configureTransfers({ getConcurrency: () => useSettings.getState().uploadConcurrency });
