@@ -235,6 +235,8 @@ Total: 35 days plus buffer. Every MVP FR in the product spec appears in at least
 
 **Deliverables:** the vault (PBKDF2-HMAC-SHA-256 at 600,000 iterations or more, non-extractable AES-GCM key, per-record IV, AAD, shared salt); the `connections` store; Save on this device (`O51`) with the 12-character minimum and the 16-character hint; Unlock, wrong-passphrase and Locked screens; the auto-lock timer; the credential lease for running transfers, `Stop transfers and lock` and the transfers banner; Forget this device with the inventory test; the connection switcher and multiple connections; Show secret key with re-derivation, 15-second reveal and the clipboard notice.
 
+**Also in M8 (D-43):** add the Unlock screen to `tests/e2e/first-load.spec.ts`, at most 120 KiB gzip of JavaScript on a cold load.
+
 **Tests:** crypto round-trip, tampered AAD, wrong passphrase, iteration-count assertion; an e2e storage dump (IndexedDB and `localStorage`) containing no plaintext fake key; lock during an upload (it finishes; queued uploads wait and then start after unlock); Stop transfers and lock aborts multipart uploads; the Forget inventory test; recorded unlock time at 4× CPU slowdown; axe.
 
 **Exit check (demo):** save a connection, show only ciphertext in the browser storage, start an upload, let auto-lock fire (shortened in test), watch the upload finish while new actions are blocked, unlock, then use Forget this device and show an empty inventory.

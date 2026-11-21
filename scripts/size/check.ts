@@ -6,8 +6,8 @@ import { fileURLToPath } from "node:url";
 // The bundle budgets from docs/technical-spec.md section 14, checked on the built dist/.
 const KIB = 1024;
 export const BUDGETS = {
-  /** Initial JavaScript (the entry and everything index.html preloads), gzip. */
-  initialJs: 120 * KIB,
+  /** The entry (the scripts index.html loads or preloads), gzip. The first-screen total is measured in tests/e2e/first-load.spec.ts (D-43). */
+  initialJs: 90 * KIB,
   /** The S3 chunk (client-s3, presigner, orchestrator), gzip. */
   s3Chunk: 200 * KIB,
   /** The pdf.js worker file, gzip. */

@@ -299,7 +299,7 @@ test("D-41 Resume clicked in two tabs runs the operation once, and the result ha
 
   // Exactly one tab ran it; the other said so and copied nothing.
   const messages = await Promise.all(tabs.map((tab) => toast(tab).allTextContents()));
-  expect(messages.flat().filter((text) => /Moved src/.test(text))).toHaveLength(1);
+  expect(messages.flat().filter((text) => text.includes("Moved src"))).toHaveLength(1);
   expect(messages.flat().some((text) => /running in another tab|already finished or was discarded/.test(text))).toBe(true);
   expect([...copies.values()].every((count) => count === 1)).toBe(true);
   expect(await keysUnder(`${folder}/dst/src/`)).toEqual(original.map((key) => key.replace("/src/", "/dst/src/")));
