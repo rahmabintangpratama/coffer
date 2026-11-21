@@ -98,9 +98,9 @@ export async function connectCustom(page: Page, options: ConnectOptions = {}): P
  * every test starts at Welcome and connects to the fixture first. The route is
  * set through the hash, never with a reload, which would drop the keys.
  */
-export async function enterApp(page: Page, route = "/files"): Promise<void> {
+export async function enterApp(page: Page, route = "/files", options: ConnectOptions = {}): Promise<void> {
   await page.goto("/");
-  await connectCustom(page);
+  await connectCustom(page, options);
   await page.getByRole("button", { name: "Open bucket" }).click({ timeout: 30_000 });
   await expect(page.getByRole("navigation", { name: "Main navigation" })).toBeVisible();
   await goToRoute(page, route);
