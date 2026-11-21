@@ -61,15 +61,12 @@ Answered by the project owner. The **From** column gives the question that was o
 | C-45 | n/a | **Upload orchestrator.** MVP uses a small own multipart orchestrator (`CreateMultipartUpload`, `UploadPart` through the shared pool, `CompleteMultipartUpload`, `AbortMultipartUpload`) instead of `lib-storage` plus an `UploadId` middleware. MVP behavior stays as in C-43. | [ADR-009](adr/ADR-009-own-multipart-orchestrator.md), tech spec 7, M4 |
 | C-46 | n/a | **Types.** `src/lib/types.ts` is the canonical contract; `design/types.ts` is its origin. There is no identity check; every difference (T-1 to T-8) is listed in the tech spec. | Tech spec 3, M0 |
 | C-47 | n/a | **Git rules.** Conventional Commits; no `Co-Authored-By` or other attribution; every commit signed and signing never disabled (stop and report if it fails); commit to `main`; remote `git@github.com:rahmabintangpratama/coffer.git`; `.gitignore` reviewed before committing. | Root `AGENTS.md` Git section |
+| C-48 | OQ-32 | **S3 fixture.** The fixture is **RustFS 1.0.6** (`rustfs/rustfs`), chosen after testing candidates against the fixture criteria (comparison below). CORS is set per bucket; per-user policies come from RustFS's admin API (`tests/integration/global-setup.ts`). It also runs as a CI service container. `tests/integration/capabilities.test.ts` is the acceptance test for any future replacement. | `tests/integration/`, CI, tech spec 15.2 |
+| C-49 | n/a | **Commit and Node enforcement.** commitlint (conventional preset, header at most 72) runs in a lefthook `commit-msg` hook and, in CI, over every commit in the pushed range. `engines` is `>=22 <23` with `engine-strict`, so pnpm refuses other Node versions. All 14 earlier commits already conformed, so history was not rewritten. | Root `AGENTS.md` Git, README |
 
 ## Open questions
 
-### OQ-32: Which image runs the local S3 fixture
-- **Owner:** Eng
-- **Status:** Open
-- **Question:** The official `minio/minio` images are no longer published on Docker Hub or Quay (pulls fail), so the MinIO-based fixture in the plan cannot use them. M0 uses `bitnamilegacy/minio:2025.7.23-debian-12-r5`, a frozen legacy image: it works (list, put, get, delete and CORS via `MINIO_API_CORS_ALLOW_ORIGIN` verified), but it gets no updates and Docker Hub may remove it.
-- **Recommended:** Keep the legacy image for MVP tests behind the one compose file. Before it breaks, move to a maintained S3 server (for example Garage, SeaweedFS or RustFS) or a MinIO build from source, and re-run the integration suite; none of the tests depend on MinIO-only behavior except the global CORS environment variable, which the new server must replace. Note the same constraint for CI.
-- **Affects:** `tests/integration/docker-compose.yml`, CI, technical-spec 15.2
+None. Every question so far is decided. Add new ones here with an owner and a recommended answer.
 
 ---
 
@@ -134,3 +131,18 @@ Conflicts and gaps found across `design/` files. Status values: **Resolved** (a 
 | DC-23 | No connection field for a start folder (initial prefix), yet the owner's decision C-37 assumes one, and prefix-scoped keys cannot use the bucket-root trash. | `types.ts`, `providers.json`, `screens.md` | **Resolved** → [C-39](#owner-confirmed-decisions): a standard optional text field in Advanced; no Design pass. Copy keys `form.prefix*` are in the additions file. |
 | DC-24 | `SECURITY-DESIGN.md` says "minimum 12 characters suggested"; the owner made 12 a hard minimum. | `SECURITY-DESIGN.md`, `copy.en.json` | **Resolved** → [C-34](#owner-confirmed-decisions) (additions `ob.save.tooShort`). |
 | DC-25 | `design/tokens.css` sets `--cf-color-border-focus: var(--cf-inverse-accent)` in `[data-surface="inverse"]`, but no `--cf-inverse-accent` is defined; `tokens.json` says `{color.inverse.accent}`, which is `--cf-color-inverse-accent`. As delivered, the toast focus ring would be invalid. | `tokens.css`, `tokens.json`, `button-states.md` | **Open (Design):** the generator emits the correct name and the golden test lists this as its only known deviation. Design should fix the delivered CSS or confirm. |
+
+### Fixture comparison (C-48)
+
+Each candidate was run in Docker and checked with the same probe (later turned into `capabilities.test.ts`). "Service container" means it runs with its default command and only environment variables, which is all a GitHub Actions service container allows.
+
+| Server (image) | Per-bucket CORS and preflight | Multipart and `UploadPartCopy` | List, delimiter, `EncodingType=url` | Presigned GET (and expiry) | `DeleteObjects` | Per-user policies (read-only, delete-denied) | Service container |
+|---|---|---|---|---|---|---|---|
+| **RustFS** `rustfs/rustfs:1.0.6` (released 2026-11-15) | Yes. Allowed origin answered, other origin and a bucket without a rule refused | Yes | Yes | Yes, expires with 403 | Yes | **Yes**, via the admin API; deny-delete works for `DeleteObject` and `DeleteObjects` | **Yes** (default command, env credentials) |
+| Moto `motoserver/moto` (2026-10-30) | Fails: echoes any origin, including on a bucket with no rule | Yes | Yes | Link does not expire without auth | Yes | Needs IAM enforcement switched on in steps; it is a mock, not a server | Yes |
+| SeaweedFS `chrislusf/seaweedfs` (2026-11-16) | Partial: a bucket without a rule still answers the origin | Yes | Yes | Yes | Yes | Not tested (identity file needed) | Runs with defaults, but cannot be configured through the environment |
+| Garage `dxflrs/garage` | Not tested | Not tested | Not tested | Not tested | Not tested | Read and write flags only, no delete-denied key | **No**: needs a config file at start and exits without one |
+| MinIO (official) | Image no longer published on Docker Hub or Quay | | | | | | |
+| MinIO `bitnamilegacy/minio` (frozen, 2025-08) | Global environment variable only | Yes | Yes | Yes | Yes | Yes | Yes, but frozen and unmaintained |
+
+RustFS is the only candidate that met every criterion. RustFS is young (1.0.x, frequent releases), so the image is pinned to an exact version and bumped on purpose, with the capability suite as the safety net. Its built-in `readonly` policy does not allow listing, so the tests create their own read-and-list policy.

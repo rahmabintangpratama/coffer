@@ -19,10 +19,10 @@
 
 | Milestone | Days | Requirements | Exit check in one line |
 |---|---|---|---|
-| M0 Scaffold, CI, tokens, headers, MinIO | 3 | NFR-2, NFR-11, NFR-12 (plumbing) | Clean clone passes typecheck, lint, tests, token check, build, header check, MinIO smoke test |
+| M0 Scaffold, CI, tokens, headers, S3 fixture | 3 | NFR-2, NFR-11, NFR-12 (plumbing) | Clean clone passes typecheck, lint, tests, token check, build, header check, S3 fixture smoke test |
 | M1 App shell, routing, theme, copy loader | 2 | FR-22, FR-100 (theme), NFR-6, NFR-11 | Container resize switches nav; theme switches without flash |
-| M2a Provider engine and connection test | 2 | FR-3, FR-4, FR-5, FR-12, FR-110 (detection) | Connection test returns ok, readOnly and cors outcomes against MinIO |
-| M2b Onboarding screens | 3 | FR-1, FR-2, FR-3, FR-4, FR-5, FR-6, FR-7, FR-12, FR-110 (offer) | Connect to MinIO in the browser; fix a CORS failure from the helper |
+| M2a Provider engine and connection test | 2 | FR-3, FR-4, FR-5, FR-12, FR-110 (detection) | Connection test returns ok, readOnly and cors outcomes against the local S3 fixture |
+| M2b Onboarding screens | 3 | FR-1, FR-2, FR-3, FR-4, FR-5, FR-6, FR-7, FR-12, FR-110 (offer) | Connect to the local S3 fixture in the browser; fix a CORS failure from the helper |
 | M3 Browse and virtualization | 3 | FR-20, FR-21, FR-22, FR-23, FR-24, FR-27, FR-30, FR-31, FR-37, FR-130 | Browse a 10,000-object bucket at three widths; download a file |
 | M4 Upload and transfer panel | 3 | FR-35, FR-40, FR-41, FR-43, FR-44 | Upload 500 MB with progress; reload leaves no incomplete upload |
 | M5a Preview core types | 2 | FR-50, FR-51, FR-52, FR-54, FR-57, FR-58 | Preview image, video, audio, code and SVG with prev/next |
@@ -38,9 +38,9 @@ Total: 35 days plus buffer. Every MVP FR in the product spec appears in at least
 
 ---
 
-## M0: Scaffold, CI, token generator, headers, MinIO (3 days)
+## M0: Scaffold, CI, token generator, headers, S3 fixture (3 days)
 
-**Status: complete.** Deviations from this plan (all logged in `docs/open-questions.md`): the S3 fixture runs the frozen `bitnamilegacy/minio` image because the official MinIO images are no longer published (OQ-32); TypeScript is pinned to 6.0.3 because `typescript-eslint` does not support TypeScript 7 yet; the generated token CSS differs from the design CSS in one place, an undefined custom property in the design file (DC-25).
+**Status: complete.** Deviations from this plan (all logged in `docs/open-questions.md`): the S3 fixture is RustFS 1.0.6 instead of MinIO because the official MinIO images are no longer published; it was chosen after testing candidates against the fixture criteria (C-48); TypeScript is pinned to 6.0.3 because `typescript-eslint` does not support TypeScript 7 yet; the generated token CSS differs from the design CSS in one place, an undefined custom property in the design file (DC-25, resolved by the generator).
 
 **Requirements:** NFR-2 (headers), NFR-11 (copy-key check skeleton), NFR-12 (token tooling). No FR.
 
@@ -52,15 +52,15 @@ Total: 35 days plus buffer. Every MVP FR in the product spec appears in at least
 - `scripts/tokens/`: the DTCG to CSS generator ([ADR-008](adr/ADR-008-token-generator.md)) writing `src/styles/tokens.css` and `src/styles/tailwind.css`, plus a golden test against `design/tokens.css` and `design/tailwind.css`. Scripts `tokens:build` and `tokens:check`.
 - `design/types.ts` copied once to `src/lib/types.ts`, which is then the canonical contract (C-46). There is no check that the two match; the differences from the origin (T-1 to T-8) are applied in M2a and later and are listed in technical-spec 3.
 - `public/_headers` exactly as in technical-spec 11.2, and a `headers:check` script that parses it and asserts every directive.
-- `tests/integration/docker-compose.yml`: MinIO with fixed fake root credentials, a created test bucket and `MINIO_API_CORS_ALLOW_ORIGIN=http://localhost:5173`; one smoke integration test (ListBuckets, put, get, delete through the AWS SDK).
+- `tests/integration/docker-compose.yml`: a local S3 fixture (RustFS) with fixed fake credentials; one smoke integration test (ListBuckets, put, get, delete through the AWS SDK) and a capability suite for what Coffer needs (per-bucket CORS, multipart, `UploadPartCopy`, listing with `EncodingType=url`, presigned GET, `DeleteObjects`, per-user policies).
 - `copy:check` script: merges `copy.en.json` with `copy.additions.en.json` and fails when code references an unknown key (starts trivial, grows with the code).
-- CI workflow (GitHub Actions unless the owner names another system) running install with `--frozen-lockfile`, typecheck, lint, copy check, token check, unit tests, MinIO integration, build, header check, `pnpm audit --prod` and a Chromium plus WebKit smoke e2e.
+- CI workflow (GitHub Actions unless the owner names another system) running install with `--frozen-lockfile`, typecheck, lint, copy check, token check, unit tests, S3 fixture integration, build, header check, `pnpm audit --prod` and a Chromium plus WebKit smoke e2e.
 
-**Tests:** golden token test; header parser test; MinIO smoke; one component test with axe; one e2e "hello" at the three viewports in two browsers.
+**Tests:** golden token test; header parser test; S3 fixture smoke; one component test with axe; one e2e "hello" at the three viewports in two browsers.
 
 **Exit check (demo):** from a clean clone, `pnpm install --frozen-lockfile && pnpm typecheck && pnpm lint && pnpm test && pnpm tokens:check && pnpm build && pnpm headers:check` is green locally and in CI, and `docker compose up -d && pnpm test:integration` passes. Then edit a generated token CSS file by hand and show `pnpm tokens:check` failing.
 
-**AGENTS.md commands landing:** install, dev, build, typecheck, lint, test, test:integration, test:e2e, start MinIO, `tokens:build`, `tokens:check`, `copy:check`, `headers:check`. Remove their `TBD` marks and add `headers:check` to the table.
+**AGENTS.md commands landing:** install, dev, build, typecheck, lint, test, test:integration, test:e2e, start the S3 fixture, `tokens:build`, `tokens:check`, `copy:check`, `headers:check`. Remove their `TBD` marks and add `headers:check` to the table.
 
 **Risk:** the golden test may need more than a day if the design CSS has hand-tuned details; if so, record the differences and split an M0b rather than loosen the test.
 
@@ -92,10 +92,10 @@ Total: 35 days plus buffer. Every MVP FR in the product spec appears in at least
 
 **Tests (AC IDs in test names)**
 - Unit, table-driven over all 21 presets: endpoint, region, addressing; paste fixtures including CRLF, quotes, `export`, bad input.
-- Integration against MinIO: ok; wrong secret (signature); wrong bucket; read-only user; delete-denied user (`failed` on clean); empty bucket read-only; start-folder prefix.
+- Integration against the S3 fixture: ok; wrong secret (signature); wrong bucket; read-only user; delete-denied user (`failed` on clean); empty bucket read-only; start-folder prefix.
 - Playwright route interception to separate `cors` from `network`; fake-handler tests for clock skew and wrong-region hints.
 
-**Exit check (demo):** a script run prints the six steps for an ok, a readOnly and a CORS-failure case against local MinIO, and a table shows endpoint, region and addressing for all 21 presets.
+**Exit check (demo):** a script run prints the six steps for an ok, a readOnly and a CORS-failure case against the local S3 fixture, and a table shows endpoint, region and addressing for all 21 presets.
 
 **AGENTS.md commands landing:** none new.
 
@@ -107,13 +107,13 @@ Total: 35 days plus buffer. Every MVP FR in the product spec appears in at least
 - Screens `O10` (without the `Explore with sample files` button; demo is v1), `O20`, `O21`, `O30` to `O35`, `O40` to `O44`, `O50`; components `ProviderRow`, `ConnectionTest`, `EndpointPreview`, `HelpInline`, `ReadOnlyOffer`, `Banner`, `Tabs`, `Input`.
 - The Advanced section: addressing, `Session token` and `Token expires at`, `Start in folder`.
 - Memory-only session store holding the profile and keys; after connecting, the app lands on an empty Files placeholder. "Save on this device?" (`O51`) arrives in M8.
-- A second MinIO service in the compose file with a different allowed origin, for the CORS-failure path.
+- A fixture bucket without a CORS rule for the CORS-failure path (CORS is set per bucket, so no second server is needed).
 
-**Tests:** component tests per state; e2e at all three viewports for the R2 preset against MinIO with a custom endpoint, CORS failure then fix, read-only offer, paste privacy (textarea cleared, nothing stored); keyboard-only run; axe; an assertion that no secret appears in the DOM, URL or storage.
+**Tests:** component tests per state; e2e at all three viewports for the R2 preset against the S3 fixture with a custom endpoint, CORS failure then fix, read-only offer, paste privacy (textarea cleared, nothing stored); keyboard-only run; axe; an assertion that no secret appears in the DOM, URL or storage.
 
-**Exit check (demo):** connect to local MinIO from the browser at 375 and 1440; point the bucket at the wrong-origin MinIO, see the CORS helper with the exact origin, fix it, tap "Check again" and reach Connected; connect a read-only key and see the offer.
+**Exit check (demo):** connect to the local S3 fixture from the browser at 375 and 1440; use a bucket without a CORS rule, see the CORS helper with the exact origin, fix it, tap "Check again" and reach Connected; connect a read-only key and see the offer.
 
-**AGENTS.md commands landing:** none new; document the second MinIO service in `tests/AGENTS.md`.
+**AGENTS.md commands landing:** none new.
 
 ## M3: Browse and virtualization (3 days)
 
@@ -129,7 +129,7 @@ Total: 35 days plus buffer. Every MVP FR in the product spec appears in at least
 
 **Tests:** unit for key decoding, sorting and filters; integration listing 5,000 objects with delimiter, awkward keys (`#?%+`, spaces, Unicode, 1,024 bytes) and pagination; e2e scrolling a 5,000-item fixture within the performance budget, selection on touch and pointer, download works; axe and keyboard.
 
-**Exit check (demo):** browse a MinIO bucket of 10,000 objects at 375, 768 and 1440 with folders, sorting and search; trigger `Load all` and see the cap message (the cap is configurable in test); download a file.
+**Exit check (demo):** browse a bucket of 10,000 objects on the S3 fixture at 375, 768 and 1440 with folders, sorting and search; trigger `Load all` and see the cap message (the cap is configurable in test); download a file.
 
 **AGENTS.md commands landing:** none new.
 
@@ -145,9 +145,9 @@ Total: 35 days plus buffer. Every MVP FR in the product spec appears in at least
 - Abort on load: after unlock, every stored upload is aborted with `AbortMultipartUpload` and shown as interrupted (C-43); no resume UI.
 - Conflict dialog (Replace, Keep both, Skip, Apply to all), `TransferPanel` with `role=progressbar` and text values, "Upload interrupted" row.
 
-**Tests:** unit for conflict naming and for the orchestrator with a fake client (part order, ETag sorting, abort on failure and cancel, at most 10,000 parts, record written before the first part); integration for a 20 MiB and a 200 MiB multipart upload, cancel leaves no incomplete upload (`ListMultipartUploads` empty), a part failing twice then succeeding, `SlowDown`; e2e for nested folder upload, conflict batch with Apply to all, reload mid-upload shows the interrupted row and MinIO has no incomplete upload; axe on the panel.
+**Tests:** unit for conflict naming and for the orchestrator with a fake client (part order, ETag sorting, abort on failure and cancel, at most 10,000 parts, record written before the first part); integration for a 20 MiB and a 200 MiB multipart upload, cancel leaves no incomplete upload (`ListMultipartUploads` empty), a part failing twice then succeeding, `SlowDown`; e2e for nested folder upload, conflict batch with Apply to all, reload mid-upload shows the interrupted row and the S3 fixture has no incomplete upload; axe on the panel.
 
-**Exit check (demo):** upload a 500 MB file with live progress, cancel one upload, then reload another mid-way and show the panel saying it was interrupted while a `ListMultipartUploads` call against MinIO returns nothing.
+**Exit check (demo):** upload a 500 MB file with live progress, cancel one upload, then reload another mid-way and show the panel saying it was interrupted while a `ListMultipartUploads` call against the S3 fixture returns nothing.
 
 **Risk:** the orchestrator replaces a library call. If it overruns, split M4 into M4a (orchestrator, IndexedDB setup, unit and integration tests) and M4b (menus, queue, conflicts, panel, abort-on-load).
 
@@ -161,7 +161,7 @@ Total: 35 days plus buffer. Every MVP FR in the product spec appears in at least
 
 **Tests:** unit for `FileKind` detection; e2e for each type at three viewports; an SVG with embedded script stays inert; a hostile text file shows as text; axe and focus return on close.
 
-**Exit check (demo):** open an image, a video, an MP3, a code file, an SVG and an unknown binary from MinIO, moving between them with the keyboard and swipe.
+**Exit check (demo):** open an image, a video, an MP3, a code file, an SVG and an unknown binary from the S3 fixture, moving between them with the keyboard and swipe.
 
 **AGENTS.md commands landing:** none new.
 

@@ -35,4 +35,4 @@ The only module that imports the AWS SDK. No UI imports (no React, no `component
 
 ## Tests
 
-Unit tests with a fake handler; integration tests against MinIO in `tests/integration`.
+Unit tests with a fake handler; integration tests against the local S3 fixture in `tests/integration`.

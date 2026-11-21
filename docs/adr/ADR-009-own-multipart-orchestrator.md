@@ -22,7 +22,7 @@ Write one small orchestrator in `src/lib/s3/upload.ts` over SDK commands and do 
 
 - No `UploadId` middleware, no private-field access, and no second upload path to rewrite for resume.
 - Smaller S3 chunk (no `lib-storage`).
-- Coffer owns part slicing, concurrency, retries on top of the SDK strategy, abort and ordering, so these need focused unit tests with a fake client and integration tests against MinIO.
+- Coffer owns part slicing, concurrency, retries on top of the SDK strategy, abort and ordering, so these need focused unit tests with a fake client and integration tests against the local S3 fixture.
 - Progress is per finished part, not per byte; with 8 MiB parts this is smooth enough, and the UI states percentages from completed bytes.
 - SDK upgrades no longer change upload behavior except through the commands themselves.
 

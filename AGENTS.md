@@ -44,9 +44,9 @@ Package manager: **pnpm** 12 with Node 22 only (`engines` is `>=22 <23` and `eng
 | Typecheck | `pnpm typecheck` |
 | Lint | `pnpm lint` |
 | Unit and component tests | `pnpm test` |
-| Integration tests (needs MinIO) | `pnpm test:integration` |
+| Integration tests (needs the S3 fixture) | `pnpm test:integration` |
 | End-to-end tests (install browsers once: `pnpm exec playwright install chromium webkit`) | `pnpm test:e2e` |
-| Start local MinIO | `docker compose -f tests/integration/docker-compose.yml up -d --wait` |
+| Start the local S3 fixture (RustFS) | `docker compose -f tests/integration/docker-compose.yml up -d --wait` |
 | Generate token CSS from `design/tokens.json` | `pnpm tokens:build` |
 | Check generated CSS matches committed files | `pnpm tokens:check` |
 | Check copy keys used in code exist | `pnpm copy:check` |

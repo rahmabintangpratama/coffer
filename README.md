@@ -85,7 +85,7 @@ Current and previous major versions of Chrome, Edge and Firefox. Safari 16.4 or 
 
 ## Development
 
-Prerequisites: Node 22 (`>=22 <23`; run `nvm use` or `fnm use` to read `.nvmrc`; pnpm refuses other Node versions), pnpm 12 (enable it with `corepack enable`) and Docker (for a local MinIO). `pnpm install` also installs the Git hooks. The commands below exist as of M0, the first milestone of the [implementation plan](docs/implementation-plan.md). The CI workflow in `.github/workflows/ci.yml` runs them on every push and pull request. There is still no usable application: the app is a placeholder page until M1.
+Prerequisites: Node 22 (`>=22 <23`; run `nvm use` or `fnm use` to read `.nvmrc`; pnpm refuses other Node versions), pnpm 12 (enable it with `corepack enable`) and Docker (for the local S3 test server). `pnpm install` also installs the Git hooks. The commands below exist as of M0, the first milestone of the [implementation plan](docs/implementation-plan.md). The CI workflow in `.github/workflows/ci.yml` runs them on every push and pull request. There is still no usable application: the app is a placeholder page until M1.
 
 | Task | Command |
 |---|---|
@@ -96,7 +96,7 @@ Prerequisites: Node 22 (`>=22 <23`; run `nvm use` or `fnm use` to read `.nvmrc`;
 | Unit tests | `pnpm test` |
 | Generate token CSS from `design/tokens.json` | `pnpm tokens:build` |
 | Check generated CSS is current | `pnpm tokens:check` |
-| Integration tests (local MinIO) | `docker compose -f tests/integration/docker-compose.yml up -d --wait`, then `pnpm test:integration` |
+| Integration tests (local S3 fixture) | `docker compose -f tests/integration/docker-compose.yml up -d --wait`, then `pnpm test:integration` |
 | End-to-end tests (once: `pnpm exec playwright install chromium webkit`) | `pnpm test:e2e` |
 | Check that copy keys used in code exist | `pnpm copy:check` |
 | Check the security headers file | `pnpm headers:check` (after `pnpm build` it also checks `dist`) |

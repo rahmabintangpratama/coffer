@@ -90,7 +90,7 @@ Imports point down only. Violations fail lint.
 | **`idb`** | Small promise wrapper over IndexedDB with typed stores and versioned migrations. |
 | **Web Crypto** | Native PBKDF2 and AES-GCM, with non-extractable derived keys; no crypto library to audit. |
 | **pnpm** | Strict, fast, disk-efficient installs; lockfile with integrity hashes supports the dependency policy. |
-| **Vitest + Testing Library, Playwright, MinIO, axe** | See section 15. |
+| **Vitest + Testing Library, Playwright, a local S3 fixture (RustFS), axe** | See section 15. |
 
 **Additions that the design implies but the brief did not list.** All approved by the owner ([C-16](open-questions.md#owner-confirmed-decisions), [C-17](open-questions.md#owner-confirmed-decisions)):
 
@@ -416,7 +416,7 @@ Spec for the file Cloudflare Pages serves (from the design proposal, with cache 
 ```
 
 Notes:
-- `connect-src https:` is required because the endpoint is chosen by the user; it is the only broad directive. `http://localhost:*` and `http://127.0.0.1:*` allow local MinIO. Do **not** add `upgrade-insecure-requests` (it would break localhost `http`).
+- `connect-src https:` is required because the endpoint is chosen by the user; it is the only broad directive. `http://localhost:*` and `http://127.0.0.1:*` allow a local S3 server. Do **not** add `upgrade-insecure-requests` (it would break localhost `http`).
 - `script-src 'self'` forbids inline scripts, so there is no inline theme script; `public/theme-init.js` is a small blocking file ([C-22](open-questions.md#owner-confirmed-decisions)). `style-src 'self'` forbids `<style>` tags and `style=""` attributes in HTML; React sets styles through the CSSOM, which is allowed. Radix, Vaul and TanStack Virtual set positions through React props, which works; this must be verified in a real browser (console shows no CSP violations) ([C-31](open-questions.md#owner-confirmed-decisions)).
 - `frame-src blob:` is for the sandbox HTML preview. `worker-src 'self' blob:` is for the bundled pdf.js worker. `img-src https:` and `media-src https:` serve presigned previews.
 - HSTS `preload` from the design proposal is omitted: preloading is a deliberate, hard-to-reverse choice for a domain the project controls ([C-32](open-questions.md#owner-confirmed-decisions)).
@@ -537,14 +537,14 @@ Enforcement: a bundle-size check (`size-limit` or Vite's report) in CI, Lighthou
 |---|---|---|
 | Unit | Vitest | Pure logic: upload orchestrator with a fake client (part order, ETag sorting, abort on failure and cancel, record written before the first part), preset validation, templating, paste parser, key naming, conflict naming, share limits, error mapping, vault crypto round-trips, journal state machine, formatters |
 | Component | Vitest + Testing Library + `jest-axe` | States, copy keys, ARIA, keyboard |
-| Integration | Vitest (Node) against **MinIO in Docker** | Every operation in section 6.2, multipart, copy above the multipart limit (with a low configured limit), `DeleteObjects` batching, journal resume with injected faults |
+| Integration | Vitest (Node) against a **local S3 fixture (RustFS in Docker)** | Every operation in section 6.2, multipart, copy above the multipart limit (with a low configured limit), `DeleteObjects` batching, journal resume with injected faults |
 | End to end | Playwright at **375, 768 and 1440** | Core jobs in Chromium; **WebKit (including an iPhone-sized mobile Safari profile) on every PR**; Firefox for smoke and layout |
 | Accessibility | axe via Playwright, manual passes | Section 13 |
 | Provider compatibility | Manual checklist per provider | Section 15.5 |
 
-### 15.2 MinIO fixture
+### 15.2 S3 fixture
 
-`tests/integration/docker-compose.yml` runs MinIO (the frozen `bitnamilegacy/minio` image, because the official images are no longer published; OQ-32) with a fixed fake root user, a test bucket and `MINIO_API_CORS_ALLOW_ORIGIN=http://localhost:5173` for browser e2e. Integration tests run in Node, where CORS does not apply. CORS failure cases in e2e use Playwright request interception (`page.route`) to return responses without CORS headers or abort the request, to cover `cors` versus `network`. Tests never use real cloud credentials; fixtures use fixed fake keys.
+`tests/integration/docker-compose.yml` runs RustFS (`rustfs/rustfs`, an S3-compatible server with an official, actively released image; the official MinIO images are no longer published) with fixed fake credentials. In CI the same image runs as a GitHub Actions service container. Integration tests run in Node, where CORS does not apply, and create their own buckets. `tests/integration/global-setup.ts` creates two users with per-user policies through RustFS's admin API: a read-only user (list and read) and a delete-denied user (write but no delete), which M2a needs for the read-only and clean-step cases. CORS is set **per bucket** with `PutBucketCors`, so browser tests can use one bucket with a rule and one without; no global CORS setting is involved. CORS failure cases in e2e can also use Playwright request interception (`page.route`) to return responses without CORS headers or abort the request, to cover `cors` versus `network`. `tests/integration/capabilities.test.ts` is the acceptance test for the fixture: if the server is ever swapped, it must pass there unchanged. Tests never use real cloud credentials; fixtures use fixed fake keys.
 
 ### 15.3 Fault injection
 
@@ -552,7 +552,7 @@ The S3 layer is wrapped by a test middleware that can fail or delay the Nth requ
 
 ### 15.4 E2E scenarios (minimum)
 
-Connect (R2 preset against MinIO with a custom endpoint), CORS-fail then fix, read-only offer, save with passphrase, lock and unlock, browse and search, upload with conflict, rename, move folder, trash and undo, restore, delete forever with typed count, share link with expiry limits, preview each type including hostile HTML, SVG and Markdown fixtures, Forget this device (storage dump is empty), theme switch.
+Connect (R2 preset against the S3 fixture with a custom endpoint), CORS-fail then fix, read-only offer, save with passphrase, lock and unlock, browse and search, upload with conflict, rename, move folder, trash and undo, restore, delete forever with typed count, share link with expiry limits, preview each type including hostile HTML, SVG and Markdown fixtures, Forget this device (storage dump is empty), theme switch.
 
 ### 15.5 Provider compatibility matrix
 
@@ -576,7 +576,7 @@ Presets with known quirks to record: Oracle OCI (browser CORS not supported), Al
 
 ### 15.6 CI
 
-On every PR: typecheck, lint (including token, string and layer rules), **copy-key check (every key used in code exists in the merged copy)**, **`pnpm tokens:check` (generated token CSS must equal the committed files)**, unit and component tests, integration against MinIO, build, `_headers` check, bundle-size check, e2e (Chromium and WebKit) with axe. Nightly or per release: Firefox e2e, Lighthouse, and a manual pass on a real iPhone (iOS Safari 16.4 or later is mandatory).
+On every PR: typecheck, lint (including token, string and layer rules), **copy-key check (every key used in code exists in the merged copy)**, **`pnpm tokens:check` (generated token CSS must equal the committed files)**, unit and component tests, integration against the S3 fixture, build, `_headers` check, bundle-size check, e2e (Chromium and WebKit) with axe. Nightly or per release: Firefox e2e, Lighthouse, and a manual pass on a real iPhone (iOS Safari 16.4 or later is mandatory).
 
 ### 15.7 Verify contrast in a real browser (task)
 

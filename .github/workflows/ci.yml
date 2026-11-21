@@ -18,18 +18,18 @@ jobs:
     timeout-minutes: 20
 
     # Local S3 fixture for the integration tests. Fake credentials only.
-    # Same image as tests/integration/docker-compose.yml (see OQ-32).
+    # Same image and settings as tests/integration/docker-compose.yml (C-48).
     services:
-      minio:
-        image: bitnamilegacy/minio:2025.7.23-debian-12-r5
+      s3:
+        image: rustfs/rustfs:1.0.6
         ports:
           - 9000:9000
         env:
-          MINIO_ROOT_USER: coffer-test-key
-          MINIO_ROOT_PASSWORD: coffer-test-secret-not-real
-          MINIO_API_CORS_ALLOW_ORIGIN: http://localhost:5173
+          RUSTFS_ACCESS_KEY: coffer-test-key
+          RUSTFS_SECRET_KEY: coffer-test-secret-not-real
+          RUSTFS_CONSOLE_ENABLE: "false"
         options: >-
-          --health-cmd "curl -fsS http://127.0.0.1:9000/minio/health/ready"
+          --health-cmd "curl -fsS http://127.0.0.1:9000/health"
           --health-interval 3s
           --health-timeout 3s
           --health-retries 20
