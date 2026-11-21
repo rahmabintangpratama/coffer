@@ -17,26 +17,28 @@ interface CopyBoundaryProps {
  * a t() call written in the expression passed as children runs before the load.
  */
 export function CopyBoundary({ groups, fallback, errorFallback, children }: CopyBoundaryProps) {
-  const [state, setState] = useState<"loading" | "ready" | "failed">(() =>
-    groups.every((group) => isCopyGroupLoaded(group)) ? "ready" : "loading",
-  );
+  // Readiness is read from what is loaded on every render, not kept in state: the router can reuse one boundary
+  // for two routes with different groups, and a stale "ready" would render the second route before its copy exists.
+  const ready = groups.every((group) => isCopyGroupLoaded(group));
+  const [failed, setFailed] = useState<readonly LazyCopyGroup[] | null>(null);
+  const [, setLoadedCount] = useState(0);
 
   useEffect(() => {
-    if (state !== "loading") return;
+    if (ready) return;
     let active = true;
     loadCopyGroups(...groups).then(
       () => {
-        if (active) setState("ready");
+        if (active) setLoadedCount((count) => count + 1);
       },
       () => {
-        if (active) setState("failed");
+        if (active) setFailed(groups);
       },
     );
     return () => {
       active = false;
     };
-  }, [groups, state]);
+  }, [groups, ready]);
 
-  if (state === "ready") return children;
-  return state === "failed" ? errorFallback : fallback;
+  if (ready) return children;
+  return failed === groups ? errorFallback : fallback;
 }
