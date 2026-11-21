@@ -22,3 +22,20 @@ export { decodeS3Key, fileKindOf, isHiddenName, keyByteLength, MAX_KEY_BYTES, na
 export { listPage, PAGE_SIZE, type ListPage, type ListPageOptions } from "./list";
 export type { S3Client as S3Handle } from "@aws-sdk/client-s3";
 export { headObject, type ObjectHead } from "./head";
+export { clientFor } from "./connection-client";
+export { existingKeys, HEAD_LIMIT, putFolder } from "./conflicts";
+export { folderNameProblem, keepBothKey, keyProblem, type KeyProblem } from "./keys";
+export { RequestPool } from "./pool";
+export {
+  abortUpload,
+  MAX_OBJECT_BYTES,
+  MAX_PARTS,
+  MIB,
+  MULTIPART_THRESHOLD,
+  partSizeFor,
+  uploadObject,
+  type UploadBody,
+  type UploadOptions,
+  type UploadRecord,
+  type UploadStateStore,
+} from "./upload";

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { attachmentDisposition } from "./disposition";
-import { decodeS3Key, fileKindOf, isHiddenName, keyByteLength, nameOf, trashPrefixOf } from "./keys";
+import { decodeS3Key, fileKindOf, folderNameProblem, isHiddenName, keepBothKey, keyByteLength, keyProblem, MAX_KEY_BYTES, nameOf, trashPrefixOf } from "./keys";
 
 describe("key decoding (FR-20 edge cases)", () => {
   it("decodes percent escapes and + as a space", () => {
@@ -65,5 +65,47 @@ describe("AC-37.1 download disposition (RFC 5987)", () => {
 
   it("never lets a line break into the header", () => {
     expect(attachmentDisposition("a\r\nSet-Cookie: x")).not.toMatch(/[\r\n]/);
+  });
+});
+
+
+describe("AC-40.4 key problems are found before upload", () => {
+  it("accepts ordinary keys, Unicode and a key of exactly 1,024 bytes", () => {
+    expect(keyProblem("a/b/日本語 (1).txt")).toBeNull();
+    expect(keyProblem("x".repeat(MAX_KEY_BYTES))).toBeNull();
+    expect(keyProblem("folder/")).toBeNull();
+  });
+  it("rejects too long, control characters, empty and dot segments, and lone surrogates", () => {
+    expect(keyProblem("x".repeat(MAX_KEY_BYTES + 1))).toBe("tooLong");
+    expect(keyProblem("日".repeat(342))).toBe("tooLong");
+    expect(keyProblem("a\u0000b")).toBe("control");
+    expect(keyProblem("a\nb")).toBe("control");
+    expect(keyProblem("")).toBe("empty");
+    expect(keyProblem("a//b")).toBe("empty");
+    expect(keyProblem("/a")).toBe("empty");
+    expect(keyProblem("a/../b")).toBe("dots");
+    expect(keyProblem("a/./b")).toBe("dots");
+    expect(keyProblem("a\ud800b")).toBe("surrogate");
+  });
+  it("AC-35.2 checks a new folder name", () => {
+    expect(folderNameProblem("", "")).toBe("empty");
+    expect(folderNameProblem("  ", "")).toBe("empty");
+    expect(folderNameProblem("a/b", "")).toBe("slash");
+    expect(folderNameProblem("..", "x/")).toBe("dots");
+    expect(folderNameProblem("ok", "x/")).toBeNull();
+    expect(folderNameProblem("x".repeat(1024), "")).toBe("tooLong");
+  });
+});
+
+describe("AC-43.2 keep both names", () => {
+  it("takes the first free number before the extension", () => {
+    const taken = new Set(["d/a.txt", "d/a (1).txt", "d/a (2).txt"]);
+    expect(keepBothKey("d/a.txt", (key) => taken.has(key))).toBe("d/a (3).txt");
+    expect(keepBothKey("d/new.txt", (key) => taken.has(key))).toBe("d/new (1).txt");
+  });
+  it("uses the last extension, and the end of a dotfile name", () => {
+    expect(keepBothKey("a.tar.gz", () => false)).toBe("a.tar (1).gz");
+    expect(keepBothKey("d/.env", () => false)).toBe("d/.env (1)");
+    expect(keepBothKey("README", (key) => key === "README (1)")).toBe("README (2)");
   });
 });

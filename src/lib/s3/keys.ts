@@ -56,3 +56,51 @@ export function fileKindOf(name: string): FileKind {
   if (dot <= 0) return "unknown";
   return kindByExtension.get(name.slice(dot + 1).toLowerCase()) ?? "unknown";
 }
+
+export type KeyProblem = "empty" | "tooLong" | "control" | "slash" | "dots" | "surrogate";
+
+/** Characters no S3 provider stores reliably: C0 controls, DEL and unpaired surrogates (which cannot be UTF-8). */
+// eslint-disable-next-line no-control-regex -- matching control characters is the point
+const CONTROL = /[\u0000-\u001f\u007f]/;
+const LONE_SURROGATE = /[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/;
+
+/**
+ * Whether a full object key can be stored, checked before an upload starts
+ * (AC-40.4): at most 1,024 bytes, no control characters, no empty or dot-only
+ * path segments (`a//b`, `./x`, `../x`) and no unpaired surrogates.
+ */
+export function keyProblem(key: string): KeyProblem | null {
+  if (key === "") return "empty";
+  if (keyByteLength(key) > MAX_KEY_BYTES) return "tooLong";
+  if (CONTROL.test(key)) return "control";
+  if (LONE_SURROGATE.test(key)) return "surrogate";
+  const segments = key.endsWith("/") ? key.slice(0, -1).split("/") : key.split("/");
+  if (segments.some((segment) => segment === "")) return "empty";
+  if (segments.some((segment) => segment === "." || segment === "..")) return "dots";
+  return null;
+}
+
+/** A single folder name from the New folder dialog: no `/`, not empty or dot-only, and a key that fits under its parent. */
+export function folderNameProblem(name: string, parentPrefix: string): KeyProblem | null {
+  if (name.trim() === "") return "empty";
+  if (name.includes("/")) return "slash";
+  return keyProblem(`${parentPrefix}${name}/`);
+}
+
+/**
+ * `name (1).ext`: the first number whose key is free, inserted before the last
+ * extension. A name that starts with a dot and has no other dot (`.env`) takes the
+ * number at the end.
+ */
+export function keepBothKey(key: string, isTaken: (candidate: string) => boolean): string {
+  const slash = key.lastIndexOf("/") + 1;
+  const dir = key.slice(0, slash);
+  const name = key.slice(slash);
+  const dot = name.lastIndexOf(".");
+  const stem = dot > 0 ? name.slice(0, dot) : name;
+  const extension = dot > 0 ? name.slice(dot) : "";
+  for (let n = 1; ; n += 1) {
+    const candidate = `${dir}${stem} (${n.toString()})${extension}`;
+    if (!isTaken(candidate)) return candidate;
+  }
+}
