@@ -191,7 +191,7 @@ jobs:
           PLAYWRIGHT_JSON_OUTPUT_NAME: e2e-report.json
         run: |
           pnpm exec playwright merge-reports --reporter=html,json ./all-blob-reports
-          node scripts/ci/e2e-summary.ts e2e-report.json >> "$GITHUB_STEP_SUMMARY"
+          node scripts/ci/e2e-summary.ts e2e-report.json | tee -a "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
