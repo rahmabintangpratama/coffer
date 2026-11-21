@@ -2,9 +2,11 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { lazy, Suspense, useEffect } from "react";
 import { Route, Router, Switch } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
+import { InterruptedBanner, loadInterrupted } from "@/features/operations";
 import { configureTransfers } from "@/features/transfers";
 import type { ConnectionSummary } from "@/lib/types";
 import { abortInterruptedUploads } from "./abortOnLoad";
+import { useToasts } from "./toast";
 import { CopyBoundary } from "./CopyBoundary";
 import { LoadError } from "./LoadError";
 import { queryClient } from "./query";
@@ -23,6 +25,15 @@ const filesGroups = ["files", "det", "filter", "search", "sel", "kind", "col", "
 // The upload queue reads how many parts may be in flight from the settings at the moment each part starts.
 configureTransfers({ getConcurrency: () => useSettings.getState().uploadConcurrency });
 
+/** The interrupted-operation banner, with its copy loaded first; it draws nothing while nothing was interrupted. */
+function OperationsBanner(props: { connection: ConnectionSummary; notify: (message: string, action?: { label: string; run: () => void }) => void }) {
+  return (
+    <CopyBoundary groups={["op", "dlg", "files"]} fallback={null} errorFallback={null}>
+      <InterruptedBanner {...props} />
+    </CopyBoundary>
+  );
+}
+
 /**
  * Everything after a connection exists: the query client, the router, the shell and
  * its routes. It is one lazy chunk, so the first paint (Welcome and the connection
@@ -33,13 +44,17 @@ export default function ConnectedApp({ connection }: { connection: ConnectionSum
   useEffect(() => {
     // IndexedDB can be missing (some private modes); the abort is best effort and must never break the app.
     void abortInterruptedUploads(connection).catch(() => undefined);
+    // Moves that were running when the page closed become "interrupted" and wait for Resume, Review or Discard (FR-45).
+    void loadInterrupted(connection).catch(() => undefined);
   }, [connection]);
+  const push = useToasts((state) => state.push);
 
   const screenFallback = <div aria-busy="true" className="min-h-40" />;
   return (
     <QueryClientProvider client={queryClient}>
       <Router hook={useHashLocation}>
         <Shell>
+          <OperationsBanner connection={connection} notify={(message, action) => { push({ message, ...(action ? { actionLabel: action.label, onAction: action.run } : {}) }); }} />
           <Switch>
             <Route path={routes.home}>
               <CopyBoundary groups={filesGroups} fallback={screenFallback} errorFallback={<LoadError />}>

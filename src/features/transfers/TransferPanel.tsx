@@ -3,7 +3,7 @@ import { Button } from "@/components/Button";
 import { formatBytes } from "@/lib/format";
 import { t, type CopyKey } from "@/lib/i18n";
 import { cancelTransfer, retryTransfer } from "./queue";
-import { type Transfer, useTransfers } from "./store";
+import { type OperationRow, type Transfer, useTransfers } from "./store";
 
 const errorCopy: Record<string, CopyKey> = {
   accessDenied: "upl.error.denied",
@@ -12,6 +12,20 @@ const errorCopy: Record<string, CopyKey> = {
   quota: "upl.error.quota",
   throttled: "upl.error.throttled",
 };
+
+function OperationProgress({ row }: { row: OperationRow }) {
+  const percent = row.total === 0 ? 0 : Math.floor((row.done / row.total) * 100);
+  const text = t("op.progress", { done: row.done.toLocaleString(), total: row.total.toLocaleString() });
+  return (
+    <li data-component="TransferRow" data-status="running" data-kind="operation" className="py-2">
+      <p className="truncate text-base" title={row.name}>{t("op.title", { name: row.name })}</p>
+      <div role="progressbar" aria-label={t("op.title", { name: row.name })} aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent} aria-valuetext={text} className="mt-1 h-1.5 overflow-hidden rounded-full bg-subtle">
+        <div className="h-full bg-accent" style={{ width: `${percent.toString()}%` }} />
+      </div>
+      <p className="mt-1 text-sm text-fg-muted">{text}</p>
+    </li>
+  );
+}
 
 function ProgressRow({ transfer }: { transfer: Transfer }) {
   const percent = transfer.size === 0 ? (transfer.status === "done" ? 100 : 0) : Math.floor((transfer.bytesDone / transfer.size) * 100);
@@ -65,21 +79,24 @@ function ProgressRow({ transfer }: { transfer: Transfer }) {
  * a role=progressbar with a text value.
  */
 export function TransferPanel() {
-  const { transfers, interrupted, collapsed, setCollapsed, clearDone, dismissInterrupted } = useTransfers();
-  if (transfers.length === 0 && interrupted.length === 0) return null;
+  const { transfers, interrupted, operations, collapsed, setCollapsed, clearDone, dismissInterrupted } = useTransfers();
+  if (transfers.length === 0 && interrupted.length === 0 && operations.length === 0) return null;
 
   const busy = transfers.filter((transfer) => transfer.status === "queued" || transfer.status === "running").length;
   const failed = transfers.filter((transfer) => transfer.status === "failed").length;
   const done = transfers.filter((transfer) => transfer.status === "done").length;
+  const first = operations[0];
   const title =
     busy > 0
       ? t("upl.title.running", { count: busy })
+      : first
+        ? t("op.title", { name: first.name })
       : failed > 0
         ? t("upl.title.failed", { count: failed })
         : done > 0
           ? t("upl.title.done", { count: done })
           : t("upl.interrupted.title");
-  const finished = busy === 0;
+  const finished = busy === 0 && operations.length === 0;
 
   return (
     <section
@@ -126,6 +143,7 @@ export function TransferPanel() {
               <Button variant="ghost" iconOnly aria-label={t("act.dismiss")} icon={<X aria-hidden="true" className="size-4" />} onClick={() => { dismissInterrupted(item.id); }} />
             </li>
           ))}
+          {operations.map((row) => <OperationProgress key={row.id} row={row} />)}
           {transfers.map((transfer) => <ProgressRow key={transfer.id} transfer={transfer} />)}
         </ul>
       )}

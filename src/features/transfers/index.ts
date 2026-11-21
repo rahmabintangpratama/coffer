@@ -1,8 +1,10 @@
 export { candidatesFromDrop, candidatesFromInput } from "./collect";
 export type { UploadCandidate } from "./plan";
 export { configureTransfers } from "./queue";
-export { useTransfers } from "./store";
+export { type OperationRow, useTransfers } from "./store";
 export { TransferPanel } from "./TransferPanel";
+export type { ConflictAnswer, ConflictChoice, ConflictQuestion } from "./resolve";
+export { useConflictPrompt } from "./useConflictPrompt";
 export { useUpload } from "./useUpload";
 
 import { useTransfers } from "./store";

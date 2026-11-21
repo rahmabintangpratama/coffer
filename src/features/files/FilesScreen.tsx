@@ -1,16 +1,17 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { Download } from "lucide-react";
+import { Download, FolderInput, FolderPlus } from "lucide-react";
 import { type DragEvent, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { Banner } from "@/components/Banner";
 import { Button } from "@/components/Button";
 import { SEARCH_PILL_ID } from "@/components/SearchPill";
-import { ContextMenuArea } from "@/components/ActionMenu";
+import { ContextMenuArea, type MenuGroup } from "@/components/ActionMenu";
 import { useLayout } from "@/components/layout";
 import { Skeleton } from "@/components/Skeleton";
 import { t } from "@/lib/i18n";
 import type { AppError } from "@/lib/s3/errors";
 import type { ConnectionSummary, FileItem, FolderItem, Settings } from "@/lib/types";
+import { useOperationDialogs } from "@/features/operations";
 import { candidatesFromDrop, useTransfers, useUpload } from "@/features/transfers";
 import { actionsFor, type ActionHandlers } from "./actions";
 import { Breadcrumb } from "./Breadcrumb";
@@ -38,7 +39,7 @@ export interface FilesScreenProps {
   /** Settings and toasts live in the app shell; the feature gets what it needs as props. */
   settings: Pick<Settings, "view" | "sort" | "density" | "showHiddenFiles">;
   onSettings: (patch: Partial<Settings>) => void;
-  notify: (message: string) => void;
+  notify: (message: string, action?: { label: string; run: () => void }) => void;
 }
 
 export function FilesScreen(props: FilesScreenProps) {
@@ -68,7 +69,7 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
   const [focusRequest, setFocusRequest] = useState<{ index: number; nonce: number } | undefined>(undefined);
   const [dragging, setDragging] = useState(false);
   const queryClient = useQueryClient();
-  const hasTransfers = useTransfers((state) => state.transfers.length + state.interrupted.length > 0);
+  const hasTransfers = useTransfers((state) => state.transfers.length + state.interrupted.length + state.operations.length > 0);
   const writable = connection.access === "readWrite";
   const selection = useSelection();
   const [, navigate] = useLocation();
@@ -123,6 +124,14 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
   }, [listing]);
   usePullToRefresh(() => void refresh(), layout === "compact");
 
+  // After uploads or a new folder the folder reloads from page 1.
+  const reload = useCallback(() => {
+    void queryClient.resetQueries({ queryKey: ["list", connection.id, bucket, root + relative] });
+  }, [queryClient, connection.id, bucket, root, relative]);
+  const runHooks = useMemo(() => ({ notify, onChanged: reload }), [notify, reload]);
+  const { rename, copy: makeCopy, move, dialogs: operationDialogs } = useOperationDialogs({ connection, folderPrefix: root + relative, folderName: folderLabel, root, hooks: runHooks });
+  const readOnly = !writable;
+
   const handlers: ActionHandlers = useMemo(
     () => ({
       // A menu opened on a selected item acts on the whole selection (AC-37.3).
@@ -137,8 +146,17 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
       copyKey: (item) => {
         void navigator.clipboard.writeText(item.key).then(() => { notify(t("toast.copied")); });
       },
+      rename: (item) => { rename({ key: item.key, name: item.name, kind: item.kind }); },
+      makeCopy: (item) => { if (item.kind === "file") makeCopy({ key: item.key, name: item.name, kind: "file" }); },
+      // A menu opened on a selected item moves the whole selection, like Download.
+      move: (items) => {
+        const state = useSelection.getState();
+        const first = items[0];
+        const chosen = first && items.length === 1 && state.keys.has(first.key) && state.keys.size > 1 ? visible.filter((item) => state.keys.has(item.key)) : items;
+        move(chosen.map((item) => ({ key: item.key, name: item.name, kind: item.kind })));
+      },
     }),
-    [connection, visible, notify],
+    [connection, visible, notify, rename, makeCopy, move],
   );
 
   // The selection bar is drawn by the app bar; it is told what is selected and which actions apply (AC-30.3).
@@ -146,8 +164,9 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
     const onlyFiles = selected.every((item) => item.kind === "file");
     setSelection(selected.length, [
       { id: "download", label: t("act.download"), icon: <Download aria-hidden="true" className="size-5" />, disabled: !onlyFiles, onSelect: () => { handlers.download(selected); } },
+      { id: "move", label: t("act.move"), icon: <FolderInput aria-hidden="true" className="size-5" />, disabled: readOnly, onSelect: () => { handlers.move(selected); } },
     ]);
-  }, [selected, handlers, setSelection]);
+  }, [selected, handlers, setSelection, readOnly]);
 
   const openFolder = useCallback(
     (folder: FolderItem) => { navigate(pathFromPrefix(folder.key.slice(root.length))); },
@@ -157,17 +176,13 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
   const focusSearch = useCallback(() => { document.getElementById(SEARCH_PILL_ID)?.focus(); }, []);
   const onContextItem = useCallback(
     (item: Item) => {
-      if (actionsFor(item, handlers).length === 0) return false;
+      if (actionsFor(item, handlers, readOnly).length === 0) return false;
       setContextItem(item);
       return true;
     },
-    [handlers],
+    [handlers, readOnly],
   );
 
-  // After uploads or a new folder the folder reloads from page 1.
-  const reload = useCallback(() => {
-    void queryClient.resetQueries({ queryKey: ["list", connection.id, bucket, root + relative] });
-  }, [queryClient, connection.id, bucket, root, relative]);
   const { upload, dialog: conflictDialog } = useUpload({ connection, folderPrefix: root + relative, folderName: folderLabel, notify, onUploaded: reload });
   const existingFolderNames = useMemo(() => new Set(listing.items.filter((item) => item.kind === "folder").map((item) => item.name)), [listing.items]);
   const createFolder = useCallback(
@@ -206,12 +221,20 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
     },
   };
 
+  // The current folder's menu (FolderMenu): New folder for now; Rename, Move and the rest are on the folder's own row in its parent.
+  const folderMenu: MenuGroup[] = relative === "" ? [] : [
+    {
+      id: "new",
+      actions: [{ id: "newFolder", label: t("act.newFolder"), icon: <FolderPlus aria-hidden="true" className="size-5 text-fg-muted" />, disabled: readOnly, ...(readOnly ? { reason: t("ro.reason") } : {}), onSelect: () => { setNewFolderOpen(true); } }],
+    },
+  ];
+
   const filtering = hasFilters(filters);
   const onSort = (by: "name" | "modified" | "size") => {
     onSettings({ sort: { by, dir: settings.sort.by === by && settings.sort.dir === "asc" ? "desc" : "asc" } });
   };
 
-  const viewProps = { items: visible, density: settings.density, folderLabel, handlers, onOpenFolder: openFolder, onSearchShortcut: focusSearch, onContextItem, focusRequest };
+  const viewProps = { readOnly, items: visible, density: settings.density, folderLabel, handlers, onOpenFolder: openFolder, onSearchShortcut: focusSearch, onContextItem, focusRequest };
 
   let body;
   if (listing.isPending) {
@@ -244,7 +267,7 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
   } else {
     const view = settings.view === "grid" ? <FileGrid {...viewProps} /> : <FileList {...viewProps} sort={settings.sort} onSort={onSort} />;
     body = (
-      <ContextMenuArea component="ContextMenu" groups={contextItem ? actionsFor(contextItem, handlers) : []}>
+      <ContextMenuArea component="ContextMenu" groups={contextItem ? actionsFor(contextItem, handlers, readOnly) : []}>
         {view}
       </ContextMenuArea>
     );
@@ -255,7 +278,7 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
       <div className="flex min-w-0 flex-1 flex-col gap-3">
         <h1 className="sr-only">{t("nav.files")}</h1>
         <div className="flex min-h-(--cf-size-touch-min) flex-wrap items-center justify-between gap-2">
-          <Breadcrumb rootLabel={bucket} prefix={relative} menu={[]} />
+          <Breadcrumb rootLabel={bucket} prefix={relative} menu={folderMenu} />
           <div className="flex items-center gap-2">
             <ViewControls sort={settings.sort} view={settings.view} onSort={(sort) => { onSettings({ sort }); }} onView={(view) => { onSettings({ view }); }} onRefresh={() => void refresh()} refreshing={refreshing} />
             {writable && <NewMenu onNewFolder={() => { setNewFolderOpen(true); }} onFiles={(candidates) => void upload(candidates)} raised={hasTransfers} />}
@@ -276,6 +299,7 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
         {body}
       </div>
       {conflictDialog}
+      {operationDialogs}
       {previewIndex >= 0 && (
         <Suspense fallback={null}>
           <Preview

@@ -18,6 +18,8 @@ export interface ItemViewProps {
   density: Density;
   folderLabel: string;
   handlers: ActionHandlers;
+  /** A read-only connection: write actions are disabled with the reason (FR-111). */
+  readOnly: boolean;
   onOpenFolder: (folder: FolderItem) => void;
   onSearchShortcut: () => void;
   onContextItem: (item: Item) => boolean;
@@ -126,7 +128,7 @@ export function FileList(props: ItemViewProps & { sort: Sort; onSort: (by: Sort[
               index={virtual.index}
               selected={keys.has(item.key)}
               layout={layout}
-              menu={actionsFor(item, handlers)}
+              menu={actionsFor(item, handlers, props.readOnly)}
               top={virtual.start - margin}
               height={height}
               rowProps={itemProps(item, virtual.index)}

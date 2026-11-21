@@ -45,6 +45,33 @@
         "dots": "A folder can’t be named “.” or “..”.",
         "failed": "Couldn’t create the folder. Check that this key can write here, then try again."
       }
+    },
+    "rename": {
+      "label": "Name",
+      "err": {
+        "empty": "Enter a name.",
+        "tooLong": "That name is too long. A key can be at most 1,024 bytes.",
+        "invalid": "That name has characters a bucket can’t store."
+      },
+      "confirm": "Rename"
+    },
+    "copy": {
+      "confirm": "Make a copy",
+      "err": {
+        "slash": "Names can’t contain slashes. The copy is saved in the same folder."
+      },
+      "checking": "Choosing a free name"
+    },
+    "move": {
+      "err": {
+        "inside": "A folder can’t be moved into itself.",
+        "same": "This is where it already is. Choose another folder."
+      },
+      "tree": "Folders",
+      "loadError": "Couldn’t load this folder. Try again.",
+      "newFolderName": "New folder name",
+      "create": "Create folder",
+      "checking": "Checking the destination"
     }
   },
   "files": {
@@ -240,7 +267,10 @@
   },
   "toast": {
     "copied": "Copied",
-    "region": "Notifications"
+    "region": "Notifications",
+    "moved": "Moved {name}",
+    "renamed": "Renamed to {name}",
+    "copyMade": "Copy saved as {name}"
   },
   "trash": {
     "deleted": "Deleted {when}",
@@ -323,5 +353,22 @@
       "sandboxNote": "Shown in a sandbox: scripts, forms, popups and remote resources are blocked, and styles may not apply.",
       "frameTitle": "Sandboxed page for {name}"
     }
+  },
+  "op": {
+    "error": "Couldn’t start that. Nothing was changed. Check that this key can write here, then try again.",
+    "resume": "Resume",
+    "review": {
+      "label": "Review",
+      "title": "Moving “{name}”",
+      "source": "Still in the source: {count, plural, one {# object} other {# objects}}",
+      "target": "Already in the destination: {count, plural, one {# object} other {# objects}}",
+      "loading": "Reading both folders",
+      "error": "Couldn’t read the folders. Nothing was changed."
+    },
+    "discard": "Discard",
+    "interrupted": {
+      "bodyFailed": "{done} of {total} objects in {name} were moved. {failed, plural, one {# object} other {# objects}} could not be moved."
+    },
+    "discarded": "Discarded. Some objects are in the destination and some are still in {name}; nothing was deleted."
   }
 }

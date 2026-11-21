@@ -20,7 +20,18 @@ export interface InterruptedUpload {
   name: string;
 }
 
+/** A move, rename or copy running in the background (FR-44: "Moving “{name}”" with progress). */
+export interface OperationRow {
+  id: string;
+  name: string;
+  done: number;
+  total: number;
+}
+
 interface TransferState {
+  operations: OperationRow[];
+  setOperation: (row: OperationRow) => void;
+  removeOperation: (id: string) => void;
   transfers: Transfer[];
   interrupted: InterruptedUpload[];
   collapsed: boolean;
@@ -35,6 +46,9 @@ interface TransferState {
 }
 
 export const useTransfers = create<TransferState>((set) => ({
+  operations: [],
+  setOperation: (row) => { set((state) => ({ operations: state.operations.some((existing) => existing.id === row.id) ? state.operations.map((existing) => (existing.id === row.id ? row : existing)) : [...state.operations, row], collapsed: false })); },
+  removeOperation: (id) => { set((state) => ({ operations: state.operations.filter((row) => row.id !== id) })); },
   transfers: [],
   interrupted: [],
   collapsed: false,
@@ -45,5 +59,5 @@ export const useTransfers = create<TransferState>((set) => ({
   addInterrupted: (items) => { set((state) => ({ interrupted: [...state.interrupted, ...items], collapsed: false })); },
   dismissInterrupted: (id) => { set((state) => ({ interrupted: state.interrupted.filter((item) => item.id !== id) })); },
   setCollapsed: (collapsed) => { set({ collapsed }); },
-  reset: () => { set({ transfers: [], interrupted: [], collapsed: false }); },
+  reset: () => { set({ transfers: [], interrupted: [], operations: [], collapsed: false }); },
 }));

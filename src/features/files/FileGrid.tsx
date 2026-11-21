@@ -157,7 +157,7 @@ export function FileGrid(props: ItemViewProps) {
             style={{ transform, height: (row.kind === "folders" ? FOLDER_ROW : FILE_ROW) - GAP, gridTemplateColumns: `repeat(${columns.toString()}, minmax(0, 1fr))` }}
           >
             {row.items.map((item, offset) => (
-              <Tile key={item.key} item={item} selected={keys.has(item.key)} index={row.start + offset} itemProps={itemProps} handlers={handlers} />
+              <Tile key={item.key} item={item} selected={keys.has(item.key)} index={row.start + offset} itemProps={itemProps} handlers={handlers} readOnly={props.readOnly} />
             ))}
           </div>
         );
@@ -166,8 +166,8 @@ export function FileGrid(props: ItemViewProps) {
   );
 }
 
-function Tile({ item, selected, index, itemProps, handlers }: { item: Item; selected: boolean; index: number; itemProps: ReturnType<typeof useItemInteractions>["itemProps"]; handlers: ItemViewProps["handlers"] }) {
-  const menu = actionsFor(item, handlers);
+function Tile({ item, selected, index, itemProps, handlers, readOnly }: { readOnly: boolean; item: Item; selected: boolean; index: number; itemProps: ReturnType<typeof useItemInteractions>["itemProps"]; handlers: ItemViewProps["handlers"] }) {
+  const menu = actionsFor(item, handlers, readOnly);
   const folder = item.kind === "folder";
   return (
     <div

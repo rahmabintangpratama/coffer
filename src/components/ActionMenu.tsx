@@ -14,6 +14,8 @@ export interface MenuAction {
   onSelect: () => void;
   tone?: "danger";
   disabled?: boolean;
+  /** Why it is disabled, shown under the label (a disabled action is never left unexplained). */
+  reason?: string;
   /** Marks the current choice in a menu of options (the filter chips). */
   checked?: boolean;
 }
@@ -47,7 +49,10 @@ function Items({ groups, kind }: { groups: MenuGroup[]; kind: typeof Dropdown | 
       {group.actions.map((action) => (
         <kind.Item key={action.id} disabled={action.disabled ?? false} onSelect={action.onSelect} className={itemClass(action, focusRing)}>
           {action.icon}
-          {action.label}
+          <span className="flex min-w-0 flex-col">
+            {action.label}
+            {action.disabled === true && action.reason !== undefined && <span className="text-sm text-fg-muted">{action.reason}</span>}
+          </span>
           {action.checked === true && <Check aria-hidden="true" className="ml-auto size-4" />}
         </kind.Item>
       ))}
@@ -120,7 +125,10 @@ export function ActionMenu({ groups, triggerLabel, title, closeLabel, component,
                   className={cn(itemClass(action, ""), "hover:bg-hover focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus")}
                 >
                   {action.icon}
-                  {action.label}
+                  <span className="flex min-w-0 flex-col">
+                    {action.label}
+                    {action.disabled === true && action.reason !== undefined && <span className="text-sm text-fg-muted">{action.reason}</span>}
+                  </span>
                   {action.checked === true && <Check aria-hidden="true" className="ml-auto size-4" />}
                 </button>
               ))}

@@ -14,7 +14,7 @@ export default function FilesRoute({ connection }: { connection: ConnectionSumma
       connection={connection}
       settings={{ view, sort, density, showHiddenFiles }}
       onSettings={update}
-      notify={(message) => { push({ message }); }}
+      notify={(message, action) => { push({ message, ...(action ? { actionLabel: action.label, onAction: action.run } : {}) }); }}
     />
   );
 }

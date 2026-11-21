@@ -1,10 +1,10 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback } from "react";
 import { t } from "@/lib/i18n";
 import type { ConnectionSummary } from "@/lib/types";
-import { ConflictDialog } from "./ConflictDialog";
 import { type UploadCandidate, planUploads } from "./plan";
 import { startUploads } from "./queue";
-import { type ConflictAnswer, type ConflictQuestion, resolveConflicts } from "./resolve";
+import { resolveConflicts } from "./resolve";
+import { useConflictPrompt } from "./useConflictPrompt";
 
 export interface UseUploadOptions {
   connection: ConnectionSummary;
@@ -23,22 +23,7 @@ export interface UseUploadOptions {
  * conflict dialog to render.
  */
 export function useUpload({ connection, folderPrefix, folderName, notify, onUploaded }: UseUploadOptions) {
-  const [question, setQuestion] = useState<ConflictQuestion | null>(null);
-  const waiting = useRef<((answer: ConflictAnswer) => void) | null>(null);
-
-  const ask = useCallback(
-    (next: ConflictQuestion) =>
-      new Promise<ConflictAnswer>((resolve) => {
-        waiting.current = resolve;
-        setQuestion(next);
-      }),
-    [],
-  );
-  const answer = useCallback((value: ConflictAnswer) => {
-    setQuestion(null);
-    waiting.current?.(value);
-    waiting.current = null;
-  }, []);
+  const { ask, dialog } = useConflictPrompt(folderName);
 
   const upload = useCallback(
     async (candidates: UploadCandidate[]) => {
@@ -63,6 +48,5 @@ export function useUpload({ connection, folderPrefix, folderName, notify, onUplo
     [ask, connection, folderName, folderPrefix, notify, onUploaded],
   );
 
-  const dialog = <ConflictDialog question={question} folder={folderName} onAnswer={answer} />;
   return { upload, dialog };
 }
