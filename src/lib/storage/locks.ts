@@ -46,6 +46,17 @@ export async function withOperationLock<T>(id: string, task: () => Promise<T>): 
   return manager.request(`${OPERATION_LOCK_PREFIX}${id}`, task);
 }
 
+/**
+ * Like `withOperationLock`, but never waits: when another tab (or this one) holds the lock the task
+ * does not run and the result says so. Resume uses it so two tabs cannot both run one entry (D-41).
+ * Without the Web Locks API the task runs, unprotected.
+ */
+export async function tryOperationLock<T>(id: string, task: () => Promise<T>): Promise<{ ran: true; value: T } | { ran: false }> {
+  const manager = locks();
+  if (!manager) return { ran: true, value: await task() };
+  return manager.request(`${OPERATION_LOCK_PREFIX}${id}`, { ifAvailable: true }, async (lock) => (lock ? { ran: true as const, value: await task() } : { ran: false as const }));
+}
+
 /** Entry ids whose operation lock is held right now, here or in another tab; null when the lock state cannot be read. */
 export async function heldOperationIds(): Promise<ReadonlySet<string> | null> {
   const manager = locks();

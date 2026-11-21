@@ -329,7 +329,7 @@ The UI never hides these. Each one is surfaced where it affects the person.
 **Acceptance**
 - AC-32.1 Given a file, When renamed to a new valid name, Then the object is copied to the new key, verified, and the old key deleted; progress shows if it takes more than 1 s.
 - AC-32.2 Given a name containing `/`, Then the dialog shows `dlg.rename.err.slash` and does not submit.
-- AC-32.3 Given the new key already exists, Then the person is asked Replace, Keep both or Skip.
+- AC-32.3 Given the new key already exists, Then the person is asked Replace, Keep both or Skip; for a folder, Keep both or Merge (D-42).
 - AC-32.4 Given a folder, When renamed, Then every object under the prefix is copied and deleted via the journal (FR-45).
 - AC-32.5 Given success, Then a toast offers Undo while the journal entry exists.
 
@@ -357,7 +357,7 @@ The UI never hides these. Each one is surfaced where it affects the person.
 - AC-34.5 Given (v1) items are dragged onto a folder on desktop, Then the destination highlights, a count chip shows and the same move runs.
 
 **States:** choosing, running, success with Undo, interrupted (FR-45), error.
-**Edge cases:** name clashes at the destination use the conflict dialog (FR-43). Moving 10,000 objects must not block the UI.
+**Edge cases:** name clashes at the destination use the conflict dialog (FR-43). A clash with a folder offers only `Keep both` (the moved folder becomes `name (1)/`) and `Merge` (objects with the same key are overwritten; objects that exist only in the destination are never deleted); a clash with a file keeps Replace, Keep both and Skip (D-42). Moving 10,000 objects must not block the UI.
 **Screens:** `S22_Move`, `S28_Interrupted`
 
 #### FR-35 New folder (MVP)

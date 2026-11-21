@@ -186,6 +186,40 @@ test.describe("folders and the journal", () => {
   });
 });
 
+/** Move the folder `src` of the open folder into `dst`, through the Move dialog. */
+async function moveSrcIntoDst(page: Page): Promise<void> {
+  await page.getByRole("button", { name: "More actions for src" }).first().click();
+  const layout = layoutFor(test.info());
+  if (layout === "compact") await page.getByRole("dialog").getByRole("button", { name: /^Move/ }).click();
+  else await page.getByRole("menuitem", { name: /^Move/ }).click();
+  const dialog = page.getByRole("dialog", { name: "Move 1 item" });
+  await dialog.getByRole("tree").getByRole("treeitem", { name: /^dst/ }).focus();
+  await page.keyboard.press("Enter");
+  await dialog.getByRole("button", { name: "Move here" }).click();
+}
+
+/** Wait until the journal in IndexedDB says more than `count` objects are done: the move is under way. */
+async function journalDoneReaches(page: Page, count: number, timeout: number): Promise<void> {
+  // Wait until a good part is done, as the journal in IndexedDB says, then close the tab's work by reloading.
+  await expect
+    .poll(
+      () =>
+        page.evaluate(
+          () =>
+            new Promise<number>((resolve, reject) => {
+              const open = indexedDB.open("coffer");
+              open.onerror = () => { reject(new Error("open")); };
+              open.onsuccess = () => {
+                const all = open.result.transaction("journal").objectStore("journal").getAll();
+                all.onsuccess = () => { resolve(Math.max(0, ...(all.result as { done: number }[]).map((entry) => entry.done))); };
+              };
+            }),
+        ),
+      { timeout },
+    )
+    .toBeGreaterThan(count);
+}
+
 test("exit check: a 2,000-object folder move cut off by a reload resumes from the banner with nothing lost or duplicated", async ({ page, browserName }) => {
   test.skip(browserName !== "chromium", "One engine is enough for the long exit check; the engine itself is covered in integration.");
   test.setTimeout(240_000);
@@ -204,32 +238,8 @@ test("exit check: a 2,000-object folder move cut off by a reload resumes from th
   // The new folder is not in the list that is already showing.
   await openFolder(page, `${folder}/`);
   await expect(row(page, "src")).toBeVisible({ timeout: 15_000 });
-  await page.getByRole("button", { name: "More actions for src" }).first().click();
-  const layout = layoutFor(test.info());
-  if (layout === "compact") await page.getByRole("dialog").getByRole("button", { name: /^Move/ }).click();
-  else await page.getByRole("menuitem", { name: /^Move/ }).click();
-  const dialog = page.getByRole("dialog", { name: "Move 1 item" });
-  await dialog.getByRole("tree").getByRole("treeitem", { name: /^dst/ }).focus();
-  await page.keyboard.press("Enter");
-  await dialog.getByRole("button", { name: "Move here" }).click();
-  // Wait until a good part is done, as the journal in IndexedDB says, then close the tab's work by reloading.
-  await expect
-    .poll(
-      () =>
-        page.evaluate(
-          () =>
-            new Promise<number>((resolve, reject) => {
-              const open = indexedDB.open("coffer");
-              open.onerror = () => { reject(new Error("open")); };
-              open.onsuccess = () => {
-                const all = open.result.transaction("journal").objectStore("journal").getAll();
-                all.onsuccess = () => { resolve(Math.max(0, ...(all.result as { done: number }[]).map((entry) => entry.done))); };
-              };
-            }),
-        ),
-      { timeout: 90_000 },
-    )
-    .toBeGreaterThan(150);
+  await moveSrcIntoDst(page);
+  await journalDoneReaches(page, 150, 90_000);
   await page.unroute(/./);
   await page.reload();
   await enterApp(page, "/files");
@@ -245,5 +255,52 @@ test("exit check: a 2,000-object folder move cut off by a reload resumes from th
   await expect(toast(page)).toContainText("Moved src", { timeout: 180_000 });
   // The diff: nothing left at the source, every object at the destination exactly once, none invented.
   expect(await keysUnder(`${folder}/src/`)).toEqual([]);
+  expect(await keysUnder(`${folder}/dst/src/`)).toEqual(original.map((key) => key.replace("/src/", "/dst/src/")));
+});
+
+test("D-41 Resume clicked in two tabs runs the operation once, and the result has no duplicates", async ({ page, context, browserName }) => {
+  test.skip(browserName !== "chromium", "Web Locks across tabs are the same in every engine; one is enough for the race.");
+  test.setTimeout(180_000);
+  const folder = unique();
+  const original = Array.from({ length: 400 }, (_, n) => `${folder}/src/f-${n.toString().padStart(4, "0")}.txt`);
+  await putMany(s3, E2E_BUCKET, original, 48);
+  await page.route(/./, async (route) => {
+    if (route.request().headers()["x-amz-copy-source"] !== undefined) await new Promise((resolve) => setTimeout(resolve, 30));
+    await route.continue().catch(() => undefined);
+  });
+  await enterApp(page, "/files");
+  await openFolder(page, folder);
+  await expect(row(page, "src")).toBeVisible({ timeout: 15_000 });
+  await put(`${folder}/dst/keep.txt`, "k");
+  await openFolder(page, `${folder}/`);
+  await expect(row(page, "src")).toBeVisible({ timeout: 15_000 });
+  await moveSrcIntoDst(page);
+  await journalDoneReaches(page, 40, 60_000);
+  await page.unroute(/./);
+  await page.reload();
+
+  // Two tabs with their own memory-only sessions: both load the same interrupted entry.
+  const other = await context.newPage();
+  const tabs = [page, other];
+  const copies = new Map<string, number>();
+  for (const tab of tabs) {
+    tab.on("request", (request) => {
+      const source = request.headers()["x-amz-copy-source"];
+      if (source !== undefined) copies.set(source, (copies.get(source) ?? 0) + 1);
+    });
+  }
+  for (const tab of tabs) {
+    await enterApp(tab, "/files");
+    await openFolder(tab, folder);
+    await expect(tab.locator('[data-component="InterruptedBanner"]').getByText("A move was interrupted")).toBeVisible({ timeout: 30_000 });
+  }
+  await Promise.all(tabs.map((tab) => tab.locator('[data-component="InterruptedBanner"]').getByRole("button", { name: "Resume" }).click()));
+  await expect.poll(async () => (await keysUnder(`${folder}/src/`)).length, { timeout: 120_000 }).toBe(0);
+
+  // Exactly one tab ran it; the other said so and copied nothing.
+  const messages = await Promise.all(tabs.map((tab) => toast(tab).allTextContents()));
+  expect(messages.flat().filter((text) => /Moved src/.test(text))).toHaveLength(1);
+  expect(messages.flat().some((text) => /running in another tab|already finished or was discarded/.test(text))).toBe(true);
+  expect([...copies.values()].every((count) => count === 1)).toBe(true);
   expect(await keysUnder(`${folder}/dst/src/`)).toEqual(original.map((key) => key.replace("/src/", "/dst/src/")));
 });

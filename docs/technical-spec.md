@@ -346,7 +346,7 @@ interface JournalEntry extends OperationJournalEntry {
 
 **Locking.** Locking does not pause an operation that is already running: it finishes with its credential lease (section 9). Queued operations wait and start after unlock. A trash entry stores its batch prefix (`target`) when it is created, so a resume reuses it.
 
-**Concurrency.** Objects within one operation copy in parallel (up to 4) but deletes of a source key happen strictly after that key's verify. Two operations touching the same prefix are serialized. Each selected item is its own entry; the app runs the entries of a page one after another. A name that clashes at the destination is decided per selected item (Replace, Keep both, Skip), not per nested object: Keep both on a folder renames the destination folder.
+**Concurrency.** Objects within one operation copy in parallel (up to 4) but deletes of a source key happen strictly after that key's verify. Two operations touching the same prefix are serialized. Each selected item is its own entry; the app runs the entries of a page one after another. A name that clashes at the destination is decided per selected item (files: Replace, Keep both, Skip; folders: Keep both, Merge), not per nested object. Keep both on a folder renames the moved folder to the first free `name (n)/`. Merge moves into the existing prefix: same keys are overwritten as the move reaches them and keys only the destination holds are never touched (D-42). Resume takes the lock `coffer-op:<id>` with `ifAvailable` before it does anything and re-reads the entry: if the lock is held the tab says the operation is running in another tab, and if the entry is no longer `interrupted` it says so; either way nothing runs twice (D-41).
 
 ---
 

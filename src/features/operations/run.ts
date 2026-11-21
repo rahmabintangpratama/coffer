@@ -26,13 +26,20 @@ const nameOf = (key: string) => {
 // Two operations on one bucket never overlap: they run one after another (technical-spec 8, Concurrency).
 let queue: Promise<unknown> = Promise.resolve();
 
+/** Run `job` after the jobs queued before it; a failure shows the error toast and does not stop the queue. */
+function enqueue(job: () => Promise<void>, hooks: RunHooks): Promise<void> {
+  const next = queue.then(job).catch(() => { hooks.notify(t("op.error")); });
+  queue = next;
+  return next;
+}
+
 /**
  * Write the journal entry and run it, in the background: the panel shows "Moving “name”"
  * with progress, the entry survives a closed tab, and the screen can go on being used.
  */
 export function startOperation(input: StartInput, hooks: RunHooks): void {
-  const run = async () => {
-    const [{ startEntry }, { journalStore }] = await Promise.all([import("@/lib/storage/journal"), import("@/lib/storage/journal-store")]);
+  void enqueue(async () => {
+    const [{ startEntry }, { journalStore }, { withOperationLock }] = await Promise.all([import("@/lib/storage/journal"), import("@/lib/storage/journal-store"), import("@/lib/storage/locks")]);
     const entry = startEntry({
       id: crypto.randomUUID(),
       kind: input.kind,
@@ -43,44 +50,56 @@ export function startOperation(input: StartInput, hooks: RunHooks): void {
       target: input.target,
       ...(input.undoOf === undefined ? {} : { undoOf: input.undoOf }),
     });
-    await journalStore.put(entry);
-    await execute(input.connection, entry, hooks);
-  };
-  queue = queue.then(run).catch(() => { hooks.notify(t("op.error")); });
+    // The lock comes before the first write: an entry that says `running` always has a live lock (D-41).
+    await withOperationLock(entry.id, async () => {
+      await journalStore.put(entry);
+      await execute(input.connection, entry, hooks);
+    });
+  }, hooks);
 }
 
-/** Resume an interrupted entry (technical-spec 8: re-list from the cursor, trust nothing in memory). */
+/**
+ * Resume an interrupted entry (technical-spec 8: re-list from the cursor, trust nothing in memory).
+ * The lock is taken first and never waited for: if another tab holds it the operation is running
+ * there, and this tab says so instead of starting it a second time (D-41).
+ */
 export function resumeOperation(connection: ConnectionSummary, entry: JournalEntry, hooks: RunHooks): void {
   useOperations.getState().removeInterrupted(entry.id);
-  queue = queue
-    .then(async () => {
-      const { resume } = await import("@/lib/storage/journal");
-      await execute(connection, resume(entry), hooks);
-    })
-    .catch(() => { hooks.notify(t("op.error")); });
+  void (async () => {
+    try {
+      const [{ journalStore }, { resume }, { tryOperationLock }] = await Promise.all([import("@/lib/storage/journal-store"), import("@/lib/storage/journal"), import("@/lib/storage/locks")]);
+      const outcome = await tryOperationLock(entry.id, () =>
+        enqueue(async () => {
+          // The banner's copy may be old: another tab may have finished or discarded the entry since.
+          const stored = await journalStore.get(entry.id);
+          if (stored?.status !== "interrupted") {
+            hooks.notify(t("op.resumeSettled"));
+            return;
+          }
+          await execute(connection, resume(stored), hooks);
+        }, hooks),
+      );
+      if (!outcome.ran) hooks.notify(t("op.resumeElsewhere"));
+    } catch {
+      hooks.notify(t("op.error"));
+    }
+  })();
 }
 
 async function execute(connection: ConnectionSummary, entry: JournalEntry, hooks: RunHooks): Promise<void> {
-  const [s3, { journalStore }, { withOperationLock }, { reversed }] = await Promise.all([
-    import("@/lib/s3"),
-    import("@/lib/storage/journal-store"),
-    import("@/lib/storage/locks"),
-    import("@/lib/storage/journal"),
-  ]);
+  const [s3, { journalStore }, { reversed }] = await Promise.all([import("@/lib/s3"), import("@/lib/storage/journal-store"), import("@/lib/storage/journal")]);
   const transfers = useTransfers.getState();
   const name = nameOf(entry.source);
   transfers.setOperation({ id: entry.id, name, done: entry.done, total: entry.total });
   let final: JournalEntry;
   try {
-    // The lock is held for the whole run: another tab's load can tell this entry is alive and leave it alone (D-41).
-    final = await withOperationLock(entry.id, () =>
-      s3.runOperation({
-        client: s3.clientFor(connection),
-        journal: journalStore,
-        entry,
-        onProgress: (progress) => { useTransfers.getState().setOperation({ id: progress.id, name, done: progress.done, total: progress.total }); },
-      }),
-    );
+    // The caller holds the entry's lock for the whole run, so another tab's load leaves it alone (D-41).
+    final = await s3.runOperation({
+      client: s3.clientFor(connection),
+      journal: journalStore,
+      entry,
+      onProgress: (progress) => { useTransfers.getState().setOperation({ id: progress.id, name, done: progress.done, total: progress.total }); },
+    });
   } finally {
     useTransfers.getState().removeOperation(entry.id);
   }
