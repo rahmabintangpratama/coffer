@@ -48,6 +48,21 @@ describe("the presets in design/providers.json", () => {
   });
 });
 
+// `pnpm demo:presets` runs only this test and prints what every preset resolves to.
+describe("preset overview", () => {
+  it.runIf(process.env.COFFER_DEMO !== undefined)("prints endpoint, region and addressing for every preset", () => {
+    const rows = presetCases.map(({ id, label, values, bucket }) => {
+      const result = resolveConnection(getPreset(id), values, bucket === undefined ? {} : { bucket });
+      if (!result.ok) throw new Error(`${label} did not resolve`);
+      return [label, result.value.endpoint, result.value.region, result.value.forcePathStyle ? "path" : "virtual"];
+    });
+    const widths = [0, 1, 2, 3].map((column) => Math.max(...[["Provider", "Endpoint", "Region", "Addressing"], ...rows].map((row) => (row[column] ?? "").length)));
+    const line = (row: string[]) => row.map((cell, column) => cell.padEnd(widths[column] ?? 0)).join("  ");
+    console.log(["", line(["Provider", "Endpoint", "Region", "Addressing"]), line(widths.map((width) => "-".repeat(width))), ...rows.map(line)].join("\n"));
+    expect(rows).toHaveLength(presetCases.length);
+  });
+});
+
 describe("validateProvidersFile catches a bad preset", () => {
   const clone = () => structuredClone(providersFile);
   const withPreset = (change: (preset: ProvidersFile["providers"][number]) => void) => {

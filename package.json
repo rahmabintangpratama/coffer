@@ -23,7 +23,9 @@
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:e2e": "playwright test",
     "prepare": "node scripts/hooks/prepare.ts",
-    "commitlint": "commitlint"
+    "commitlint": "commitlint",
+    "demo:presets": "COFFER_DEMO=1 vitest run src/lib/providers/providers.test.ts -t \"prints endpoint\" --silent=false",
+    "demo:connection-test": "playwright test tests/e2e/connection-test.spec.ts --project=chromium-1440 --project=webkit-1440 --reporter=list"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1173.0",
