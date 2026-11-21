@@ -17,7 +17,8 @@
     "test": "vitest run",
     "tokens:build": "node scripts/tokens/build.ts",
     "tokens:check": "node scripts/tokens/build.ts --check",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "headers:check": "node scripts/headers/check.ts"
   },
   "dependencies": {
     "class-variance-authority": "0.7.1",

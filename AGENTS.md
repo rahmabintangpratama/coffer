@@ -50,6 +50,7 @@ Package manager: **pnpm** 12 with Node 22 (`.nvmrc`; enable pnpm with `corepack 
 | Generate token CSS from `design/tokens.json` | `pnpm tokens:build` |
 | Check generated CSS matches committed files | `pnpm tokens:check` |
 | Check copy keys used in code exist | `pnpm copy:check` (TBD) |
+| Check `public/_headers` and `dist/_headers` against the spec | `pnpm headers:check` |
 
 ## Conventions
 
