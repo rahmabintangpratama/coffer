@@ -154,6 +154,8 @@ test.describe("upload", () => {
               };
             }),
         ),
+        // The record is written right after the multipart upload is created; a slow runner can take longer than the default 5 s.
+        { timeout: 20_000 },
       )
       .toBe(1);
     await page.unroute(/partNumber=/);
