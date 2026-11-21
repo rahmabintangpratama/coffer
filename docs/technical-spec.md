@@ -572,6 +572,7 @@ Manual, with a throwaway bucket and a scoped key per provider, run before each r
 | Session token (where applicable) | Token signing and expiry cap |
 | Read-only key detection | `AccessDenied` shape on write |
 | Wrong region and wrong bucket errors | Error mapping |
+| A local or LAN endpoint reached from the deployed HTTPS origin, in Chrome, Safari and Firefox | Local network access permission and mixed-content rules ([OQ-35](open-questions.md#oq-35-chromes-local-network-access-permission)) |
 | Unicode, spaces and `#?%+` in keys | Encoding |
 
 Presets with known quirks to record: Oracle OCI (browser CORS not supported), Alibaba OSS (virtual-hosted only), Tencent COS (bucket suffix), Supabase (session token mode), GCS (HMAC interoperability), IDrive e2 (per-account endpoint).

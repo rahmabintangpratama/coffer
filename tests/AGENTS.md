@@ -17,6 +17,7 @@ Integration tests, end-to-end tests and shared fixtures. Unit and component test
 - E2E viewport matrix: **375, 768 and 1440**, light and dark for visual and axe checks. Chromium for every spec; WebKit and Firefox for smoke and layout.
 - Every e2e screen runs axe (serious and critical must be zero). Add keyboard-only flows for every FR with a keyboard path.
 - E2E asserts no secret appears in the DOM, URL, storage dump or network log (other than signed provider requests).
+- Browser tests that call the S3 fixture serve their page from a real loopback server (`tests/e2e/connection-test.spec.ts`), not `page.route()`: Chromium blocks requests from a page it did not load from the network to loopback (OQ-35). Run the library code in the page by bundling an entry with `tests/e2e/bundle.ts`.
 - XSS fixtures (hostile names, HTML, SVG, Markdown) must stay inert; add one when a new renderer lands.
 - CORS: set rules per bucket with `PutBucketCors` (one bucket with a rule, one without); use Playwright route interception for `cors` versus `network` cases. Do not rely on a global CORS setting.
 - No fixed sleeps; wait on conditions. Tests must pass offline from the repo plus Docker.

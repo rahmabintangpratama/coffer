@@ -69,6 +69,13 @@ Answered by the project owner. The **From** column gives the question that was o
 
 ## Open questions
 
+### OQ-35: Chrome's local network access permission
+- **Owner:** Eng, Design
+- **Status:** Open
+- **Question:** While testing the connection test in Playwright's Chromium, a request from a page that Chromium treated as public to `http://127.0.0.1:9000` failed with "Permission was denied for this request to access the `loopback` address space". That is Chrome's Local Network Access check: a page on a public origin (the deployed Coffer) that reaches a loopback or private-network endpoint (MinIO on localhost or on the LAN) needs the person's permission. A denied or unavailable permission surfaces as a plain `TypeError`, so the connection test reports `network` at the reach step. It was **not verified in a normal, attended Chrome**, and Safari's and Firefox's behavior is unknown.
+- **Recommended:** Add a manual compatibility check (deployed origin to a local endpoint in Chrome, Safari and Firefox) to the M10 matrix. If it is confirmed, show a hint when the endpoint host is loopback or private and the failure is `network` ("allow local network access when the browser asks, then test again"; new `ob.fail.localNetwork.*` copy) and mention it in the README. The algorithm does not change. The browser e2e spec serves its page from a real loopback server so it is not affected.
+- **Affects:** FR-5, `ob.fail.net.*`, technical-spec 15.5
+
 ### OQ-33: App icon and logo
 - **Owner:** Product, Design
 - **Status:** Open
