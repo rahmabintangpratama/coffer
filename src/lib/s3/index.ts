@@ -44,3 +44,5 @@ export { looksBinary, mimeOf, sniffKind } from "./keys";
 export { COPY_SINGLE_LIMIT, copyObject, copyPartSizeFor, copySourceOf, type CopyOptions } from "./copy";
 export { countUnder, listUnder, type ObjectInfo } from "./list-all";
 export { OPERATION_CONCURRENCY, runOperation, targetKeyOf, verifies, type OperationOptions } from "./operations";
+export { DELETE_BATCH, deleteKeys, deleteUnder, type DeleteFailure, type DeleteResult } from "./delete";
+export { batchPrefixOf, batchTime, newBatchId, parseTrashKey, trashKeyOf, type TrashedKey } from "./trash";
