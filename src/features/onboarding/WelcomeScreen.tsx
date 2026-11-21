@@ -2,7 +2,6 @@ import { Cloud, KeyRound, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/Button";
 import { CofferLogo } from "@/components/CofferLogo";
 import { t } from "@/lib/i18n";
-import { providersFile } from "@/lib/providers";
 import { StepFrame } from "./StepFrame";
 
 /**
@@ -18,7 +17,7 @@ export function WelcomeScreen({ onConnect }: { onConnect: () => void }) {
   const facts = [
     { icon: KeyRound, text: t("ob.factKeys") },
     { icon: ShieldCheck, text: t("ob.factFree") },
-    { icon: Cloud, text: t("ob.factProviders", { count: providerCountClaim(providersFile.providers.length) }) },
+    { icon: Cloud, text: t("ob.factProviders", { count: providerCountClaim(__PROVIDER_COUNT__) }) },
   ];
   return (
     <StepFrame title={t("ob.welcome.title")} focusHeading={false} lead={<CofferLogo width={24} label={t("app.name")} className="self-start" />}>

@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { describe, expect, it, vi } from "vitest";
+import { providersFile } from "@/lib/providers";
 import { providerCountClaim, WelcomeScreen } from "./WelcomeScreen";
 
 describe("WelcomeScreen (O10)", () => {
@@ -23,6 +24,10 @@ describe("WelcomeScreen (O10)", () => {
     expect(providerCountClaim(21)).toBe(20);
     expect(providerCountClaim(30)).toBe(30);
     expect(providerCountClaim(9)).toBe(0);
+  });
+
+  it("D-40 the build-time provider count is the real number of presets", () => {
+    expect(__PROVIDER_COUNT__).toBe(providersFile.providers.length);
   });
 
   it("shows the logo with its name and has no accessibility violations", async () => {

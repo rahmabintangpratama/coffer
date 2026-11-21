@@ -181,6 +181,8 @@ test.describe("keyboard", () => {
     await expect(page.getByRole("button", { name: "Connect a bucket" })).toBeVisible();
     await tabTo("Connect a bucket");
     await page.keyboard.press("Enter");
+    // The provider list is a lazy chunk; the step takes focus itself once it shows.
+    await expect(page.getByRole("heading", { name: "Choose your provider" })).toBeVisible();
     await tabTo("Search providers");
     await page.keyboard.type("other");
     await tabTo(/Other S3-compatible service$/);

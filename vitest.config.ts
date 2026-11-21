@@ -1,11 +1,13 @@
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 import { copyGroups } from "./scripts/vite/copy-groups.ts";
+import { providerCount } from "./scripts/vite/provider-count.ts";
 
 const root = (path: string) => fileURLToPath(new URL(path, import.meta.url));
 
 export default defineConfig({
   plugins: [copyGroups()],
+  define: { __PROVIDER_COUNT__: JSON.stringify(providerCount()) },
   resolve: {
     alias: {
       "@": root("./src"),

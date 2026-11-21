@@ -18,6 +18,7 @@ const passing = (extra: Partial<ConnectionTestRun> = {}): ConnectionTestRun => (
 
 async function fillCustom(bucket: string, secret = "example-secret-value") {
   await userEvent.click(screen.getByRole("button", { name: "Connect a bucket" }));
+  await screen.findByRole("heading", { name: "Choose your provider" });
   await userEvent.click(screen.getByRole("button", { name: "Other S3-compatible service" }));
   await userEvent.type(screen.getByLabelText("Endpoint URL"), "https://s3.example-provider.test");
   await userEvent.type(screen.getByLabelText("Access Key ID"), "example-key-id");
@@ -123,6 +124,8 @@ describe("OnboardingFlow", () => {
   it("Back from a provider's form returns to the provider list, and from there to Welcome", async () => {
     render(<OnboardingFlow onConnected={() => undefined} />);
     await userEvent.click(screen.getByRole("button", { name: "Connect a bucket" }));
+    await screen.findByRole("heading", { name: "Choose your provider" });
+  await screen.findByRole("heading", { name: "Choose your provider" });
     await userEvent.click(screen.getAllByRole("button", { name: /Cloudflare R2/ })[0]!);
     await userEvent.click(screen.getByRole("button", { name: "Back" }));
     expect(screen.getByRole("heading", { name: "Choose your provider" })).toBeInTheDocument();

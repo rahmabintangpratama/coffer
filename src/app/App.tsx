@@ -1,12 +1,12 @@
 import { lazy, Suspense } from "react";
-import { CopyBoundary } from "./CopyBoundary";
+import { CopyBoundary } from "@/components/CopyBoundary";
 import { LoadError } from "./LoadError";
 import { routes } from "./routes";
 import { useSession } from "./session";
 
 // Onboarding, the provider presets and the form are not needed once connected, so they are one lazy chunk.
 const OnboardingFlow = lazy(() => import("@/features/onboarding").then((module) => ({ default: module.OnboardingFlow })));
-const onboardingGroups = ["ob", "form", "conn"] as const;
+const onboardingGroups = ["ob"] as const;
 // The connected app (shell, routes, query client, transfers) loads after the connection exists, not before the first paint.
 const ConnectedApp = lazy(() => import("./ConnectedApp"));
 

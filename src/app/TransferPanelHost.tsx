@@ -1,5 +1,5 @@
 import { TransferPanel, useTransfers } from "@/features/transfers";
-import { CopyBoundary } from "./CopyBoundary";
+import { CopyBoundary } from "@/components/CopyBoundary";
 
 /** The panel on every route. Its copy loads only when there is something to show. */
 export function TransferPanelHost() {

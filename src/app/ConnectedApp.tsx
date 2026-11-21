@@ -7,7 +7,7 @@ import { configureTransfers } from "@/features/transfers";
 import type { ConnectionSummary } from "@/lib/types";
 import { abortInterruptedUploads } from "./abortOnLoad";
 import { useToasts } from "./toast";
-import { CopyBoundary } from "./CopyBoundary";
+import { CopyBoundary } from "@/components/CopyBoundary";
 import { LoadError } from "./LoadError";
 import { queryClient } from "./query";
 import { routes } from "./routes";
