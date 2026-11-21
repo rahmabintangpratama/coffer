@@ -11,6 +11,8 @@ import { parseHeaders, type ParsedHeaders } from "../headers/check.ts";
 const MIME: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
+  // The pdf.js worker is a module file; Cloudflare Pages serves .mjs as JavaScript too.
+  ".mjs": "text/javascript; charset=utf-8",
   ".css": "text/css; charset=utf-8",
   ".json": "application/json; charset=utf-8",
   ".webmanifest": "application/manifest+json; charset=utf-8",

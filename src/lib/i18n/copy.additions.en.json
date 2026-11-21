@@ -317,6 +317,11 @@
     "zoomLabel": "Zoom",
     "type": {
       "unknown": "Unknown"
+    },
+    "html": {
+      "source": "Show source",
+      "sandboxNote": "Shown in a sandbox: scripts, forms, popups and remote resources are blocked, and styles may not apply.",
+      "frameTitle": "Sandboxed page for {name}"
     }
   }
 }

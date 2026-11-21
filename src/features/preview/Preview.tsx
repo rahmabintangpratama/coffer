@@ -1,16 +1,21 @@
 import { ArrowLeft, ChevronLeft, ChevronRight, Download, Info, Link2, SkipBack, SkipForward } from "lucide-react";
-import type { KeyboardEvent } from "react";
+import { type KeyboardEvent, lazy, Suspense } from "react";
 import { ActionMenu } from "@/components/ActionMenu";
 import { Button } from "@/components/Button";
 import { FullscreenDialog } from "@/components/FullscreenDialog";
 import { t, type CopyKey } from "@/lib/i18n";
 import type { ConnectionSummary, FileItem, FileKind } from "@/lib/types";
+import { HtmlView } from "./HtmlView";
 import { ImageView } from "./ImageView";
+import { MarkdownView } from "./MarkdownView";
 import { MediaView } from "./MediaView";
 import { NoPreview } from "./NoPreview";
 import { SvgView } from "./SvgView";
 import { TextView } from "./TextView";
 import { useKind } from "./source";
+
+// pdf.js is large; it loads the first time a PDF is opened and not before (technical-spec 14).
+const PdfView = lazy(() => import("./PdfView"));
 import { typeLabelOf } from "./types";
 
 const kindLabel: Record<FileKind, CopyKey> = {
@@ -44,7 +49,14 @@ function Body({ connection, file, onSwipe, onDownload }: { connection: Connectio
     case "video":
     case "audio": return <MediaView connection={connection} file={file} kind={kind} {...common} />;
     case "code": return <TextView connection={connection} file={file} typeName={t(kindLabel[kind])} {...common} />;
-    // PDF, Markdown and HTML arrive in M5b; until then they take the fallback like any type the browser cannot show.
+    case "markdown": return <MarkdownView connection={connection} file={file} {...common} />;
+    case "html": return <HtmlView connection={connection} file={file} {...common} />;
+    case "pdf":
+      return (
+        <Suspense fallback={<p role="status" className="text-(--cf-color-inverse-muted)">{t("pv.loading")}</p>}>
+          <PdfView connection={connection} file={file} {...common} />
+        </Suspense>
+      );
     default: return <NoPreview type={typeLabelOf(file)} onDownload={onDownload} />;
   }
 }
