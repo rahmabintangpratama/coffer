@@ -122,6 +122,7 @@ Imports point down only. Violations fail lint.
 | T-7 | **Applied in M2a.** Add `ConnectionProfile.prefix?: string` (empty or ending in `/`): the connection root and start folder ([D-19](open-questions.md#decisions-made-on-the-owners-behalf)). | Prefix-scoped keys; test file and Trash live under it. |
 | T-9 | **Applied in M2a.** Add `"localNetworkDenied"` to `TestFailure`: a loopback or private endpoint, and the browser has not allowed local network access ([C-54](open-questions.md#owner-confirmed-decisions)). | A denied permission and a stopped server look the same to `fetch`. |
 | T-10 | **Applied in M2b.** Add `ConnectionSummary = Omit<ConnectionProfile, "credentials">`, the only form of a connection that React state, stores and props may hold. | Keys stay inside `lib/storage/vault` ([src/AGENTS.md](../src/AGENTS.md)). |
+| T-11 | **Applied in M6a.** Add `JournalEntry` (the journal's own fields: `phase`, `cursor`, `failures`, `undoOf`) and `endpoint` on it, so a later session can match an entry to a connection without the old connection id ([D-41](open-questions.md#decisions-made-on-the-owners-behalf)). | Technical spec section 8 defines the fields; a memory-only connection has a new id each session. |
 
 ---
 
@@ -339,13 +340,13 @@ interface JournalEntry extends OperationJournalEntry {
 5. **Targets that already exist** (before the operation starts) go through the conflict dialog; during a resume an existing target is treated as a partial result only if it verifies against the source.
 6. **Finish.** Set `phase: "finished"`, `status: "done"`. Done entries are kept 24 hours for Undo and then pruned.
 
-**Resume, Review, Discard.** On app load (after unlock), entries with `status: "running"` become `interrupted`. The banner offers: **Resume** (rules 3 and 4), **Review** (a list of what is at the source and at the target, from live listings), **Discard** (set `status: "discarded"`; nothing is deleted; the person is told that some objects are at the target and some remain at the source).
+**Resume, Review, Discard.** On app load (after unlock), entries with `status: "running"` whose operation lock is free become `interrupted`: a running operation holds the Web Lock `coffer-op:<entry id>`, so an entry that another tab is still running is left alone ([D-41](open-questions.md#decisions-made-on-the-owners-behalf); the same rule as uploads in D-36). Entries are matched to the connection by endpoint and bucket. The banner offers: **Resume** (rules 3 and 4), **Review** (a list of what is at the source and at the target, from live listings), **Discard** (set `status: "discarded"`; nothing is deleted; the person is told that some objects are at the target and some remain at the source).
 
 **Undo.** For move, rename and trash the toast offers Undo while the entry exists. Undo creates a new entry with `undoOf` and the reversed source and target and runs the same rules. Copy and delete-forever have no Undo.
 
 **Locking.** Locking does not pause an operation that is already running: it finishes with its credential lease (section 9). Queued operations wait and start after unlock. A trash entry stores its batch prefix (`target`) when it is created, so a resume reuses it.
 
-**Concurrency.** Objects within one operation copy in parallel (up to 4) but deletes of a source key happen strictly after that key's verify. Two operations touching the same prefix are serialized.
+**Concurrency.** Objects within one operation copy in parallel (up to 4) but deletes of a source key happen strictly after that key's verify. Two operations touching the same prefix are serialized. Each selected item is its own entry; the app runs the entries of a page one after another. A name that clashes at the destination is decided per selected item (Replace, Keep both, Skip), not per nested object: Keep both on a folder renames the destination folder.
 
 ---
 

@@ -1,7 +1,7 @@
 # Coffer MVP implementation plan
 
 - **Purpose:** Split the MVP into milestones of one to three days. Each milestone lists its requirements, deliverables, tests and an exit check that can be demoed.
-- **Status:** Approved. M0, M1, M2a, M2b, M3, M4, M5a and M5b are complete (2026-11-21); M6a has not started.
+- **Status:** Approved. M0, M1, M2a, M2b, M3, M4, M5a, M5b and M6a are complete (2026-11-21); M6b has not started.
 - **Last updated:** 2026-11-21
 - **Source files in `design/`:** [`HANDOFF.md`](../design/HANDOFF.md), [`screens.md`](../design/screens.md), [`components.md`](../design/components.md), [`tokens.json`](../design/tokens.json)
 - **Related:** [product-spec.md](product-spec.md) (FR, AC, release plan), [technical-spec.md](technical-spec.md), [open-questions.md](open-questions.md)
@@ -196,6 +196,8 @@ Total: 35 days plus buffer. Every MVP FR in the product spec appears in at least
 **Requirements:** FR-32, FR-33, FR-34 (dialog; drag-to-move is v1), FR-45.
 
 **Deliverables:** the journal store and state machine (write-ahead, copy, verify, delete, cursor, resume, discard, `undoOf`); the object and folder move engine; `CopyObject` with metadata preserved, multipart `UploadPartCopy` above the limit (the limit is a constant that tests lower); Rename dialog, Make a copy dialog, Move dialog with `FolderTree`; conflict handling at the destination; Transfer panel rows for background moves; the interrupted-operation banner with Resume, Review, Discard.
+
+**Status: complete.** Differences from the plan below: see [D-41](open-questions.md#decisions-made-on-the-owners-behalf) (one entry per selected item, endpoint-matched entries with an operation lock, clashes decided per item, case-only renames on case-folding providers not handled). The 10,000-object folder move is not run in CI: the engine runs 2,000 in integration (the exit-check size, interrupted and resumed), and e2e shows a 400-object move leaves no long task over 250 ms.
 
 **Tests:** unit for the journal state machine; integration with fault injection (crash after copy, after verify, mid-way, `SlowDown`), a copy over the lowered multipart limit, a 10,000-object folder move that does not block the UI; e2e for rename, move, copy and the interrupted banner; axe.
 
