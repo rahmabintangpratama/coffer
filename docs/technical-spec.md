@@ -65,7 +65,7 @@ Imports point down only. Violations fail lint.
 
 ### Routing and state
 
-- **Routing:** hash-based (`#/files/<encoded prefix>`, `#/trash`, `#/starred`, `#/settings/security`) with TanStack Router and hash history. Keys and file names stay in the fragment, so they are never sent to the host or written to its logs (NFR-8). Preview and details are search params on the hash route.
+- **Routing:** hash-based (`#/files/<encoded prefix>`, `#/trash`, `#/starred`, `#/settings/security`) with wouter's hash location (`wouter/use-hash-location`), the routes listed once as string literals in `src/app/routes.ts`. Keys and file names stay in the fragment, so they are never sent to the host or written to its logs (NFR-8). Preview and details are search params on the hash route.
 - **Server state:** TanStack Query. Listing pages are `useInfiniteQuery` keyed by `[connectionId, bucket, prefix]`. Nothing sensitive is persisted by the query cache; it is memory only and cleared on lock.
 - **Client state:** a small `zustand` store for session state (active connection, selection, transfer panel, toasts). Decrypted credentials are not in any store; they live only inside the vault module.
 - **Persistent state:** IndexedDB for encrypted connections, journal, uploads, starred and recent; `localStorage` for settings ([ADR-007](adr/ADR-007-local-data-placement.md)).
@@ -97,7 +97,7 @@ Imports point down only. Violations fail lint.
 | Package | Reason | Decision |
 |---|---|---|
 | `intl-messageformat` | `copy.en.json` uses ICU plural syntax (`{count, plural, one {…} other {…}}`) | Adopted (small, formatjs) |
-| `@tanstack/react-router` | Typed hash routing, same family as Query and Virtual | Adopted |
+| `wouter` | Hash routing in about 2 KB gzip; replaces `@tanstack/react-router` (29 KB) ([C-50](open-questions.md#owner-confirmed-decisions)) | Adopted |
 | `zustand` | Tiny session store, no provider boilerplate | Adopted |
 | `fflate` | Streaming zip (decided: Q6) | Adopted, lazy chunk, v1 |
 | `pdfjs-dist` | PDF preview; CSP has `object-src 'none'` so native embeds are blocked | Adopted, lazy chunk, bundled worker |
@@ -525,7 +525,7 @@ Target **WCAG 2.2 AA** ([`design/accessibility.md`](../design/accessibility.md))
 | List virtualization | always virtualized; overscan 8 rows; grid virtualized by row |
 | Memory | 100,000 loaded keys must stay under about 150 MB of JS heap (store keys compactly) |
 
-Measured at M1: the shell is 128.9 KB gzip of JavaScript, above the 120 KB figure; see [OQ-34](open-questions.md#oq-34-initial-javascript-budget).
+Measured after M1 follow-ups ([C-50](open-questions.md#owner-confirmed-decisions), [C-51](open-questions.md#owner-confirmed-decisions), [C-52](open-questions.md#owner-confirmed-decisions)): the first route is **100.0 KB gzip** of JavaScript (and 8.2 KB of CSS), inside the 120 KB budget. Copy for features loads as separate chunks.
 
 Enforcement: a bundle-size check (`size-limit` or Vite's report) in CI, Lighthouse CI against the preview deployment, and a Playwright performance test that renders a 5,000-item fixture and scrolls it.
 

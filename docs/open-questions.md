@@ -30,7 +30,7 @@ Answered by the project owner. The **From** column gives the question that was o
 | C-14 | OQ-5 | `popular` and `popularOrder` drive the Popular section; `group` is a facet label only. "All providers" lists every preset alphabetically, popular ones included. | FR-2 |
 | C-15 | OQ-6 | **Copy gaps.** Missing keys live in `src/lib/i18n/copy.additions.en.json`, merged over the design file; an addition may override a design key (only `files.emptyBucket.body` so far) and each override is listed in this file. The file exists and already holds 49 keys. Provider strings stay in `providers.json`. **CI fails if any copy key used in code does not exist** in the merged copy. | NFR-11, tech spec 15.6, `src/lib/i18n/AGENTS.md` |
 | C-16 | OQ-7 | Add `intl-messageformat` for ICU plurals. | Tech spec section 2 |
-| C-17 | OQ-8 | Add `@tanstack/react-router` (hash history) and `zustand`. | Tech spec section 2 |
+| C-17 | OQ-8 | Add `@tanstack/react-router` (hash history) and `zustand`. *The router part is superseded by C-50; zustand stands.* | Tech spec section 2 |
 | C-18 | OQ-9 | **Folder placeholders.** `New folder` writes a zero-byte `name/` object (`application/x-directory`), hidden in listings and moved or deleted with the folder. `files.emptyBucket.body` is overridden in `copy.additions.en.json`: "Upload your first file, drag a folder in, or create a folder with New." | FR-35, tech spec 6.2 |
 | C-19 | OQ-10 | **Trash layout.** Each trash operation moves items to `.trash/{UTC timestamp}-{6 random chars}/{original key}` (one batch prefix per operation). Older trashed copies are never overwritten. Deletion time comes from the prefix; restore strips it; trash collisions are impossible. The Trash view lists batches flattened to items. | [ADR-004](adr/ADR-004-trash-as-prefix.md), FR-36, FR-70 |
 | C-20 | OQ-11 | A key that can write but not delete fails the connection test (`accessDenied` on the clean step). | FR-5 |
@@ -63,15 +63,11 @@ Answered by the project owner. The **From** column gives the question that was o
 | C-47 | n/a | **Git rules.** Conventional Commits; no `Co-Authored-By` or other attribution; every commit signed and signing never disabled (stop and report if it fails); commit to `main`; remote `git@github.com:rahmabintangpratama/coffer.git`; `.gitignore` reviewed before committing. | Root `AGENTS.md` Git section |
 | C-48 | OQ-32 | **S3 fixture.** The fixture is **RustFS 1.0.6** (`rustfs/rustfs`), chosen after testing candidates against the fixture criteria (comparison below). CORS is set per bucket; per-user policies come from RustFS's admin API (`tests/integration/global-setup.ts`). It also runs as a CI service container. `tests/integration/capabilities.test.ts` is the acceptance test for any future replacement. | `tests/integration/`, CI, tech spec 15.2 |
 | C-49 | n/a | **Commit and Node enforcement.** commitlint (conventional preset, header at most 72) runs in a lefthook `commit-msg` hook and, in CI, over every commit in the pushed range. `engines` is `>=22 <23` with `engine-strict`, so pnpm refuses other Node versions. All 14 earlier commits already conformed, so history was not rewritten. | Root `AGENTS.md` Git, README |
+| C-50 | OQ-34 | **Router.** Replace TanStack Router with **wouter** (hash location, about 2 KB gzip, against 29 KB). Routes are centralized as string literals in `src/app/routes.ts` and links take an `AppRoute`, so a typo is a compile error. Supersedes the router part of C-17. | Tech spec 1 and 2, `src/app/AGENTS.md` |
+| C-51 | OQ-34 | **Per-feature copy loading.** Copy is split by top-level group. The shell groups (`act`, `app`, `main`, `nav`, `set`, `toast`) are in the first bundle; every other group is its own chunk, loaded by `loadCopyGroups` or `CopyBoundary` before its screen renders. A Vite plugin (`scripts/vite/copy-groups.ts`) builds the chunks from the design copy plus the additions file. | Tech spec 2, `src/lib/i18n/AGENTS.md` |
+| C-52 | OQ-34 | **Budget.** The first-route budget stays at **120 KB gzip**. After C-50 and C-51 the initial JavaScript is **100.0 KB gzip** (React and ReactDOM about 60 KB, `intl-messageformat` 9.8 KB, lucide icons 3.7 KB, wouter 2 KB, zustand 1.2 KB, copy core and app code the rest) plus 8.2 KB of CSS. About 20 KB remain for onboarding code. | Tech spec 14 |
 
 ## Open questions
-
-### OQ-34: Initial JavaScript budget
-- **Owner:** Eng, Product
-- **Status:** Open
-- **Question:** The technical spec (section 14) budgets the initial JavaScript at 120 KB gzip for the shell, router and onboarding. The M1 shell alone is **128.9 KB gzip** (plus 8.2 KB of CSS). Measured costs (gzip): React and ReactDOM about 60 KB, TanStack Router 29 KB, `intl-messageformat` 9.8 KB, the two copy files 7.3 KB, lucide icons 3.7 KB, zustand 1.2 KB. The 120 KB figure was an estimate made before measuring, and onboarding will add more.
-- **Recommended:** Set the budget for the first route (shell, router, copy and onboarding code) to **150 KB gzip** and keep the lazy-chunk budgets as written. Cut cost where it is cheap: load copy by group (the `ob.*` strings only with onboarding, about 5 KB off the first route) when onboarding lands, and replace `intl-messageformat` with a small plural-and-placeholder formatter only if the budget is still tight. Enforce it with a bundle-size check in CI (the plan has it in M10; adding it earlier is cheap).
-- **Affects:** technical-spec section 14, implementation-plan M10
 
 ### OQ-33: App icon and logo
 - **Owner:** Product, Design

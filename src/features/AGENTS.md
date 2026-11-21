@@ -16,4 +16,4 @@ One folder per feature area. Layer rules are in [../AGENTS.md](../AGENTS.md).
 - Read-only connections: gate write actions with the shared capability helper, disabled with the reason `ro.reason`, never silently missing.
 - Mutations that touch many objects go through the journal in `lib/storage` (FR-45).
 - Render bucket data only through text nodes or the safe renderers in `preview/`.
-- Copy keys come from `copy.en.json`; add missing ones to the additions file, not inline.
+- Copy keys come from `copy.en.json`; add missing ones to the additions file, not inline. Wrap the feature's route in `CopyBoundary` with the groups it uses (they are separate chunks, not in the first bundle).
