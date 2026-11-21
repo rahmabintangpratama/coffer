@@ -2,6 +2,9 @@
 # never put real cloud credentials in this repository (tests/AGENTS.md).
 #
 # RustFS is an S3-compatible server with an official, actively released image.
+# The image is pinned by digest so a moved tag cannot change the fixture. To
+# upgrade: pull the new tag, copy its digest here and into .github/workflows/ci.yml,
+# and run the capability suite (scripts/ci/fixture-image.test.ts keeps both in step).
 # It passed the fixture criteria in docs/open-questions.md (C-48): per-bucket
 # CORS with correct preflight, multipart and UploadPartCopy, listing with
 # EncodingType=url, presigned GET, DeleteObjects and per-user policies.
@@ -9,7 +12,7 @@ name: coffer-test
 
 services:
   s3:
-    image: rustfs/rustfs:1.0.6
+    image: rustfs/rustfs@sha256:ee717072290bec9b11abfc0365f8310b00df1cd9b3639943edae47bdef05044a # 1.0.6
     ports:
       - "127.0.0.1:9000:9000"
     environment:

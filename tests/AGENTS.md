@@ -4,7 +4,7 @@ Integration tests, end-to-end tests and shared fixtures. Unit and component test
 
 ## Layout
 
-- `integration/`: Vitest in Node against the local S3 fixture (RustFS); `docker-compose.yml` starts it, `config.ts` holds the fake credentials, `global-setup.ts` creates the read-only and delete-denied users, and `capabilities.test.ts` is the acceptance test for any replacement server (C-48).
+- `integration/`: Vitest in Node against the local S3 fixture (RustFS); `docker-compose.yml` starts it (image pinned by digest, tag in a comment; the same digest is in `.github/workflows/ci.yml`, and a test keeps them equal), `config.ts` holds the fake credentials, `global-setup.ts` creates the read-only and delete-denied users, and `capabilities.test.ts` is the acceptance test for any replacement server (C-48).
 - `e2e/`: Playwright specs.
 - `fixtures/`: fake credentials, hostile HTML, SVG and Markdown samples, sample files, provider payloads.
 

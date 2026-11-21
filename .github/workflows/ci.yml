@@ -21,7 +21,7 @@ jobs:
     # Same image and settings as tests/integration/docker-compose.yml (C-48).
     services:
       s3:
-        image: rustfs/rustfs:1.0.6
+        image: rustfs/rustfs@sha256:ee717072290bec9b11abfc0365f8310b00df1cd9b3639943edae47bdef05044a # 1.0.6
         ports:
           - 9000:9000
         env:
