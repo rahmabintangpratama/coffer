@@ -480,7 +480,7 @@ The design lists 37 components. These primitives are implemented with shadcn/Rad
 
 | Primitive | Basis | Rules |
 |---|---|---|
-| `Sheet` (bottom sheet, drag handle) | Vaul / Radix Dialog | Below 768, `data-surface="elevated"`, safe-area padding, `dvh` max height |
+| `Sheet` (bottom sheet, drag handle) and `Dialog` | Native `<dialog>` (`ModalSurface`), not Radix Dialog | Radix's scroll lock injects a `<style>` element, which `style-src 'self'` blocks; the native element gives focus trap, Escape and focus return without it. Below 768, `data-surface="elevated"`, safe-area padding, `dvh` max height ([D-24](open-questions.md#decisions-made-on-the-owners-behalf)) |
 | `Popover` | Radix Popover | From 768, elevated scope, `shadow.overlay`, portal inside `.cf-root` |
 | `Input`, `Textarea` | native | 48 px at 375 and 40 px from 768, visible label, `aria-describedby` for errors, 16 px text on mobile to avoid zoom |
 | `Checkbox` | Radix Checkbox | Filled when checked, 44 px target on mobile |

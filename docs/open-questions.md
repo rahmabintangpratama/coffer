@@ -99,6 +99,7 @@ These choices were not asked. Reverse any by opening a question.
 | D-21 | `copy.additions.en.json` may override a design key (needed for `files.emptyBucket.body`); every override is listed under C-15 or its own C-row. | C-18 requires an override. |
 | D-22 | `LICENSE` (MIT, "Coffer contributors", 2026) was added to the repo. | C-25. The copyright holder name is a placeholder the owner can change. |
 | D-23 | Token scripts are `pnpm tokens:build` and `pnpm tokens:check`. The generator must first reproduce `design/tokens.css` and `design/tailwind.css` (compared after normalizing whitespace) in a golden test. | Proves equivalence before the design copies stop being the reference. |
+| D-24 | Modal layers (`Dialog`, `Sheet`, `NavDrawer`) are built on the native `<dialog>` element, not Radix Dialog. Radix primitives that do not inject styles (menus, popovers, tooltips) stay allowed after a browser check for CSP violations; `vaul` is not used. | Radix Dialog uses `react-remove-scroll`, which injects a `<style>` element; `style-src 'self'` blocks it (C-31 keeps the CSP strict). |
 
 ## Design conflicts log
 

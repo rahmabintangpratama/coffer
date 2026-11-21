@@ -1,0 +1,30 @@
+/* Layer behavior that utility classes cannot express. Tokens only. */
+
+/* The page behind an open modal layer does not scroll. */
+body:has(dialog.cf-modal[open]) {
+  overflow: hidden;
+}
+
+@keyframes cf-rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--cf-space-6));
+  }
+}
+
+@keyframes cf-slide-in-start {
+  from {
+    opacity: 0;
+    transform: translateX(calc(var(--cf-space-8) * -1));
+  }
+}
+
+/* Durations are 0 under prefers-reduced-motion (see tokens.css), so the layers
+   still appear and disappear, without sliding. */
+dialog.cf-modal[open] .cf-panel {
+  animation: cf-rise var(--cf-motion-duration-slow) var(--cf-motion-easing-standard);
+}
+
+dialog.cf-modal[data-placement="start"][open] .cf-panel {
+  animation-name: cf-slide-in-start;
+}

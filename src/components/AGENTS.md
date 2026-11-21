@@ -4,7 +4,8 @@ Shared UI: shadcn/Radix base components restyled with tokens. Rules from [../AGE
 
 - Component names match `design/components.md` (`Button`, `Dialog`, `FileRow`, `Toast`, ...). Primitives the design does not draw (`Sheet`, `Popover`, `Input`, `Checkbox`, `Progress`, `Tooltip`, `Skeleton`, `Tabs`) follow [technical-spec](../../docs/technical-spec.md) section 12.
 - Style with tokens only. No hex, rgb, px color or size literals; no arbitrary Tailwind values for color.
-- Components do not import `features/`, `lib/s3` or `lib/storage`. They take props and render.
+- Components do not import `features/`, `lib/s3` or `lib/storage`. They take props and render; visible text (including labels such as the close button's) comes in as props from `src/app` or a feature.
+- Modal layers (`Dialog`, `Sheet`, the drawer) use the native `<dialog>` through `ModalSurface`. Do not add Radix Dialog: its scroll lock injects a `<style>` element, which the CSP (`style-src 'self'`) blocks. Check any other Radix primitive in a browser for CSP violations before using it (D-24).
 - Set `data-surface="elevated"` on the root of Dialog, Sheet, Popover, ContextMenu, NewMenu, FolderMenu, CommandPalette, the DetailsPanel overlay and the ConnectionSwitcher popover; use `bg-elevated`. Toast uses `data-surface="inverse"`.
 - Button: variants `primary`, `secondary`, `tonal`, `ghost`, `danger`, `danger-tonal`, `link`; sizes `sm` 32, `md` 40, `lg` 48; `iconOnly` requires `aria-label`; `loading` sets `aria-busy` and keeps the label. Use `btn-*` utilities from `design/tailwind.css`.
 - State rules ([design/button-states.md](../../design/button-states.md)): hover only under `@media (hover: hover)`; focus is a 2 px `border.focus` ring with 2 px offset, never a fill change; disabled is `text.disabled` on `bg.hover`; never opacity alone.
