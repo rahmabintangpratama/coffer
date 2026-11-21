@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="64" height="64" onload="window.__svgRan = true">
+  <script>window.__svgRan = true; document.title = "pwned";</script>
+  <rect width="64" height="64" fill="teal" onclick="window.__svgRan = true"/>
+  <image href="https://attacker.invalid/track.png" width="1" height="1"/>
+  <foreignObject><iframe xmlns="http://www.w3.org/1999/xhtml" src="https://attacker.invalid/frame"></iframe></foreignObject>
+</svg>

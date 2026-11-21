@@ -156,6 +156,8 @@ test.describe("selection and keyboard on a pointer device", () => {
   });
 
   test("AC-23.4 slash focuses the search pill; Esc clears then blurs", async ({ page }) => {
+    // The pill is in the app bar and loads with it; the shortcut needs it to exist.
+    await expect(page.getByRole("searchbox")).toBeVisible();
     await row(page, "g-00000.txt").focus();
     await page.keyboard.press("/");
     await expect(page.getByRole("searchbox")).toBeFocused();

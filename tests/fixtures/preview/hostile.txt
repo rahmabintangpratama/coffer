@@ -1,0 +1,4 @@
+<script>window.__textRan = true</script>
+<img src="x" onerror="window.__textRan = true">
+<a href="javascript:window.__textRan = true">click</a>
+plain line 4

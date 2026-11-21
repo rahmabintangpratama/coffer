@@ -1,6 +1,8 @@
 import { CreateBucketCommand, ListObjectsV2Command, PutBucketCorsCommand, PutObjectCommand, type S3Client } from "@aws-sdk/client-s3";
 import { createClient, uniqueName } from "../integration/client";
 import { admin } from "../integration/config";
+import { readdirSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { provisionTestUsers } from "../integration/provision";
 import { putMany } from "../integration/seed";
 
@@ -45,6 +47,19 @@ export async function provisionE2e(): Promise<void> {
   }
   await allowOrigin(client, E2E_BUCKET);
   await client.send(new PutObjectCommand({ Bucket: E2E_BUCKET, Key: "hello.txt", Body: "hello" }));
+  await seedPreviewFixtures(client);
+}
+
+/** The files the preview specs open, under `preview/` in the shared bucket (FR-50 to FR-58). */
+async function seedPreviewFixtures(client: S3Client): Promise<void> {
+  const dir = fileURLToPath(new URL("../fixtures/preview/", import.meta.url));
+  for (const name of readdirSync(dir)) {
+    // No content type on purpose: providers store plain uploads as octet-stream, and Coffer must cope.
+    await client.send(new PutObjectCommand({ Bucket: E2E_BUCKET, Key: `preview/${name}`, Body: readFileSync(`${dir}${name}`) }));
+  }
+  // Over the 1 MiB text limit, so the truncation notice shows.
+  const line = "line of text that repeats to make a file larger than the preview limit\n";
+  await client.send(new PutObjectCommand({ Bucket: E2E_BUCKET, Key: "preview/big.txt", Body: line.repeat(Math.ceil((1.5 * 1024 * 1024) / line.length)) }));
 }
 
 /** A bucket for browsing at scale (FR-20, FR-21): 5,000 files at the root, ten folders of 500, and one folder of exactly 2,000. */
