@@ -1,7 +1,8 @@
 import { IntlMessageFormat } from "intl-messageformat";
 import { type CopyKey, messageFor } from "./messages";
 
-export type { CopyKey } from "./messages";
+export { isCopyGroupLoaded, lazyCopyGroups, loadCopyGroups } from "./messages";
+export type { CopyKey, LazyCopyGroup } from "./messages";
 export type CopyValues = Record<string, string | number | Date>;
 
 const LOCALE = "en";

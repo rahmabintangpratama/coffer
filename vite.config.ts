@@ -2,11 +2,12 @@ import { fileURLToPath } from "node:url";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
+import { copyGroups } from "./scripts/vite/copy-groups.ts";
 
 const root = (path: string) => fileURLToPath(new URL(path, import.meta.url));
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), copyGroups()],
   resolve: {
     alias: {
       "@": root("./src"),

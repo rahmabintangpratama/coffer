@@ -1,8 +1,9 @@
 // @vitest-environment node
 import { IntlMessageFormat } from "intl-messageformat";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { t } from "./index";
 import { allMessages, messageFor } from "./messages";
+import { isCopyGroupLoaded, lazyCopyGroups, loadCopyGroups } from "./index";
 
 describe("t", () => {
   it("returns plain design copy", () => {
@@ -30,7 +31,8 @@ describe("t", () => {
     expect(() => t("no.such.key")).toThrow();
   });
 
-  it("has valid ICU syntax in every message", () => {
+  it("has valid ICU syntax in every message", async () => {
+    await loadCopyGroups(...lazyCopyGroups());
     const broken: string[] = [];
     for (const [key, message] of allMessages()) {
       try {
@@ -40,5 +42,49 @@ describe("t", () => {
       }
     }
     expect(broken).toEqual([]);
+  });
+});
+
+describe("copy groups", () => {
+  // Each test imports a fresh copy of the module, so nothing is loaded yet.
+  const fresh = async () => {
+    vi.resetModules();
+    return import("./messages");
+  };
+
+  it("has the shell groups ready and the feature groups not loaded", async () => {
+    const messages = await fresh();
+    expect(messages.isCopyGroupLoaded("nav")).toBe(true);
+    expect(messages.isCopyGroupLoaded("ob")).toBe(false);
+    expect(messages.messageFor("nav.home")).toBe("Home");
+  });
+
+  it("explains how to fix a key from a group that is not loaded yet", async () => {
+    const messages = await fresh();
+    expect(() => messages.messageFor("ob.connect")).toThrow(/Copy group "ob" is not loaded.*loadCopyGroups\("ob"\)/);
+  });
+
+  it("loads a group on demand, once, and keeps plain keys working", async () => {
+    const messages = await fresh();
+    const first = messages.loadCopyGroups("ob");
+    const second = messages.loadCopyGroups("ob");
+    await Promise.all([first, second]);
+    expect(messages.isCopyGroupLoaded("ob")).toBe(true);
+    expect(messages.messageFor("ob.connect")).toBe("Connect a bucket");
+    await expect(messages.loadCopyGroups("ob")).resolves.toBeUndefined();
+  });
+
+  it("keeps overrides from the additions file inside a lazy group", async () => {
+    const messages = await fresh();
+    await messages.loadCopyGroups("files");
+    expect(messages.messageFor("files.emptyBucket.body")).toBe(
+      "Upload your first file, drag a folder in, or create a folder with New.",
+    );
+  });
+
+  it("lists every group that is not core as lazy", () => {
+    expect(lazyCopyGroups()).toContain("ob");
+    expect(lazyCopyGroups()).not.toContain("nav");
+    expect(isCopyGroupLoaded("nav")).toBe(true);
   });
 });
