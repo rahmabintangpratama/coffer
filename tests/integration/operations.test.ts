@@ -288,6 +288,32 @@ describe("AC-45.3 and AC-45.5 crash and resume (technical-spec 15.3)", () => {
   }, 60_000);
 });
 
+describe("AC-32.3 folder name clashes (D-42)", () => {
+  const bodyOf = async (key: string) => (await client.send(new GetObjectCommand({ Bucket: bucket, Key: key }))).Body?.transformToString();
+
+  it("Merge overwrites objects with the same key and never deletes what only the destination holds", async () => {
+    const root = unique("merge");
+    await putMany(client, bucket, [`${root}/src/dir/same.txt`, `${root}/src/dir/new.txt`, `${root}/dst/dir/same.txt`, `${root}/dst/dir/only-here.txt`, `${root}/dst/dir/deep/only-here-too.txt`]);
+    await client.send(new PutObjectCommand({ Bucket: bucket, Key: `${root}/src/dir/same.txt`, Body: "from the source" }));
+    await client.send(new PutObjectCommand({ Bucket: bucket, Key: `${root}/dst/dir/same.txt`, Body: "from the destination" }));
+    const result = await runOperation({ client, journal: memoryJournal(), entry: entryFor(`${root}/src/dir/`, `${root}/dst/dir/`) });
+    expect(result).toMatchObject({ status: "done", total: 2, done: 2 });
+    expect(await keys(`${root}/dst/`)).toEqual([`${root}/dst/dir/deep/only-here-too.txt`, `${root}/dst/dir/new.txt`, `${root}/dst/dir/only-here.txt`, `${root}/dst/dir/same.txt`]);
+    expect(await bodyOf(`${root}/dst/dir/same.txt`)).toBe("from the source");
+    expect(await keys(`${root}/src/`)).toEqual([]);
+  });
+
+  it("Keep both moves the folder to a free name and leaves the existing folder untouched", async () => {
+    const root = unique("both");
+    await putMany(client, bucket, [`${root}/src/dir/a.txt`, `${root}/dst/dir/a.txt`, `${root}/dst/dir/b.txt`]);
+    await client.send(new PutObjectCommand({ Bucket: bucket, Key: `${root}/dst/dir/a.txt`, Body: "keep me" }));
+    const result = await runOperation({ client, journal: memoryJournal(), entry: entryFor(`${root}/src/dir/`, `${root}/dst/dir (1)/`) });
+    expect(result).toMatchObject({ status: "done", total: 1 });
+    expect(await keys(`${root}/dst/`)).toEqual([`${root}/dst/dir (1)/a.txt`, `${root}/dst/dir/a.txt`, `${root}/dst/dir/b.txt`]);
+    expect(await bodyOf(`${root}/dst/dir/a.txt`)).toBe("keep me");
+  });
+});
+
 describe("FR-34 exit check numbers", () => {
   it("moves a folder of 2,000 objects, interrupted mid-way and resumed, with nothing lost or duplicated", async () => {
     const root = unique("ex");

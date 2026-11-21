@@ -12,6 +12,8 @@ export interface ConflictQuestion {
   key: string;
   /** Conflicts still to decide, this one included (for "Apply to all N conflicts"). */
   remaining: number;
+  /** A folder clash offers Merge (answered as `replace`) and Keep both, never Skip or Replace (D-42). */
+  folder?: boolean;
 }
 
 /**

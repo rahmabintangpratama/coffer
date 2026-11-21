@@ -369,6 +369,18 @@
     "interrupted": {
       "bodyFailed": "{done} of {total} objects in {name} were moved. {failed, plural, one {# object} other {# objects}} could not be moved."
     },
-    "discarded": "Discarded. Some objects are in the destination and some are still in {name}; nothing was deleted."
+    "discarded": "Discarded. Some objects are in the destination and some are still in {name}; nothing was deleted.",
+    "resumeSettled": "This operation already finished or was discarded.",
+    "resumeElsewhere": "This operation is running in another tab."
+  },
+  "conf": {
+    "bodyFolder": "{folder} already has a folder named {name}.",
+    "keepFolder": {
+      "sub": "The new folder is saved as {name}."
+    },
+    "mergeLabel": "Merge",
+    "merge": {
+      "sub": "Files with the same name are replaced. Files only in the existing folder stay."
+    }
   }
 }

@@ -31,10 +31,11 @@ export function stemLength(name: string): number {
 }
 
 /**
- * Decide what happens to each item whose target already exists (AC-32.3, FR-43 semantics): one
- * question per clash until "apply to all", then Replace keeps the target (the old object is
- * overwritten object by object as the move reaches it), Keep both picks the first free ` (n)` name, and
- * Skip drops the item. `exists` is asked about a key or a folder prefix.
+ * Decide what happens to each item whose target already exists (AC-32.3, FR-43 semantics, D-42):
+ * one question per clash until "apply to all". A file gets Replace, Keep both or Skip. A folder gets
+ * Keep both (a free ` (n)` name) or Merge, answered as `replace`: objects with the same key are
+ * overwritten as the move reaches them and objects only the destination holds are left alone. "Apply
+ * to all" holds for files and for folders separately. `exists` is asked about a key or a folder prefix.
  */
 export async function decideTargets(
   moves: readonly Move[],
@@ -43,27 +44,29 @@ export async function decideTargets(
 ): Promise<Move[]> {
   const clashing: boolean[] = [];
   for (const move of moves) clashing.push(await exists(move.target));
-  let remaining = clashing.filter(Boolean).length;
+  const remaining = { file: 0, folder: 0 };
+  for (const [index, move] of moves.entries()) if (clashing[index]) remaining[move.target.endsWith("/") ? "folder" : "file"] += 1;
   const result: Move[] = [];
-  let sticky: ConflictAnswer["choice"] | null = null;
+  const sticky: Record<"file" | "folder", ConflictAnswer["choice"] | null> = { file: null, folder: null };
   for (const [index, move] of moves.entries()) {
     if (!clashing[index]) {
       result.push(move);
       continue;
     }
-    let choice: ConflictAnswer["choice"] | null = sticky;
+    const isFolder = move.target.endsWith("/");
+    const kind = isFolder ? "folder" : "file";
+    let choice: ConflictAnswer["choice"] | null = sticky[kind];
     if (choice === null) {
-      const answer = await ask({ key: move.target, remaining });
+      const answer = await ask({ key: move.target, remaining: remaining[kind], ...(isFolder ? { folder: true } : {}) });
       choice = answer.choice;
-      if (answer.applyToAll) sticky = choice;
+      if (answer.applyToAll) sticky[kind] = choice;
     }
-    remaining -= 1;
+    remaining[kind] -= 1;
     if (choice === "skip") continue;
     if (choice === "replace") {
       result.push(move);
       continue;
     }
-    const isFolder = move.target.endsWith("/");
     const base = isFolder ? move.target.slice(0, -1) : move.target;
     const taken = new Set<string>();
     let candidate = keepBothKey(base, (key) => taken.has(key));

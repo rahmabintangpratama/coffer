@@ -75,4 +75,28 @@ describe("AC-32.3 conflicts at the destination", () => {
     const result = await decideTargets([{ source: "s/dir/", target: "d/dir/" }], existsIn("d/dir/"), answer("keepBoth"));
     expect(result).toEqual([{ source: "s/dir/", target: "d/dir (1)/" }]);
   });
+
+  it("a folder clash asks with the folder flag, and Merge keeps the target prefix", async () => {
+    const ask = vi.fn(answer("replace"));
+    const folder = { source: "s/dir/", target: "d/dir/" };
+    expect(await decideTargets([folder], existsIn("d/dir/"), ask)).toEqual([folder]);
+    expect(ask).toHaveBeenCalledWith({ key: "d/dir/", remaining: 1, folder: true });
+  });
+
+  it("a file clash does not carry the folder flag", async () => {
+    const ask = vi.fn(answer("skip"));
+    await decideTargets([moves[0]!], existsIn("d/a.txt"), ask);
+    expect(ask).toHaveBeenCalledWith({ key: "d/a.txt", remaining: 1 });
+  });
+
+  it("Apply to all holds for files and folders separately", async () => {
+    const mixed = [moves[0]!, { source: "s/dir/", target: "d/dir/" }, moves[1]!, { source: "s/two/", target: "d/two/" }];
+    const remaining: number[] = [];
+    const result = await decideTargets(mixed, existsIn("d/a.txt", "d/b.txt", "d/dir/", "d/two/"), (question) => {
+      remaining.push(question.remaining);
+      return Promise.resolve({ choice: "skip", applyToAll: true });
+    });
+    expect(remaining).toEqual([2, 2]);
+    expect(result).toEqual([]);
+  });
 });

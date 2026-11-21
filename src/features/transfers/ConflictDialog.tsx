@@ -5,24 +5,36 @@ import { t } from "@/lib/i18n";
 import { nameOf } from "@/lib/s3/keys";
 import type { ConflictAnswer, ConflictChoice, ConflictQuestion } from "./resolve";
 
-const choices: { value: ConflictChoice; label: "conf.replaceLabel" | "conf.keepLabel" | "conf.skipLabel" }[] = [
+type ChoiceLabel = "conf.replaceLabel" | "conf.keepLabel" | "conf.skipLabel" | "conf.mergeLabel";
+
+const fileChoices: { value: ConflictChoice; label: ChoiceLabel }[] = [
   { value: "replace", label: "conf.replaceLabel" },
   { value: "keepBoth", label: "conf.keepLabel" },
   { value: "skip", label: "conf.skipLabel" },
 ];
 
+// A folder is never replaced wholesale: Merge keeps what only the destination holds (D-42).
+const folderChoices: { value: ConflictChoice; label: ChoiceLabel }[] = [
+  { value: "keepBoth", label: "conf.keepLabel" },
+  { value: "replace", label: "conf.mergeLabel" },
+];
+
 /** One name that already exists (FR-43): Replace, Keep both or Skip, and "Apply to all N conflicts". */
 export function ConflictDialog({ question, folder, onAnswer }: { question: ConflictQuestion | null; folder: string; onAnswer: (answer: ConflictAnswer) => void }) {
   const group = useId();
-  const [choice, setChoice] = useState<ConflictChoice>("keepBoth");
+  const [picked, setChoice] = useState<ConflictChoice>("keepBoth");
   const [all, setAll] = useState(false);
   const name = question ? nameOf(question.key) : "";
-  const keepName = question ? t("conf.keep.sub", { name: nameOf(question.key) }) : "";
+  const folderClash = question?.folder === true;
+  const choices = folderClash ? folderChoices : fileChoices;
+  // A choice from an earlier file question that this question does not offer falls back to Keep both.
+  const choice = choices.some((option) => option.value === picked) ? picked : "keepBoth";
+  const keepName = question ? t(folderClash ? "conf.keepFolder.sub" : "conf.keep.sub", { name: nameOf(question.key) }) : "";
   const submit = () => {
     onAnswer({ choice, applyToAll: all });
     setAll(false);
   };
-  const sub = (value: ConflictChoice) => (value === "replace" ? t("conf.replace.sub") : value === "keepBoth" ? keepName : t("conf.skip.sub"));
+  const sub = (value: ConflictChoice) => (value === "replace" ? t(folderClash ? "conf.merge.sub" : "conf.replace.sub") : value === "keepBoth" ? keepName : t("conf.skip.sub"));
   return (
     <Dialog
       open={question !== null}
@@ -31,7 +43,7 @@ export function ConflictDialog({ question, folder, onAnswer }: { question: Confl
       title={t("conf.title")}
       closeLabel={t("act.close")}
     >
-      <p className="text-base">{t("conf.body", { folder, name })}</p>
+      <p className="text-base">{t(folderClash ? "conf.bodyFolder" : "conf.body", { folder, name })}</p>
       <fieldset className="mt-4 flex flex-col gap-2">
         <legend className="sr-only">{t("conf.title")}</legend>
         {choices.map(({ value, label }) => (
