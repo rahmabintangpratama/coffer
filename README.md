@@ -99,6 +99,7 @@ Prerequisites: Node 22 (`>=22 <23`; run `nvm use` or `fnm use` to read `.nvmrc`;
 | Integration tests (local S3 fixture) | `docker compose -f tests/integration/docker-compose.yml up -d --wait`, then `pnpm test:integration` |
 | End-to-end tests (once: `pnpm exec playwright install chromium webkit`) | `pnpm test:e2e` |
 | Check that copy keys used in code exist | `pnpm copy:check` |
+| Print what each provider preset resolves to | `pnpm demo:presets` |
 | Check the security headers file | `pnpm headers:check` (after `pnpm build` it also checks `dist`) |
 
 ## Documentation

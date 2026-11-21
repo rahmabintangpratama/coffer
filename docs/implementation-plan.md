@@ -1,7 +1,7 @@
 # Coffer MVP implementation plan
 
 - **Purpose:** Split the MVP into milestones of one to three days. Each milestone lists its requirements, deliverables, tests and an exit check that can be demoed.
-- **Status:** Approved. M0 and M1 are complete (2026-11-21); M2a has not started.
+- **Status:** Approved. M0, M1 and M2a are complete (2026-11-21); M2b has not started.
 - **Last updated:** 2026-11-21
 - **Source files in `design/`:** [`HANDOFF.md`](../design/HANDOFF.md), [`screens.md`](../design/screens.md), [`components.md`](../design/components.md), [`tokens.json`](../design/tokens.json)
 - **Related:** [product-spec.md](product-spec.md) (FR, AC, release plan), [technical-spec.md](technical-spec.md), [open-questions.md](open-questions.md)
@@ -84,6 +84,8 @@ Total: 35 days plus buffer. Every MVP FR in the product spec appears in at least
 **AGENTS.md commands landing:** none new. Update the Conventions section if the lint rules differ from what it says.
 
 ## M2a: Provider engine and connection test (2 days)
+
+**Status: complete.** Differences from the plan below: the CORS-versus-network check runs in real Chromium and WebKit against the S3 fixture, whose per-bucket CORS rules give real preflights, instead of Playwright route interception (stronger evidence); the harness page is served from a real loopback server because Chromium blocks requests from a page it did not load from the network to loopback (OQ-35, open); the test file name is 64 random bits with no collision check request; only T-5 and T-7 of the type changes were needed so far; `providers.json` is imported only by the (later, lazy) onboarding code, so it is not in the first bundle.
 
 **Requirements:** FR-3 (engine), FR-4 (parser), FR-5 (algorithm), FR-12 (signing with a token, expiry sources), FR-110 (detection logic).
 
