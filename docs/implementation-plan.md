@@ -1,7 +1,7 @@
 # Coffer MVP implementation plan
 
 - **Purpose:** Split the MVP into milestones of one to three days. Each milestone lists its requirements, deliverables, tests and an exit check that can be demoed.
-- **Status:** Approved. M0, M1, M2a, M2b, M3 and M4 are complete (2026-11-21); M5a has not started.
+- **Status:** Approved. M0, M1, M2a, M2b, M3, M4 and M5a are complete (2026-11-21); M5b has not started.
 - **Last updated:** 2026-11-21
 - **Source files in `design/`:** [`HANDOFF.md`](../design/HANDOFF.md), [`screens.md`](../design/screens.md), [`components.md`](../design/components.md), [`tokens.json`](../design/tokens.json)
 - **Related:** [product-spec.md](product-spec.md) (FR, AC, release plan), [technical-spec.md](technical-spec.md), [open-questions.md](open-questions.md)
@@ -168,6 +168,8 @@ Total: 35 days plus buffer. Every MVP FR in the product spec appears in at least
 **Requirements:** FR-50, FR-51, FR-52, FR-54, FR-57, FR-58.
 
 **Deliverables:** the full-screen `Preview` viewer (back, name, Download, details, menu; the Share link button is added in M7), previous and next by swipe, arrows and keys with "2 of 10"; image with zoom and pinch; video and audio from presigned URLs; text and code (first 1 MiB, line numbers, text nodes only, truncation notice); SVG through a `blob:` `<img>` with an explicit type and size cap; the no-preview fallback; `FileKind` detection by extension plus magic bytes.
+
+**Status: complete.** Differences from the plan below: see [D-38](open-questions.md#decisions-made-on-the-owners-behalf) (preview in the hash with its own history handling, Space previews, loopback http reads through a blob URL, no HTTP cache for signed requests, PDF/Markdown/HTML wait for M5b). Touch swipe, pinch and double-tap are covered by component tests with synthetic pointer events; a real-device pass is an M10 manual check.
 
 **Tests:** unit for `FileKind` detection; e2e for each type at three viewports; an SVG with embedded script stays inert; a hostile text file shows as text; axe and focus return on close.
 
