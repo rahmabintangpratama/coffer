@@ -66,6 +66,13 @@ Answered by the project owner. The **From** column gives the question that was o
 
 ## Open questions
 
+### OQ-34: Initial JavaScript budget
+- **Owner:** Eng, Product
+- **Status:** Open
+- **Question:** The technical spec (section 14) budgets the initial JavaScript at 120 KB gzip for the shell, router and onboarding. The M1 shell alone is **128.9 KB gzip** (plus 8.2 KB of CSS). Measured costs (gzip): React and ReactDOM about 60 KB, TanStack Router 29 KB, `intl-messageformat` 9.8 KB, the two copy files 7.3 KB, lucide icons 3.7 KB, zustand 1.2 KB. The 120 KB figure was an estimate made before measuring, and onboarding will add more.
+- **Recommended:** Set the budget for the first route (shell, router, copy and onboarding code) to **150 KB gzip** and keep the lazy-chunk budgets as written. Cut cost where it is cheap: load copy by group (the `ob.*` strings only with onboarding, about 5 KB off the first route) when onboarding lands, and replace `intl-messageformat` with a small plural-and-placeholder formatter only if the budget is still tight. Enforce it with a bundle-size check in CI (the plan has it in M10; adding it earlier is cheap).
+- **Affects:** technical-spec section 14, implementation-plan M10
+
 ### OQ-33: App icon and logo
 - **Owner:** Product, Design
 - **Status:** Open

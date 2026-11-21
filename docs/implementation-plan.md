@@ -1,7 +1,7 @@
 # Coffer MVP implementation plan
 
 - **Purpose:** Split the MVP into milestones of one to three days. Each milestone lists its requirements, deliverables, tests and an exit check that can be demoed.
-- **Status:** Approved. M0 is complete (2026-11-21); M1 has not started.
+- **Status:** Approved. M0 and M1 are complete (2026-11-21); M2a has not started.
 - **Last updated:** 2026-11-21
 - **Source files in `design/`:** [`HANDOFF.md`](../design/HANDOFF.md), [`screens.md`](../design/screens.md), [`components.md`](../design/components.md), [`tokens.json`](../design/tokens.json)
 - **Related:** [product-spec.md](product-spec.md) (FR, AC, release plan), [technical-spec.md](technical-spec.md), [open-questions.md](open-questions.md)
@@ -65,6 +65,8 @@ Total: 35 days plus buffer. Every MVP FR in the product spec appears in at least
 **Risk:** the golden test may need more than a day if the design CSS has hand-tuned details; if so, record the differences and split an M0b rather than loosen the test.
 
 ## M1: App shell, routing, theme, copy loader (2 days)
+
+**Status: complete.** Differences from the plan below: modal layers use the native `<dialog>` instead of Radix Dialog or `vaul`, because Radix's scroll lock injects a style element that the CSP blocks (D-24); no app icon or favicon is shipped because the design has no logo (OQ-33); the search pill, New button, FAB and connection avatar are not drawn yet, so there are no dead controls (they arrive in M3, M4 and M8); the theme choice lives in a minimal Settings screen; the initial bundle is 128.9 KB gzip against the 120 KB estimate (OQ-34).
 
 **Requirements:** FR-22 (shells, hash routing), FR-100 (AC-100.2 theme), NFR-6, NFR-11.
 

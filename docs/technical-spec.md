@@ -525,6 +525,8 @@ Target **WCAG 2.2 AA** ([`design/accessibility.md`](../design/accessibility.md))
 | List virtualization | always virtualized; overscan 8 rows; grid virtualized by row |
 | Memory | 100,000 loaded keys must stay under about 150 MB of JS heap (store keys compactly) |
 
+Measured at M1: the shell is 128.9 KB gzip of JavaScript, above the 120 KB figure; see [OQ-34](open-questions.md#oq-34-initial-javascript-budget).
+
 Enforcement: a bundle-size check (`size-limit` or Vite's report) in CI, Lighthouse CI against the preview deployment, and a Playwright performance test that renders a 5,000-item fixture and scrolls it.
 
 ---
