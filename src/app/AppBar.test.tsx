@@ -1,6 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { Router } from "wouter";
+import { useHashLocation } from "wouter/use-hash-location";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FilesScreen } from "@/features/files";
 import { useSelection } from "@/features/files/selection";
@@ -29,8 +31,10 @@ function renderApp(withFiles: boolean) {
   return render(
     <QueryClientProvider client={client}>
       <LayoutContext value="compact">
-        <AppBar menuRef={{ current: null }} menuOpen={false} onMenu={vi.fn()} />
-        {withFiles && <FilesScreen connection={connection} settings={settings} onSettings={vi.fn()} notify={vi.fn()} />}
+        <Router hook={useHashLocation}>
+          <AppBar menuRef={{ current: null }} menuOpen={false} onMenu={vi.fn()} />
+          {withFiles && <FilesScreen connection={connection} settings={settings} onSettings={vi.fn()} notify={vi.fn()} />}
+        </Router>
       </LayoutContext>
     </QueryClientProvider>,
   );
@@ -87,6 +91,15 @@ describe("the app bar is route-aware (components.md: SearchPill, FilterChips, Se
     expect(bar.querySelector('[data-component="FilterChips"]')).toHaveClass("invisible");
     await userEvent.click(within(toolbar).getByRole("button", { name: "Clear selection" }));
     expect(await within(bar).findByRole("searchbox")).toBeInTheDocument();
+  });
+
+  it("the pill leaves the bar the moment the route is no longer Files, even while the screen is still mounted", async () => {
+    listPage.mockResolvedValue(files(["a.txt"]));
+    renderApp(true);
+    await screen.findByRole("searchbox");
+    window.location.hash = "#/";
+    await waitFor(() => { expect(screen.queryByRole("searchbox")).toBeNull(); });
+    expect(screen.getByText("Coffer")).toBeInTheDocument();
   });
 
   it("leaving the Files screen takes the pill out of the bar and drops the search", async () => {

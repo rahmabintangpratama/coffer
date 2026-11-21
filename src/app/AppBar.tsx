@@ -1,9 +1,11 @@
 import { Menu } from "lucide-react";
 import { lazy, type RefObject, Suspense } from "react";
+import { useLocation } from "wouter";
 import { Button } from "@/components/Button";
 import { CofferMark } from "@/components/CofferMark";
 import { useFilesChrome } from "@/features/files/chrome";
 import { t } from "@/lib/i18n";
+import { isActiveRoute, routes } from "./routes";
 
 // The Files route's search, chips and selection bar. It is part of the Files chunk; the shell only asks for it while Files is showing.
 const FilesAppBar = lazy(() => import("@/features/files/AppBarContent"));
@@ -22,7 +24,10 @@ export function AppBar({
   menuOpen: boolean;
   menuRef: RefObject<HTMLButtonElement | null>;
 }) {
-  const filesActive = useFilesChrome((state) => state.active);
+  // The Files screen says it is mounted; the address says whether Files is still the route. Both must hold, so the search and chips
+  // leave the bar the moment the route changes instead of when the next screen has finished loading.
+  const [location] = useLocation();
+  const filesActive = useFilesChrome((state) => state.active) && isActiveRoute(routes.files, location);
   const menuButton = (
     <Button
       ref={menuRef}
