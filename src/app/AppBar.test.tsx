@@ -19,7 +19,7 @@ const connection: ConnectionSummary = {
   id: "c1", name: "n", providerId: "custom", fields: {}, endpoint: "https://s3.example.test", region: "us-east-1",
   addressingStyle: "path", bucket: "photos", access: "readWrite", createdAt: "2026-01-01T00:00:00.000Z",
 };
-const settings = { view: "list", sort: { by: "name", dir: "asc" }, density: "comfortable", showHiddenFiles: false } as const;
+const settings = { view: "list", sort: { by: "name", dir: "asc" }, density: "comfortable", showHiddenFiles: false, confirmTrash: false } as const;
 const files = (names: string[]): ListPage => ({
   folders: [],
   files: names.map((name) => ({ kind: "file", key: name, name, size: 1, lastModified: "2026-01-02T03:04:05Z", etag: "e", contentType: "", fileKind: "unknown" })),

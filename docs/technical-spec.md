@@ -264,10 +264,10 @@ One client per connection, destroyed on lock or connection removal. No logging m
 | Copy above 5 GB | `CreateMultipartUpload` on target → `UploadPartCopy` per range (`CopySourceRange: bytes=a-b`, parts of 256 MiB to 1 GiB) → `CompleteMultipartUpload` | Max 10,000 parts; the target keeps metadata by sending the source's `ContentType`, `CacheControl`, `ContentDisposition`, `ContentEncoding`, `ContentLanguage`, `Metadata` from a `HeadObject`. |
 | Folder rename / move / trash / restore | `ListObjectsV2` (no delimiter) under the prefix, then per object as above, journaled | Folder placeholder is moved too. |
 | Move to trash | move `key` → `{root}.trash/{batch}/{key}` where `batch` = `YYYYMMDDTHHMMSSZ-xxxxxx` (UTC, six random base-36 characters), generated once per operation | [ADR-004](adr/ADR-004-trash-as-prefix.md). |
-| Restore | strip `{root}.trash/{batch}/` and move the object back to `{root}{key}` | Conflict dialog if the original key now exists. |
+| Restore | strip `{root}.trash/{batch}/` and move the object back to `{root}{key}` | Conflict dialog if the original key now exists. One prefix entry when a whole batch comes back with no clash; otherwise one entry per object (D-44). |
 | Delete forever | `DeleteObjects` (`Quiet: true`, up to 1,000 keys per request) | Fallback to single `DeleteObject` calls if the provider rejects `DeleteObjects` (`MissingContentMD5`, `NotImplemented`); see compatibility matrix. |
 | Trash view | `ListObjectsV2` `Prefix: "{root}.trash/"`, no delimiter, flattened across batches | Deletion time and original path come from the batch prefix. |
-| Empty trash | `ListObjectsV2` `Prefix: "{root}.trash/"` → `DeleteObjects` batches | Typed count. |
+| Empty trash | `ListObjectsV2` `Prefix: "{root}.trash/"` → `DeleteObjects` batches of up to 1,000, then one `DeleteObject` per key if the provider rejects the batch call | Typed count. Not journaled: a delete is safe to repeat and what is left stays in Trash (D-44). |
 | Storage usage | `ListObjectsV2`, no delimiter, under the root, paged, cancellable | Sums by top-level prefix; shows requests made and an estimate of one request per 1,000 objects. |
 | Download folder zip (v1) | `ListObjectsV2` → ranged `GetObject` per file → `fflate` | Streams to disk where supported. |
 | Share link | none (local presign) | Section 10. |

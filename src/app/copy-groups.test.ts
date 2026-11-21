@@ -46,6 +46,15 @@ describe("copy groups loaded before the screens that use them", () => {
     expect(missing).toEqual([]);
   });
 
+  it("every group the Trash screen uses is core or in the list ConnectedApp loads for it", () => {
+    const trashLoaded = new Set<string>([...CORE_GROUPS, ...listIn("app/ConnectedApp.tsx", "trashGroups")]);
+    const used = groupsUsedIn(["features/trash"]);
+    // Delete and restore start operations whose toasts and panel rows use these groups too.
+    const missing = [...used].filter(([group]) => !trashLoaded.has(group)).map(([group, where]) => `${group} (first used in ${where})`);
+    expect(missing).toEqual([]);
+    expect(listIn("app/ConnectedApp.tsx", "trashGroups").length).toBeGreaterThan(3);
+  });
+
   it("finds the list it checks against, so the test cannot pass by reading nothing", () => {
     expect(listIn("app/ConnectedApp.tsx", "filesGroups").length).toBeGreaterThan(10);
     expect(groupsUsedIn(["features/files"]).size).toBeGreaterThan(5);

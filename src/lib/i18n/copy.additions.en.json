@@ -72,6 +72,10 @@
       "newFolderName": "New folder name",
       "create": "Create folder",
       "checking": "Checking the destination"
+    },
+    "trash": {
+      "title": "Move to trash?",
+      "body": "{count, plural, one {{name} will} other {# items will}} be moved to the trash folder. You can restore {count, plural, one {it} other {them}} from Trash."
     }
   },
   "files": {
@@ -270,11 +274,31 @@
     "region": "Notifications",
     "moved": "Moved {name}",
     "renamed": "Renamed to {name}",
-    "copyMade": "Copy saved as {name}"
+    "copyMade": "Copy saved as {name}",
+    "restored": "Restored {count, plural, one {# item} other {# items}}",
+    "deleted": "Deleted {count, plural, one {# item} other {# items}} forever",
+    "deleteFailed": "{count, plural, one {# item} other {# items}} could not be deleted"
   },
   "trash": {
     "deleted": "Deleted {when}",
-    "originalPath": "Original location: {path}"
+    "originalPath": "Original location: {path}",
+    "deletedUnknown": "Deleted at an unknown time",
+    "select": "Select {name}",
+    "selectAll": "Select all",
+    "toolbar": "Trash actions",
+    "list": "Items in trash",
+    "loading": "Reading the trash",
+    "error": {
+      "title": "Couldn’t read the trash",
+      "body": "Check your connection and try again. Nothing was changed."
+    },
+    "emptyState": {
+      "title": "Trash is empty",
+      "body": "Items you move to trash show up here until you empty it."
+    },
+    "failures": {
+      "title": "{count, plural, one {# item} other {# items}} could not be deleted"
+    }
   },
   "upl": {
     "interrupted": {
@@ -371,7 +395,10 @@
     },
     "discarded": "Discarded. Some objects are in the destination and some are still in {name}; nothing was deleted.",
     "resumeSettled": "This operation already finished or was discarded.",
-    "resumeElsewhere": "This operation is running in another tab."
+    "resumeElsewhere": "This operation is running in another tab.",
+    "titleTrash": "Moving “{name}” to trash",
+    "titleRestore": "Restoring “{name}”",
+    "titleDelete": "Deleting {count, plural, one {# item} other {# items}} forever"
   },
   "conf": {
     "bodyFolder": "{folder} already has a folder named {name}.",

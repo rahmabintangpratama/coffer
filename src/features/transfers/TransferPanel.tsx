@@ -18,8 +18,8 @@ function OperationProgress({ row }: { row: OperationRow }) {
   const text = t("op.progress", { done: row.done.toLocaleString(), total: row.total.toLocaleString() });
   return (
     <li data-component="TransferRow" data-status="running" data-kind="operation" className="py-2">
-      <p className="truncate text-base" title={row.name}>{t("op.title", { name: row.name })}</p>
-      <div role="progressbar" aria-label={t("op.title", { name: row.name })} aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent} aria-valuetext={text} className="mt-1 h-1.5 overflow-hidden rounded-full bg-subtle">
+      <p className="truncate text-base" title={row.name}>{row.title ?? t("op.title", { name: row.name })}</p>
+      <div role="progressbar" aria-label={row.title ?? t("op.title", { name: row.name })} aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent} aria-valuetext={text} className="mt-1 h-1.5 overflow-hidden rounded-full bg-subtle">
         <div className="h-full bg-accent" style={{ width: `${percent.toString()}%` }} />
       </div>
       <p className="mt-1 text-sm text-fg-muted">{text}</p>

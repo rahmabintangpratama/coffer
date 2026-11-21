@@ -12,7 +12,7 @@ export interface RunHooks {
 
 export interface StartInput {
   connection: ConnectionSummary;
-  kind: Extract<OperationKind, "move" | "rename" | "copy" | "restore">;
+  kind: Extract<OperationKind, "move" | "rename" | "copy" | "restore" | "trash">;
   source: string;
   target: string;
   undoOf?: string;
@@ -27,19 +27,17 @@ const nameOf = (key: string) => {
 let queue: Promise<unknown> = Promise.resolve();
 
 /** Run `job` after the jobs queued before it; a failure shows the error toast and does not stop the queue. */
-function enqueue(job: () => Promise<void>, hooks: RunHooks): Promise<void> {
+export function enqueue(job: () => Promise<void>, hooks: RunHooks): Promise<void> {
   const next = queue.then(job).catch(() => { hooks.notify(t("op.error")); });
   queue = next;
   return next;
 }
 
-/**
- * Write the journal entry and run it, in the background: the panel shows "Moving “name”"
- * with progress, the entry survives a closed tab, and the screen can go on being used.
- */
-export function startOperation(input: StartInput, hooks: RunHooks): void {
-  void enqueue(async () => {
-    const [{ startEntry }, { journalStore }, { withOperationLock }] = await Promise.all([import("@/lib/storage/journal"), import("@/lib/storage/journal-store"), import("@/lib/storage/locks")]);
+/** Create each entry in turn, under its own lock, write-ahead, and run it. Stops at the first one that is cut off. */
+async function runEntries(specs: readonly StartInput[], hooks: RunHooks): Promise<JournalEntry[]> {
+  const [{ startEntry }, { journalStore }, { withOperationLock }] = await Promise.all([import("@/lib/storage/journal"), import("@/lib/storage/journal-store"), import("@/lib/storage/locks")]);
+  const finals: JournalEntry[] = [];
+  for (const input of specs) {
     const entry = startEntry({
       id: crypto.randomUUID(),
       kind: input.kind,
@@ -51,10 +49,58 @@ export function startOperation(input: StartInput, hooks: RunHooks): void {
       ...(input.undoOf === undefined ? {} : { undoOf: input.undoOf }),
     });
     // The lock comes before the first write: an entry that says `running` always has a live lock (D-41).
-    await withOperationLock(entry.id, async () => {
+    const final = await withOperationLock(entry.id, async () => {
       await journalStore.put(entry);
-      await execute(input.connection, entry, hooks);
+      return execute(input.connection, entry);
     });
+    finals.push(final);
+    if (final.status !== "done") break;
+  }
+  hooks.onChanged();
+  return finals;
+}
+
+/**
+ * Write the journal entry and run it, in the background: the panel shows "Moving “name”"
+ * with progress, the entry survives a closed tab, and the screen can go on being used.
+ */
+export function startOperation(input: StartInput, hooks: RunHooks): void {
+  void enqueue(async () => {
+    const [final] = await runEntries([input], hooks);
+    if (final?.status === "done") await announce(input.connection, final, hooks);
+  }, hooks);
+}
+
+/**
+ * Move items to the trash (FR-36): one batch prefix for the whole action, one journal entry per
+ * item, one toast "Moved N items to trash" with an Undo that restores them all (AC-36.1, AC-36.3).
+ */
+export function startTrash(input: { connection: ConnectionSummary; root: string; keys: readonly string[] }, hooks: RunHooks): void {
+  void enqueue(async () => {
+    const { newBatchId, trashKeyOf } = await import("@/lib/s3");
+    const batch = newBatchId();
+    const finals = await runEntries(input.keys.map((key) => ({ connection: input.connection, kind: "trash", source: key, target: trashKeyOf(input.root, batch, key) })), hooks);
+    const done = finals.filter((entry) => entry.status === "done");
+    if (done.length === 0) return;
+    const { reversed } = await import("@/lib/storage/journal");
+    const undo = done.flatMap((entry) => reversed(entry, crypto.randomUUID()) ?? []);
+    hooks.notify(t("toast.trashed", { count: done.length }), {
+      label: t("act.undo"),
+      run: () => {
+        void enqueue(async () => {
+          await runEntries(undo.map((entry) => ({ connection: input.connection, kind: "restore", source: entry.source, target: entry.target ?? "", ...(entry.undoOf === undefined ? {} : { undoOf: entry.undoOf }) })), hooks);
+        }, hooks);
+      },
+    });
+  }, hooks);
+}
+
+/** Restore trashed objects, one entry each (or a whole batch as one prefix entry), then one toast (FR-70). */
+export function startRestore(input: { connection: ConnectionSummary; moves: readonly { source: string; target: string }[] }, hooks: RunHooks): void {
+  void enqueue(async () => {
+    const finals = await runEntries(input.moves.map((move) => ({ connection: input.connection, kind: "restore", source: move.source, target: move.target })), hooks);
+    const done = finals.filter((entry) => entry.status === "done");
+    if (done.length > 0) hooks.notify(t("toast.restored", { count: done.length }));
   }, hooks);
 }
 
@@ -76,7 +122,9 @@ export function resumeOperation(connection: ConnectionSummary, entry: JournalEnt
             hooks.notify(t("op.resumeSettled"));
             return;
           }
-          await execute(connection, resume(stored), hooks);
+          const final = await execute(connection, resume(stored));
+          hooks.onChanged();
+          if (final.status === "done") await announce(connection, final, hooks);
         }, hooks),
       );
       if (!outcome.ran) hooks.notify(t("op.resumeElsewhere"));
@@ -86,28 +134,33 @@ export function resumeOperation(connection: ConnectionSummary, entry: JournalEnt
   })();
 }
 
-async function execute(connection: ConnectionSummary, entry: JournalEntry, hooks: RunHooks): Promise<void> {
-  const [s3, { journalStore }, { reversed }] = await Promise.all([import("@/lib/s3"), import("@/lib/storage/journal-store"), import("@/lib/storage/journal")]);
+const titleOf = (entry: JournalEntry, name: string) => (entry.kind === "trash" ? t("op.titleTrash", { name }) : entry.kind === "restore" ? t("op.titleRestore", { name }) : t("op.title", { name }));
+
+/** Run one stored entry with the panel row; the caller holds the lock. Returns the final entry. */
+async function execute(connection: ConnectionSummary, entry: JournalEntry): Promise<JournalEntry> {
+  const [s3, { journalStore }] = await Promise.all([import("@/lib/s3"), import("@/lib/storage/journal-store")]);
   const transfers = useTransfers.getState();
   const name = nameOf(entry.source);
-  transfers.setOperation({ id: entry.id, name, done: entry.done, total: entry.total });
+  const title = titleOf(entry, name);
+  transfers.setOperation({ id: entry.id, name, title, done: entry.done, total: entry.total });
   let final: JournalEntry;
   try {
-    // The caller holds the entry's lock for the whole run, so another tab's load leaves it alone (D-41).
     final = await s3.runOperation({
       client: s3.clientFor(connection),
       journal: journalStore,
       entry,
-      onProgress: (progress) => { useTransfers.getState().setOperation({ id: progress.id, name, done: progress.done, total: progress.total }); },
+      onProgress: (progress) => { useTransfers.getState().setOperation({ id: progress.id, name, title, done: progress.done, total: progress.total }); },
     });
   } finally {
     useTransfers.getState().removeOperation(entry.id);
   }
-  hooks.onChanged();
-  if (final.status === "interrupted") {
-    useOperations.getState().upsertInterrupted(final);
-    return;
-  }
+  if (final.status === "interrupted") useOperations.getState().upsertInterrupted(final);
+  return final;
+}
+
+/** The toast for a finished move, rename or copy, with Undo where there is one (technical-spec 8). */
+async function announce(connection: ConnectionSummary, final: JournalEntry, hooks: RunHooks): Promise<void> {
+  const { reversed } = await import("@/lib/storage/journal");
   const undo = reversed(final, crypto.randomUUID());
   const undoAction = undo
     ? {
@@ -118,6 +171,14 @@ async function execute(connection: ConnectionSummary, entry: JournalEntry, hooks
       }
     : undefined;
   const target = nameOf(final.target ?? final.source);
+  if (final.kind === "trash") {
+    hooks.notify(t("toast.trashed", { count: 1 }), final.undoOf === undefined ? undoAction : undefined);
+    return;
+  }
+  if (final.kind === "restore") {
+    hooks.notify(t("toast.restored", { count: 1 }));
+    return;
+  }
   hooks.notify(
     final.kind === "rename" ? t("toast.renamed", { name: target }) : final.kind === "copy" ? t("toast.copyMade", { name: target }) : t("toast.moved", { name: target }),
     // Undo for a move and a rename while the entry exists; a copy and an Undo itself have none (technical-spec 8).

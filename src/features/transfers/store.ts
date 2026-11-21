@@ -24,6 +24,8 @@ export interface InterruptedUpload {
 export interface OperationRow {
   id: string;
   name: string;
+  /** The row's heading when it is not the move wording: "Moving to trash", "Restoring", "Deleting". */
+  title?: string;
   done: number;
   total: number;
 }

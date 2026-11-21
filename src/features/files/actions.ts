@@ -1,4 +1,4 @@
-import { Copy, Download, Eye, FolderInput, Info, Link2, Pencil } from "lucide-react";
+import { Copy, Download, Eye, FolderInput, Info, Link2, Pencil, Trash2 } from "lucide-react";
 import { createElement } from "react";
 import type { MenuGroup } from "@/components/ActionMenu";
 import { t } from "@/lib/i18n";
@@ -12,6 +12,8 @@ export interface ActionHandlers {
   rename: (item: Item) => void;
   makeCopy: (item: Item) => void;
   move: (items: Item[]) => void;
+  /** Left out inside the trash (AC-36.5). */
+  trash?: (items: Item[]) => void;
 }
 
 const icon = (component: typeof Download) => createElement(component, { "aria-hidden": true, className: "size-5 text-fg-muted" });
@@ -34,7 +36,10 @@ export function actionsFor(item: Item, handlers: ActionHandlers, readOnly = fals
       { id: "move", label: t("act.moveTo"), icon: icon(FolderInput), ...write(false), onSelect: () => { handlers.move([item]); } },
     ],
   };
-  if (item.kind === "folder") return [organize];
+  const remove: MenuGroup[] = handlers.trash
+    ? [{ id: "remove", actions: [{ id: "trash", label: t("act.trash"), icon: icon(Trash2), ...write(false), onSelect: () => { handlers.trash?.([item]); } }] }]
+    : [];
+  if (item.kind === "folder") return [organize, ...remove];
   return [
     {
       id: "file",
@@ -51,5 +56,6 @@ export function actionsFor(item: Item, handlers: ActionHandlers, readOnly = fals
         { id: "copyKey", label: t("act.copyKey"), icon: icon(Link2), onSelect: () => { handlers.copyKey(item); } },
       ],
     },
+    ...remove,
   ];
 }

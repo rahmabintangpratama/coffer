@@ -1,7 +1,7 @@
 # Coffer MVP implementation plan
 
 - **Purpose:** Split the MVP into milestones of one to three days. Each milestone lists its requirements, deliverables, tests and an exit check that can be demoed.
-- **Status:** Approved. M0, M1, M2a, M2b, M3, M4, M5a, M5b and M6a are complete (2026-11-21); M6b has not started.
+- **Status:** Approved. M0, M1, M2a, M2b, M3, M4, M5a, M5b, M6a and M6b are complete (2026-11-22).
 - **Last updated:** 2026-11-21
 - **Source files in `design/`:** [`HANDOFF.md`](../design/HANDOFF.md), [`screens.md`](../design/screens.md), [`components.md`](../design/components.md), [`tokens.json`](../design/tokens.json)
 - **Related:** [product-spec.md](product-spec.md) (FR, AC, release plan), [technical-spec.md](technical-spec.md), [open-questions.md](open-questions.md)
@@ -206,6 +206,8 @@ Total: 35 days plus buffer. Every MVP FR in the product spec appears in at least
 **AGENTS.md commands landing:** none new.
 
 ## M6b: Trash, restore, delete forever, undo (2 days)
+
+**Status: complete.** Decisions in [D-44](open-questions.md#decisions-made-on-the-owners-behalf). Delete forever and Empty trash are not journaled; a large partial Restore runs one entry per object.
 
 **Requirements:** FR-36, FR-70, FR-71.
 

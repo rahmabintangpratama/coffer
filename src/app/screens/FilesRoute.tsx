@@ -7,12 +7,12 @@ import { useToasts } from "../toast";
 
 /** Connects the Files feature to the app's settings and toast stores. */
 export default function FilesRoute({ connection }: { connection: ConnectionSummary }) {
-  const { view, sort, density, showHiddenFiles, update } = useSettings();
+  const { view, sort, density, showHiddenFiles, confirmTrash, update } = useSettings();
   const push = useToasts((state) => state.push);
   return (
     <FilesScreen
       connection={connection}
-      settings={{ view, sort, density, showHiddenFiles }}
+      settings={{ view, sort, density, showHiddenFiles, confirmTrash }}
       onSettings={update}
       notify={(message, action) => { push({ message, ...(action ? { actionLabel: action.label, onAction: action.run } : {}) }); }}
     />

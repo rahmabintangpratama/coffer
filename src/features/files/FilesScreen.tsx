@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { Download, FolderInput, FolderPlus } from "lucide-react";
+import { Download, FolderInput, FolderPlus, Trash2 } from "lucide-react";
 import { type DragEvent, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { Banner } from "@/components/Banner";
@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/Skeleton";
 import { t } from "@/lib/i18n";
 import type { AppError } from "@/lib/s3/errors";
 import type { ConnectionSummary, FileItem, FolderItem, Settings } from "@/lib/types";
-import { useOperationDialogs } from "@/features/operations";
+import { useOperationDialogs, useTrashAction } from "@/features/operations";
 import { candidatesFromDrop, useTransfers, useUpload } from "@/features/transfers";
 import { actionsFor, type ActionHandlers } from "./actions";
 import { Breadcrumb } from "./Breadcrumb";
@@ -37,7 +37,7 @@ import { useSelection } from "./selection";
 export interface FilesScreenProps {
   connection: ConnectionSummary;
   /** Settings and toasts live in the app shell; the feature gets what it needs as props. */
-  settings: Pick<Settings, "view" | "sort" | "density" | "showHiddenFiles">;
+  settings: Pick<Settings, "view" | "sort" | "density" | "showHiddenFiles" | "confirmTrash">;
   onSettings: (patch: Partial<Settings>) => void;
   notify: (message: string, action?: { label: string; run: () => void }) => void;
 }
@@ -130,7 +130,10 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
   }, [queryClient, connection.id, bucket, root, relative]);
   const runHooks = useMemo(() => ({ notify, onChanged: reload }), [notify, reload]);
   const { rename, copy: makeCopy, move, dialogs: operationDialogs } = useOperationDialogs({ connection, folderPrefix: root + relative, folderName: folderLabel, root, hooks: runHooks });
+  const { trash, dialog: trashDialog } = useTrashAction({ connection, root, hooks: runHooks, confirm: settings.confirmTrash });
   const readOnly = !writable;
+  // Nothing in the trash is trashed again (AC-36.5): inside it Files offers no Move to trash.
+  const inTrash = (root + relative).startsWith(`${root}.trash/`);
 
   const handlers: ActionHandlers = useMemo(
     () => ({
@@ -155,8 +158,19 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
         const chosen = first && items.length === 1 && state.keys.has(first.key) && state.keys.size > 1 ? visible.filter((item) => state.keys.has(item.key)) : items;
         move(chosen.map((item) => ({ key: item.key, name: item.name, kind: item.kind })));
       },
+      ...(inTrash
+        ? {}
+        : {
+            // A menu opened on a selected item trashes the whole selection, like Move.
+            trash: (items: Item[]) => {
+              const state = useSelection.getState();
+              const first = items[0];
+              const chosen = first && items.length === 1 && state.keys.has(first.key) && state.keys.size > 1 ? visible.filter((item) => state.keys.has(item.key)) : items;
+              trash(chosen.map((item) => ({ key: item.key, name: item.name, kind: item.kind })));
+            },
+          }),
     }),
-    [connection, visible, notify, rename, makeCopy, move],
+    [connection, visible, notify, rename, makeCopy, move, trash, inTrash],
   );
 
   // The selection bar is drawn by the app bar; it is told what is selected and which actions apply (AC-30.3).
@@ -165,6 +179,7 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
     setSelection(selected.length, [
       { id: "download", label: t("act.download"), icon: <Download aria-hidden="true" className="size-5" />, disabled: !onlyFiles, onSelect: () => { handlers.download(selected); } },
       { id: "move", label: t("act.move"), icon: <FolderInput aria-hidden="true" className="size-5" />, disabled: readOnly, onSelect: () => { handlers.move(selected); } },
+      ...(handlers.trash ? [{ id: "trash", label: t("act.trash"), icon: <Trash2 aria-hidden="true" className="size-5" />, disabled: readOnly, onSelect: () => { handlers.trash?.(selected); } }] : []),
     ]);
   }, [selected, handlers, setSelection, readOnly]);
 
@@ -300,6 +315,7 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
       </div>
       {conflictDialog}
       {operationDialogs}
+      {trashDialog}
       {previewIndex >= 0 && (
         <Suspense fallback={null}>
           <Preview
