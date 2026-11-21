@@ -39,4 +39,9 @@ describe("_headers check", () => {
     const noCache = headersFile.replace("/index.html\n  Cache-Control: no-cache\n", "");
     expect(checkHeaders(parseHeaders(noCache)).join("\n")).toContain("/index.html");
   });
+
+  it("requires a long cache for icons", () => {
+    const noIcons = headersFile.replace("/icons/*\n  Cache-Control: public, max-age=31536000, immutable\n", "");
+    expect(checkHeaders(parseHeaders(noIcons)).join("\n")).toContain("/icons/*");
+  });
 });

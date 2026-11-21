@@ -12,6 +12,12 @@
 /fonts/*
   Cache-Control: public, max-age=31536000, immutable
 
+/icons/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/favicon.svg
+  Cache-Control: public, max-age=31536000, immutable
+
 /
   Cache-Control: no-cache
 

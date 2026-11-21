@@ -66,7 +66,7 @@ Total: 35 days plus buffer. Every MVP FR in the product spec appears in at least
 
 ## M1: App shell, routing, theme, copy loader (2 days)
 
-**Status: complete.** Differences from the plan below: modal layers use the native `<dialog>` instead of Radix Dialog or `vaul`, because Radix's scroll lock injects a style element that the CSP blocks (D-24); no app icon or favicon is shipped because the design has no logo (OQ-33); the search pill, New button, FAB and connection avatar are not drawn yet, so there are no dead controls (they arrive in M3, M4 and M8); the theme choice lives in a minimal Settings screen; the initial bundle was 128.9 KB gzip against the 120 KB budget, so the router became wouter and copy loads by feature group, giving 100.0 KB (C-50 to C-52).
+**Status: complete.** Differences from the plan below: modal layers use the native `<dialog>` instead of Radix Dialog or `vaul`, because Radix's scroll lock injects a style element that the CSP blocks (D-24); no app icon or favicon was shipped at M2a because the design had no logo (OQ-33); the search pill, New button, FAB and connection avatar are not drawn yet, so there are no dead controls (they arrive in M3, M4 and M8); the theme choice lives in a minimal Settings screen; the initial bundle was 128.9 KB gzip against the 120 KB budget, so the router became wouter and copy loads by feature group, giving 100.0 KB (C-50 to C-52).
 
 **Requirements:** FR-22 (shells, hash routing), FR-100 (AC-100.2 theme), NFR-6, NFR-11.
 

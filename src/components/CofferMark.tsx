@@ -1,0 +1,48 @@
+import { cn } from "@/lib/utils";
+
+const MARK_PATH =
+  "M 617.0,252.0 L 605.0,255.0 L 592.0,261.0 L 345.0,397.0 L 334.0,404.0 L 321.0,418.0 L 316.0,428.0 L 313.0,439.0 L 313.0,799.0 L 318.0,814.0 L 326.0,826.0 L 344.0,840.0 L 587.0,979.0 L 609.0,987.0 L 630.0,987.0 L 646.0,982.0 L 919.0,832.0 L 931.0,820.0 L 937.0,810.0 L 941.0,795.0 L 941.0,768.0 L 933.0,763.0 L 874.0,738.0 L 861.0,736.0 L 847.0,737.0 L 836.0,740.0 L 654.0,829.0 L 639.0,833.0 L 626.0,833.0 L 610.0,829.0 L 456.0,750.0 L 446.0,742.0 L 441.0,733.0 L 440.0,728.0 L 440.0,516.0 L 445.0,503.0 L 454.0,495.0 L 609.0,415.0 L 620.0,412.0 L 636.0,412.0 L 650.0,416.0 L 822.0,504.0 L 842.0,509.0 L 853.0,509.0 L 870.0,505.0 L 939.0,473.0 L 941.0,471.0 L 941.0,432.0 L 938.0,423.0 L 931.0,412.0 L 916.0,399.0 L 652.0,256.0 L 637.0,252.0 Z M 471.0,608.0 L 471.0,655.0 L 476.0,665.0 L 603.0,725.0 L 624.0,732.0 L 640.0,732.0 L 659.0,726.0 L 792.0,665.0 L 797.0,660.0 L 800.0,654.0 L 800.0,612.0 L 796.0,608.0 L 789.0,608.0 L 653.0,671.0 L 637.0,675.0 L 620.0,674.0 L 605.0,669.0 L 472.0,607.0 Z M 471.0,521.0 L 471.0,569.0 L 477.0,579.0 L 604.0,638.0 L 621.0,644.0 L 634.0,645.0 L 653.0,641.0 L 792.0,578.0 L 797.0,573.0 L 800.0,566.0 L 800.0,525.0 L 796.0,521.0 L 790.0,521.0 L 655.0,583.0 L 643.0,587.0 L 627.0,588.0 L 616.0,586.0 L 603.0,581.0 L 474.0,521.0 Z M 471.0,695.0 L 471.0,719.0 L 473.0,725.0 L 478.0,730.0 L 610.0,798.0 L 628.0,803.0 L 640.0,803.0 L 654.0,799.0 L 764.0,745.0 L 800.0,729.0 L 800.0,699.0 L 797.0,695.0 L 792.0,694.0 L 653.0,758.0 L 637.0,762.0 L 626.0,762.0 L 610.0,758.0 L 472.0,694.0 Z";
+
+const sizes = {
+  6: "size-6",
+  8: "size-8",
+  10: "size-10",
+  12: "size-12",
+  16: "size-16",
+  24: "size-24",
+} as const;
+
+export interface CofferMarkProps {
+  /** Tailwind spacing step. */
+  size?: keyof typeof sizes;
+  /** Accessible name. Leave it out when a visible name sits beside the mark. */
+  label?: string;
+  className?: string;
+}
+
+/**
+ * The Coffer mark without a background, so it works in light and dark. It
+ * takes its color from `currentColor` (the accent by default). The artwork is
+ * the owner's brand kit (design/brand), traced to vector paths.
+ */
+export function CofferMark({ size = 8, label, className }: CofferMarkProps) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="134 134 755 755"
+      data-component="CofferMark"
+      role={label ? "img" : undefined}
+      aria-label={label}
+      aria-hidden={label ? undefined : true}
+      focusable="false"
+      className={cn("shrink-0 text-accent", sizes[size], className)}
+    >
+      <path
+        d={MARK_PATH}
+        transform="matrix(1.027 0 0 1.027 -132 -125)"
+        fill="currentColor"
+        fillRule="evenodd"
+      />
+    </svg>
+  );
+}

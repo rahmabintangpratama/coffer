@@ -55,6 +55,8 @@ const EXPECTED_HEADERS: Record<string, string> = {
 const EXPECTED_CACHE: Record<string, string> = {
   "/assets/*": "public, max-age=31536000, immutable",
   "/fonts/*": "public, max-age=31536000, immutable",
+  "/icons/*": "public, max-age=31536000, immutable",
+  "/favicon.svg": "public, max-age=31536000, immutable",
   "/": "no-cache",
   "/index.html": "no-cache",
   "/theme-init.js": "no-cache",

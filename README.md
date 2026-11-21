@@ -102,6 +102,10 @@ Prerequisites: Node 22 (`>=22 <23`; run `nvm use` or `fnm use` to read `.nvmrc`;
 | Print what each provider preset resolves to | `pnpm demo:presets` |
 | Check the security headers file | `pnpm headers:check` (after `pnpm build` it also checks `dist`) |
 
+## Brand
+
+The logo, mark and app icons come from the owner's brand kit in [design/brand](design/brand/README.md). The built app uses them from `public/icons/` and the `CofferMark` and `CofferLogo` components.
+
 ## Documentation
 
 | Document | What it covers |

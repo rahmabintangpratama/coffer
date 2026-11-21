@@ -1,6 +1,7 @@
 import { Menu } from "lucide-react";
 import type { RefObject } from "react";
 import { Button } from "@/components/Button";
+import { CofferMark } from "@/components/CofferMark";
 import { t } from "@/lib/i18n";
 
 /**
@@ -32,7 +33,10 @@ export function AppBar({
         onClick={onMenu}
         className="@md:hidden"
       />
-      <span className="text-lg font-semibold">{t("app.name")}</span>
+      <span className="flex items-center gap-2">
+        <CofferMark size={8} />
+        <span className="text-lg font-semibold">{t("app.name")}</span>
+      </span>
     </header>
   );
 }

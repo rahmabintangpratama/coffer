@@ -17,6 +17,7 @@ const MIME: Record<string, string> = {
   ".woff2": "font/woff2",
   ".svg": "image/svg+xml",
   ".png": "image/png",
+  ".ico": "image/vnd.microsoft.icon",
   ".txt": "text/plain; charset=utf-8",
 };
 
