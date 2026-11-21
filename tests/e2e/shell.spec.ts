@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test";
-import { destinations, hashFor, layoutFor, navigateTo } from "./helpers";
+import { destinations, enterApp, goToRoute, hashFor, layoutFor, navigateTo } from "./helpers";
 
 test.describe("navigation shell", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/");
+    await enterApp(page, "/");
   });
 
   test("shows the navigation that belongs to this width", async ({ page }, testInfo) => {
@@ -77,7 +77,7 @@ test.describe("navigation shell", () => {
   });
 
   test("an unknown address shows a not-found screen with a way back", async ({ page }) => {
-    await page.goto("/#/no-such-screen");
+    await goToRoute(page, "/no-such-screen");
     await expect(page.getByRole("heading", { level: 1, name: "Page not found" })).toBeVisible();
     await expect(page).toHaveTitle("Coffer");
     await page.getByRole("link", { name: "Go to Home" }).click();
@@ -86,14 +86,16 @@ test.describe("navigation shell", () => {
 
   test("a sub-path keeps its parent destination current", async ({ page }, testInfo) => {
     test.skip(layoutFor(testInfo) === "compact", "checked on the rail and sidebar");
-    await page.goto("/#/files");
+    await goToRoute(page, "/files");
     await expect(page.getByRole("navigation", { name: "Main navigation" }).locator('[aria-current="page"]')).toHaveText("Files");
   });
 
-  test("reloading keeps the screen (the path is in the hash)", async ({ page }, testInfo) => {
+  test("a reload keeps the route in the hash and returns to Welcome, because the session is memory-only", async ({ page }, testInfo) => {
+    // Saved connections (M8) will bring the person back to this screen; until then the keys are gone after a reload.
     await navigateTo(page, layoutFor(testInfo), "Files");
     await page.reload();
-    await expect(page.getByRole("heading", { level: 1, name: "Files" })).toBeVisible();
+    await expect(page).toHaveURL(/#\/files$/);
+    await expect(page.getByRole("button", { name: "Connect a bucket" })).toBeVisible();
   });
 
   test("the skip button appears on focus and moves focus to the page", async ({ page }) => {
@@ -106,10 +108,16 @@ test.describe("navigation shell", () => {
     await expect(page.locator("main")).toBeFocused();
   });
 
-  test("the skip button is the first stop in the Tab order", async ({ page, browserName }) => {
-    test.skip(browserName !== "chromium", "Safari does not Tab to buttons by default");
-    await page.keyboard.press("Tab");
-    await expect(page.getByRole("button", { name: "Skip to content" })).toBeFocused();
+  test("the skip button is the first stop in the Tab order", async ({ page }) => {
+    // Entering the app leaves the keyboard start point where onboarding ended, so the order is read from the DOM
+    // (the first tabbable element) instead of pressing Tab from an unknown place.
+    const first = await page.evaluate(() => {
+      const tabbable = [...document.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input, select, textarea, [tabindex]')].find(
+        (element) => element.tabIndex >= 0,
+      );
+      return tabbable?.textContent;
+    });
+    expect(first).toBe("Skip to content");
   });
 
   test.describe("below 768 px", () => {

@@ -1,4 +1,6 @@
-import type { Page, TestInfo } from "@playwright/test";
+import { expect, type Page, type TestInfo } from "@playwright/test";
+import { admin, s3Fixture } from "../integration/config";
+import { E2E_BUCKET } from "./fixture";
 
 export type Layout = "compact" | "rail" | "sidebar";
 
@@ -43,7 +45,8 @@ export async function cspViolations(page: Page): Promise<string[]> {
 export function collectErrors(page: Page): string[] {
   const errors: string[] = [];
   page.on("console", (message) => {
-    if (message.type() === "error") errors.push(message.text());
+    // The connection test probes the endpoint root; the S3 fixture answers HEAD / with 501, which the browser logs.
+    if (message.type() === "error" && !message.text().includes('status of 501 (Not Implemented)')) errors.push(message.text());
   });
   page.on("pageerror", (error) => {
     errors.push(error.message);
@@ -64,4 +67,41 @@ export async function navigateTo(page: Page, layout: Layout, name: DestinationNa
   }
   await page.getByRole("button", { name: "More" }).click();
   await page.getByRole("dialog", { name: "More" }).getByRole("link", { name }).click();
+}
+
+export interface ConnectOptions {
+  bucket?: string;
+  accessKeyId?: string;
+  secretAccessKey?: string;
+  endpoint?: string;
+}
+
+/** From Welcome to the connection test, through the real screens: Other S3-compatible service against the fixture. */
+export async function connectCustom(page: Page, options: ConnectOptions = {}): Promise<void> {
+  await page.getByRole("button", { name: "Connect a bucket" }).click();
+  await page.getByRole("button", { name: "Other S3-compatible service" }).click();
+  await page.getByLabel("Endpoint URL").fill(options.endpoint ?? s3Fixture.endpoint);
+  await page.getByLabel("Access Key ID").fill(options.accessKeyId ?? admin.accessKeyId);
+  await page.getByLabel("Secret Access Key").fill(options.secretAccessKey ?? admin.secretAccessKey);
+  if (options.bucket !== "") await page.getByLabel("Bucket", { exact: true }).fill(options.bucket ?? E2E_BUCKET);
+  await page.getByRole("button", { name: "Connect", exact: true }).click();
+}
+
+/**
+ * Open the app on a route as a connected person. The session is memory-only, so
+ * every test starts at Welcome and connects to the fixture first. The route is
+ * set through the hash, never with a reload, which would drop the keys.
+ */
+export async function enterApp(page: Page, route = "/files"): Promise<void> {
+  await page.goto("/");
+  await connectCustom(page);
+  await page.getByRole("button", { name: "Open bucket" }).click({ timeout: 30_000 });
+  await expect(page.getByRole("navigation", { name: "Main navigation" })).toBeVisible();
+  await goToRoute(page, route);
+}
+
+export async function goToRoute(page: Page, route: string): Promise<void> {
+  await page.evaluate((hash) => {
+    window.location.hash = hash;
+  }, `#${route}`);
 }

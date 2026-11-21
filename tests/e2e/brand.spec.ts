@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { collectErrors, enterApp } from "./helpers";
 
 // OQ-33 / C-53: every icon the page or the manifest points to must be served
 // under the real _headers, with the right type and a long cache.
@@ -60,11 +61,8 @@ test.describe("Brand assets", () => {
   });
 
   test("the app mark shows beside the name in both themes without a CSP violation", async ({ page }) => {
-    const violations: string[] = [];
-    page.on("console", (message) => {
-      if (message.type() === "error") violations.push(message.text());
-    });
-    await page.goto("/#/settings");
+    const violations = collectErrors(page);
+    await enterApp(page, "/settings");
     const mark = page.locator('[data-component="AppBar"] [data-component="CofferMark"]');
     await expect(mark).toBeVisible();
     await page.getByRole("radio", { name: "Dark" }).check();

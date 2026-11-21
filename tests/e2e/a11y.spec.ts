@@ -1,8 +1,8 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
-import { layoutFor } from "./helpers";
+import { enterApp, layoutFor } from "./helpers";
 
-const routes = ["#/", "#/files", "#/starred", "#/trash", "#/storage", "#/settings"] as const;
+const routes = ["/", "/files", "/starred", "/trash", "/storage", "/settings"] as const;
 const themes = ["light", "dark"] as const;
 
 /** Contrast is measured on the final colors, so wait for the open animation to end first. */
@@ -25,7 +25,7 @@ test.describe("accessibility (axe, WCAG 2.2 A and AA)", () => {
     for (const route of routes) {
       test(`${route} in ${colorScheme}`, async ({ page }) => {
         await page.emulateMedia({ colorScheme });
-        await page.goto(`/${route}`);
+        await enterApp(page, route);
         await expect(page.locator("h1")).toBeVisible();
         expect(await violations(page)).toEqual([]);
       });
@@ -34,7 +34,7 @@ test.describe("accessibility (axe, WCAG 2.2 A and AA)", () => {
     test(`open drawer and More sheet in ${colorScheme}`, async ({ page }, testInfo) => {
       test.skip(layoutFor(testInfo) !== "compact", "drawer and More sheet exist only below 768 px");
       await page.emulateMedia({ colorScheme });
-      await page.goto("/");
+      await enterApp(page, "/");
 
       await page.getByRole("button", { name: "Open menu" }).click();
       await expect(page.getByRole("dialog", { name: "Main navigation" })).toBeVisible();

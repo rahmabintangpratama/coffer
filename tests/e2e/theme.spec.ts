@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { enterApp } from "./helpers";
 
 const theme = (page: Page) =>
   page.evaluate(() => document.documentElement.getAttribute("data-theme"));
@@ -6,13 +7,14 @@ const theme = (page: Page) =>
 test.describe("theme", () => {
   test("a chosen theme applies, is saved and survives a reload", async ({ page }) => {
     await page.emulateMedia({ colorScheme: "light" });
-    await page.goto("/#/settings");
+    await enterApp(page, "/settings");
     await page.getByRole("radio", { name: "Dark" }).check();
     expect(await theme(page)).toBe("dark");
     expect(await page.evaluate(() => localStorage.getItem("coffer:theme"))).toBe("dark");
 
     await page.reload();
     expect(await theme(page)).toBe("dark");
+    await enterApp(page, "/settings");
     await expect(page.getByRole("radio", { name: "Dark" })).toBeChecked();
 
     await page.getByRole("radio", { name: "Light" }).check();
@@ -21,7 +23,7 @@ test.describe("theme", () => {
 
   test("System follows the operating system and updates live", async ({ page }) => {
     await page.emulateMedia({ colorScheme: "dark" });
-    await page.goto("/#/settings");
+    await enterApp(page, "/settings");
     await expect(page.getByRole("radio", { name: "System" })).toBeChecked();
     expect(await theme(page)).toBe("dark");
 
@@ -33,7 +35,7 @@ test.describe("theme", () => {
 
   test("an explicit choice ignores the operating system", async ({ page }) => {
     await page.emulateMedia({ colorScheme: "dark" });
-    await page.goto("/#/settings");
+    await enterApp(page, "/settings");
     await page.getByRole("radio", { name: "Light" }).check();
     await page.emulateMedia({ colorScheme: "light" });
     await page.emulateMedia({ colorScheme: "dark" });
@@ -65,7 +67,7 @@ test.describe("theme", () => {
     await page.goto("/");
     // bg.app is gray.100 in light and gray.975 in dark.
     await expect(page.locator(".cf-app")).toHaveCSS("background-color", "rgb(239, 237, 233)");
-    await page.goto("/#/settings");
+    await enterApp(page, "/settings");
     await page.getByRole("radio", { name: "Dark" }).check();
     await expect(page.locator(".cf-app")).toHaveCSS("background-color", "rgb(18, 17, 16)");
   });

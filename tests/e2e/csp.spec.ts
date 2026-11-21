@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { collectErrors, cspViolations, layoutFor, navigateTo, destinations, recordCspViolations } from "./helpers";
+import { collectErrors, cspViolations, destinations, enterApp, layoutFor, navigateTo, recordCspViolations } from "./helpers";
 
 // The e2e server applies dist/_headers, so this runs under the real policy.
 test.describe("Content Security Policy", () => {
@@ -18,7 +18,7 @@ test.describe("Content Security Policy", () => {
     await recordCspViolations(page);
     const errors = collectErrors(page);
 
-    await page.goto("/");
+    await enterApp(page, "/");
     for (const name of destinations) await navigateTo(page, layout, name);
 
     // Theme change, then layers (these create the most DOM and styles).
