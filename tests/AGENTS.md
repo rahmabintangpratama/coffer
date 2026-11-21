@@ -10,7 +10,8 @@ Integration tests, end-to-end tests and shared fixtures. Unit and component test
 
 ## Rules
 
-- **Never use real cloud credentials.** Use the fixed fake keys in `tests/integration/config.ts`. A test that needs a real provider belongs in the manual compatibility matrix, not here.
+- **Never use real cloud credentials.** Use the fixed fake keys in `tests/integration/config.ts`.
+- Fake keys must not look real to secret scanners. GitHub push protection blocked a Tencent-style `AKID` plus 32 characters id in a fixture. Build fakes from obvious words of the right length (`tencent-example-id-000…`), never from a provider's real key pattern. If a push is blocked, fix the string in the unpushed commits; do not use the "allow this secret" link. A test that needs a real provider belongs in the manual compatibility matrix, not here.
 - Name tests after the requirement: `AC-36.1 ...`. Group by FR.
 - Integration: use a fresh bucket prefix per test; clean up in `afterEach`; inject faults through the S3 test middleware (crash after copy, after verify, mid-multipart, `SlowDown`, expired token).
 - E2E runs against the production build served by `scripts/serve/dist-server.ts`, which applies `dist/_headers`; a CSP violation in the console fails the shell tests.
