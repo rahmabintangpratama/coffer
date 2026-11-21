@@ -23,4 +23,5 @@ Integration tests, end-to-end tests and shared fixtures. Unit and component test
 - Local Network Access specs serve the app under a fake public origin with `page.route()` (`local-network.spec.ts`) and grant `local-network-access` with `context.grantPermissions`. They run in Chromium only.
 - XSS fixtures (hostile names, HTML, SVG, Markdown) must stay inert; add one when a new renderer lands.
 - CORS: set rules per bucket with `PutBucketCors` (one bucket with a rule, one without); use Playwright route interception for `cors` versus `network` cases. Do not rely on a global CORS setting.
+- `upload-large.spec.ts` (the 500 MB exit check) runs only with `COFFER_E2E_LARGE=1`. Other upload specs write sparse files to a temp directory and pass the path (`setInputFiles` refuses buffers over 50 MB).
 - No fixed sleeps; wait on conditions. Tests must pass offline from the repo plus Docker.

@@ -1,7 +1,7 @@
 # Coffer MVP implementation plan
 
 - **Purpose:** Split the MVP into milestones of one to three days. Each milestone lists its requirements, deliverables, tests and an exit check that can be demoed.
-- **Status:** Approved. M0, M1, M2a, M2b and M3 are complete (2026-11-21); M4 has not started.
+- **Status:** Approved. M0, M1, M2a, M2b, M3 and M4 are complete (2026-11-21); M5a has not started.
 - **Last updated:** 2026-11-21
 - **Source files in `design/`:** [`HANDOFF.md`](../design/HANDOFF.md), [`screens.md`](../design/screens.md), [`components.md`](../design/components.md), [`tokens.json`](../design/tokens.json)
 - **Related:** [product-spec.md](product-spec.md) (FR, AC, release plan), [technical-spec.md](technical-spec.md), [open-questions.md](open-questions.md)
@@ -152,6 +152,8 @@ Total: 35 days plus buffer. Every MVP FR in the product spec appears in at least
 - IndexedDB setup in `lib/storage` (database `coffer`, all stores, a migration test harness) and the `uploads` store implementing `UploadStateStore`; finished parts and their ETags are stored from the start so v1 resume needs no schema change.
 - Abort on load: after unlock, every stored upload is aborted with `AbortMultipartUpload` and shown as interrupted (C-43); no resume UI.
 - Conflict dialog (Replace, Keep both, Skip, Apply to all), `TransferPanel` with `role=progressbar` and text values, "Upload interrupted" row.
+
+**Status: complete.** Differences from the plan below: abort-on-load matches records by endpoint and bucket ([D-36](open-questions.md#decisions-made-on-the-owners-behalf)); the New control sits in the Files screen, no `If-None-Match`, and the 500 MB check is opt-in ([D-37](open-questions.md#decisions-made-on-the-owners-behalf)). M4 was not split. A 500 MB upload took 22 s against the fixture. The `coffer` IndexedDB database now exists, so the M8 Forget inventory must list it.
 
 **Tests:** unit for conflict naming and for the orchestrator with a fake client (part order, ETag sorting, abort on failure and cancel, at most 10,000 parts, record written before the first part); integration for a 20 MiB and a 200 MiB multipart upload, cancel leaves no incomplete upload (`ListMultipartUploads` empty), a part failing twice then succeeding, `SlowDown`; e2e for nested folder upload, conflict batch with Apply to all, reload mid-upload shows the interrupted row and the S3 fixture has no incomplete upload; axe on the panel.
 
