@@ -18,6 +18,7 @@
 | `providers.json` | Provider presets and paste hints. |
 | `accessibility.md` | WCAG targets and rules. |
 | `SECURITY-DESIGN.md` | Trust boundaries, threats, header proposal, local data inventory. |
+| `brand/` | Owner-supplied brand source: logo, mark, favicons and app icons (SVG, PNG, ICO), with its own README. Read-only like the rest of `design/`; integrated into `public/` and `src/components/` by hand. |
 
 ## Precedence
 
