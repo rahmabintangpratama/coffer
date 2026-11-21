@@ -93,6 +93,7 @@ Prerequisites: Node 22, pnpm 12 (enable it with `corepack enable`) and Docker (f
 | Dev server | `pnpm dev` |
 | Build | `pnpm build` |
 | Typecheck | `pnpm typecheck` |
+| Unit tests | `pnpm test` |
 
 ## Documentation
 

@@ -43,7 +43,7 @@ Package manager: **pnpm** 12 with Node 22 (`.nvmrc`; enable pnpm with `corepack 
 | Build | `pnpm build` |
 | Typecheck | `pnpm typecheck` |
 | Lint | `pnpm lint` (TBD) |
-| Unit and component tests | `pnpm test` (TBD) |
+| Unit and component tests | `pnpm test` |
 | Integration tests (needs MinIO) | `pnpm test:integration` (TBD) |
 | End-to-end tests | `pnpm test:e2e` (TBD) |
 | Start local MinIO | `docker compose -f tests/integration/docker-compose.yml up -d` (TBD) |
