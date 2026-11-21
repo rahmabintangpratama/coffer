@@ -1,0 +1,19 @@
+// Static CSS fragments that do not derive from token values. Edit with care:
+// the golden test compares the generated files with design/tokens.css and design/tailwind.css.
+// Each fragment is taken verbatim from the design package.
+
+export const tailwindHead = "/* tailwind.css: Tailwind v4. Import after tokens.css. */\n@import \"tailwindcss\";\n@import \"./tokens.css\";\n\n@custom-variant dark (&:where([data-theme=\"dark\"], [data-theme=\"dark\"] *));\n\n";
+
+export const shadcn = "/* shadcn/ui variable mapping. Note: shadcn's --accent is a hover surface,\n   not the Coffer accent. Coffer's accent maps to --primary. */\n:root, [data-theme=\"dark\"] {\n  --background: var(--cf-color-bg-app);\n  --foreground: var(--cf-color-text-default);\n  /* Cards and popovers are overlay layers here: give their elements data-surface=\"elevated\". */\n  --card: var(--cf-color-bg-elevated);\n  --card-foreground: var(--cf-color-text-default);\n  --popover: var(--cf-color-bg-elevated);\n  --popover-foreground: var(--cf-color-text-default);\n  --primary: var(--cf-color-accent-default);\n  --primary-foreground: var(--cf-color-text-on-accent);\n  --secondary: var(--cf-color-bg-subtle);\n  --secondary-foreground: var(--cf-color-text-default);\n  --muted: var(--cf-color-bg-subtle);\n  --muted-foreground: var(--cf-color-text-muted);\n  --accent: var(--cf-color-bg-hover);\n  --accent-foreground: var(--cf-color-text-default);\n  --destructive: var(--cf-color-danger-default);\n  --destructive-foreground: var(--cf-color-text-on-danger);\n  --border: var(--cf-color-border-default);\n  --input: var(--cf-color-border-strong);\n  --ring: var(--cf-color-border-focus);\n  --radius: var(--cf-radius-sm);\n}\n";
+
+export const utilities = "/* State layer for chips, cards and rows: paints the hover/pressed overlay on top of the element's own fill.\n   Usage: class=\"state-layer bg-surface\". The element must be able to be a positioned box. */\n@utility state-layer {\n  position: relative;\n  isolation: isolate;\n  &::after {\n    content: \"\";\n    position: absolute;\n    inset: 0;\n    border-radius: inherit;\n    background: transparent;\n    pointer-events: none;\n    z-index: 1;\n  }\n  @media (hover: hover) {\n    &:hover:not(:disabled, [aria-disabled=\"true\"])::after { background: var(--cf-color-state-hover-overlay); }\n  }\n  &:active:not(:disabled, [aria-disabled=\"true\"])::after { background: var(--cf-color-state-pressed-overlay); }\n}\n\n/* Selected row: bg.selected + filled checkbox (in markup) + 2px accent edge. Hover uses bg.selected-hover. */\n@utility row-selected {\n  background-color: var(--cf-color-bg-selected);\n  box-shadow: inset 2px 0 0 var(--cf-color-accent-default);\n  @media (hover: hover) { &:hover { background-color: var(--cf-color-bg-selected-hover); } }\n}\n";
+
+export const tokensHead = "/* tokens.css: generated from tokens.json. Do not edit by hand. */\n";
+
+export const layoutStatic = "/* Layout is driven by the app root container, not the viewport. Put .cf-root on the app wrapper and .cf-app directly inside it. */\n.cf-root { container: cf-app / inline-size; }\n.cf-app { font-family: var(--cf-font-sans); font-size: var(--cf-font-size-base); line-height: var(--cf-line-height-base); color: var(--cf-color-text-default); background: var(--cf-color-bg-app); }\n";
+
+export const btnComment = "/* Button tokens. Declared on both selectors so the references resolve to the active theme wherever data-theme is set. */\n";
+
+export const elevatedComment = "/* Elevated layers: dialogs, sheets, popovers, menus, command palette, details overlay, connection switcher.\n   Components set data-surface=\"elevated\". The scope overrides state and tonal tokens, then re-declares --cf-btn-* so they resolve against the overrides. */\n";
+
+export const inverseComment = "/* Inverse layer (toast): the focus ring uses inverse.accent so it contrasts with inverse.bg in both themes. */\n";

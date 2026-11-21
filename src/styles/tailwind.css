@@ -1,0 +1,225 @@
+/* tailwind.css: Tailwind v4. Import after tokens.css. */
+@import "tailwindcss";
+@import "./tokens.css";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme inline {
+  --color-app: var(--cf-color-bg-app);
+  --color-surface: var(--cf-color-bg-surface);
+  --color-elevated: var(--cf-color-bg-elevated);
+  --color-inset: var(--cf-color-bg-inset);
+  --color-subtle: var(--cf-color-bg-subtle);
+  --color-hover: var(--cf-color-bg-hover);
+  --color-active: var(--cf-color-bg-active);
+  --color-selected: var(--cf-color-bg-selected);
+  --color-selected-hover: var(--cf-color-bg-selected-hover);
+  --color-overlay: var(--cf-color-bg-overlay);
+  --color-line: var(--cf-color-border-default);
+  --color-line-strong: var(--cf-color-border-strong);
+  --color-focus: var(--cf-color-border-focus);
+  --color-fg: var(--cf-color-text-default);
+  --color-fg-muted: var(--cf-color-text-muted);
+  --color-fg-subtle: var(--cf-color-text-subtle);
+  --color-fg-disabled: var(--cf-color-text-disabled);
+  --color-on-accent: var(--cf-color-text-on-accent);
+  --color-on-danger: var(--cf-color-text-on-danger);
+  --color-link: var(--cf-color-text-link);
+  --color-accent: var(--cf-color-accent-default);
+  --color-accent-hover: var(--cf-color-accent-hover);
+  --color-accent-active: var(--cf-color-accent-active);
+  --color-accent-subtle: var(--cf-color-accent-subtle);
+  --color-accent-subtle-hover: var(--cf-color-accent-subtle-hover);
+  --color-accent-line: var(--cf-color-accent-border);
+  --color-accent-fg: var(--cf-color-accent-text);
+  --color-danger: var(--cf-color-danger-default);
+  --color-danger-hover: var(--cf-color-danger-hover);
+  --color-danger-subtle: var(--cf-color-danger-subtle);
+  --color-danger-line: var(--cf-color-danger-border);
+  --color-danger-fg: var(--cf-color-danger-text);
+  --color-warning-subtle: var(--cf-color-warning-subtle);
+  --color-warning-line: var(--cf-color-warning-border);
+  --color-warning-fg: var(--cf-color-warning-text);
+  --color-success-subtle: var(--cf-color-success-subtle);
+  --color-success-line: var(--cf-color-success-border);
+  --color-success-fg: var(--cf-color-success-text);
+  --color-info-subtle: var(--cf-color-info-subtle);
+  --color-info-line: var(--cf-color-info-border);
+  --color-info-fg: var(--cf-color-info-text);
+  --color-accent-subtle-active: var(--cf-color-accent-subtle-active);
+  --color-accent-line-strong: var(--cf-color-accent-border-strong);
+  --color-danger-active: var(--cf-color-danger-active);
+  --color-danger-subtle-hover: var(--cf-color-danger-subtle-hover);
+  --color-danger-subtle-active: var(--cf-color-danger-subtle-active);
+  --color-state-hover: var(--cf-color-state-hover-overlay);
+  --color-state-pressed: var(--cf-color-state-pressed-overlay);
+  --font-sans: var(--cf-font-sans);
+  --font-mono: var(--cf-font-mono);
+  --text-xs: var(--cf-font-size-xs);
+  --text-xs--line-height: var(--cf-line-height-xs);
+  --text-sm: var(--cf-font-size-sm);
+  --text-sm--line-height: var(--cf-line-height-sm);
+  --text-base: var(--cf-font-size-base);
+  --text-base--line-height: var(--cf-line-height-base);
+  --text-md: var(--cf-font-size-md);
+  --text-md--line-height: var(--cf-line-height-md);
+  --text-lg: var(--cf-font-size-lg);
+  --text-lg--line-height: var(--cf-line-height-lg);
+  --text-xl: var(--cf-font-size-xl);
+  --text-xl--line-height: var(--cf-line-height-xl);
+  --text-2xl: var(--cf-font-size-2xl);
+  --text-2xl--line-height: var(--cf-line-height-2xl);
+  --radius-xs: var(--cf-radius-xs);
+  --radius-sm: var(--cf-radius-sm);
+  --radius-md: var(--cf-radius-md);
+  --radius-lg: var(--cf-radius-lg);
+  --radius-xl: var(--cf-radius-xl);
+  --radius-full: var(--cf-radius-full);
+  --shadow-overlay: var(--cf-shadow-overlay);
+  --shadow-dialog: var(--cf-shadow-dialog);
+  --ease-standard: var(--cf-motion-easing-standard);
+  --ease-exit: var(--cf-motion-easing-exit);
+  --spacing: 4px;
+  --container-md: 48rem; /* 768px: use @md: container variants */
+  --container-lg: 64rem; /* 1024px: use @lg: container variants */
+  --container-xl: 80rem; /* 1280px: use @xl: container variants */
+  --container-2xl: 90rem; /* 1440px: use @2xl: container variants */
+  --breakpoint-sm: 360px;
+}
+
+/* shadcn/ui variable mapping. Note: shadcn's --accent is a hover surface,
+   not the Coffer accent. Coffer's accent maps to --primary. */
+:root, [data-theme="dark"] {
+  --background: var(--cf-color-bg-app);
+  --foreground: var(--cf-color-text-default);
+  /* Cards and popovers are overlay layers here: give their elements data-surface="elevated". */
+  --card: var(--cf-color-bg-elevated);
+  --card-foreground: var(--cf-color-text-default);
+  --popover: var(--cf-color-bg-elevated);
+  --popover-foreground: var(--cf-color-text-default);
+  --primary: var(--cf-color-accent-default);
+  --primary-foreground: var(--cf-color-text-on-accent);
+  --secondary: var(--cf-color-bg-subtle);
+  --secondary-foreground: var(--cf-color-text-default);
+  --muted: var(--cf-color-bg-subtle);
+  --muted-foreground: var(--cf-color-text-muted);
+  --accent: var(--cf-color-bg-hover);
+  --accent-foreground: var(--cf-color-text-default);
+  --destructive: var(--cf-color-danger-default);
+  --destructive-foreground: var(--cf-color-text-on-danger);
+  --border: var(--cf-color-border-default);
+  --input: var(--cf-color-border-strong);
+  --ring: var(--cf-color-border-focus);
+  --radius: var(--cf-radius-sm);
+}
+
+/* State layer for chips, cards and rows: paints the hover/pressed overlay on top of the element's own fill.
+   Usage: class="state-layer bg-surface". The element must be able to be a positioned box. */
+@utility state-layer {
+  position: relative;
+  isolation: isolate;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: transparent;
+    pointer-events: none;
+    z-index: 1;
+  }
+  @media (hover: hover) {
+    &:hover:not(:disabled, [aria-disabled="true"])::after { background: var(--cf-color-state-hover-overlay); }
+  }
+  &:active:not(:disabled, [aria-disabled="true"])::after { background: var(--cf-color-state-pressed-overlay); }
+}
+
+/* Selected row: bg.selected + filled checkbox (in markup) + 2px accent edge. Hover uses bg.selected-hover. */
+@utility row-selected {
+  background-color: var(--cf-color-bg-selected);
+  box-shadow: inset 2px 0 0 var(--cf-color-accent-default);
+  @media (hover: hover) { &:hover { background-color: var(--cf-color-bg-selected-hover); } }
+}
+
+@utility btn-primary {
+  background-color: var(--cf-btn-primary-bg);
+  color: var(--cf-btn-primary-fg);
+  border: 1px solid transparent;
+  @media (hover: hover) {
+    &:hover:not(:disabled, [aria-disabled="true"]) { background-color: var(--cf-btn-primary-bg-hover); color: var(--cf-btn-primary-fg-hover); }
+  }
+  &:active:not(:disabled, [aria-disabled="true"]) { background-color: var(--cf-btn-primary-bg-active); color: var(--cf-btn-primary-fg-active); }
+  &:focus-visible { outline: var(--cf-btn-focus-ring); outline-offset: var(--cf-btn-focus-offset); }
+  &:disabled, &[aria-disabled="true"] { background-color: var(--cf-btn-disabled-bg); color: var(--cf-btn-disabled-fg); border-color: transparent; cursor: not-allowed; }
+}
+
+@utility btn-secondary {
+  background-color: var(--cf-btn-secondary-bg);
+  color: var(--cf-btn-secondary-fg);
+  border: 1px solid var(--cf-btn-secondary-border);
+  @media (hover: hover) {
+    &:hover:not(:disabled, [aria-disabled="true"]) { background-color: var(--cf-btn-secondary-bg-hover); color: var(--cf-btn-secondary-fg-hover); }
+  }
+  &:active:not(:disabled, [aria-disabled="true"]) { background-color: var(--cf-btn-secondary-bg-active); color: var(--cf-btn-secondary-fg-active); }
+  &:focus-visible { outline: var(--cf-btn-focus-ring); outline-offset: var(--cf-btn-focus-offset); }
+  &:disabled, &[aria-disabled="true"] { background-color: var(--cf-btn-disabled-bg); color: var(--cf-btn-disabled-fg); border-color: transparent; cursor: not-allowed; }
+}
+
+@utility btn-tonal {
+  background-color: var(--cf-btn-tonal-bg);
+  color: var(--cf-btn-tonal-fg);
+  border: 1px solid transparent;
+  @media (hover: hover) {
+    &:hover:not(:disabled, [aria-disabled="true"]) { background-color: var(--cf-btn-tonal-bg-hover); color: var(--cf-btn-tonal-fg-hover); }
+  }
+  &:active:not(:disabled, [aria-disabled="true"]) { background-color: var(--cf-btn-tonal-bg-active); color: var(--cf-btn-tonal-fg-active); }
+  &:focus-visible { outline: var(--cf-btn-focus-ring); outline-offset: var(--cf-btn-focus-offset); }
+  &:disabled, &[aria-disabled="true"] { background-color: var(--cf-btn-disabled-bg); color: var(--cf-btn-disabled-fg); border-color: transparent; cursor: not-allowed; }
+}
+
+@utility btn-ghost {
+  background-color: var(--cf-btn-ghost-bg);
+  color: var(--cf-btn-ghost-fg);
+  border: 1px solid transparent;
+  @media (hover: hover) {
+    &:hover:not(:disabled, [aria-disabled="true"]) { background-color: var(--cf-btn-ghost-bg-hover); color: var(--cf-btn-ghost-fg-hover); }
+  }
+  &:active:not(:disabled, [aria-disabled="true"]) { background-color: var(--cf-btn-ghost-bg-active); color: var(--cf-btn-ghost-fg-active); }
+  &:focus-visible { outline: var(--cf-btn-focus-ring); outline-offset: var(--cf-btn-focus-offset); }
+  &:disabled, &[aria-disabled="true"] { background-color: var(--cf-btn-disabled-bg); color: var(--cf-btn-disabled-fg); border-color: transparent; cursor: not-allowed; }
+}
+
+@utility btn-danger {
+  background-color: var(--cf-btn-danger-bg);
+  color: var(--cf-btn-danger-fg);
+  border: 1px solid transparent;
+  @media (hover: hover) {
+    &:hover:not(:disabled, [aria-disabled="true"]) { background-color: var(--cf-btn-danger-bg-hover); color: var(--cf-btn-danger-fg-hover); }
+  }
+  &:active:not(:disabled, [aria-disabled="true"]) { background-color: var(--cf-btn-danger-bg-active); color: var(--cf-btn-danger-fg-active); }
+  &:focus-visible { outline: var(--cf-btn-focus-ring); outline-offset: var(--cf-btn-focus-offset); }
+  &:disabled, &[aria-disabled="true"] { background-color: var(--cf-btn-disabled-bg); color: var(--cf-btn-disabled-fg); border-color: transparent; cursor: not-allowed; }
+}
+
+@utility btn-danger-tonal {
+  background-color: var(--cf-btn-danger-tonal-bg);
+  color: var(--cf-btn-danger-tonal-fg);
+  border: 1px solid var(--cf-btn-danger-tonal-border);
+  @media (hover: hover) {
+    &:hover:not(:disabled, [aria-disabled="true"]) { background-color: var(--cf-btn-danger-tonal-bg-hover); color: var(--cf-btn-danger-tonal-fg-hover); }
+  }
+  &:active:not(:disabled, [aria-disabled="true"]) { background-color: var(--cf-btn-danger-tonal-bg-active); color: var(--cf-btn-danger-tonal-fg-active); }
+  &:focus-visible { outline: var(--cf-btn-focus-ring); outline-offset: var(--cf-btn-focus-offset); }
+  &:disabled, &[aria-disabled="true"] { background-color: var(--cf-btn-disabled-bg); color: var(--cf-btn-disabled-fg); border-color: transparent; cursor: not-allowed; }
+}
+
+@utility btn-inverse {
+  background-color: var(--cf-btn-inverse-bg);
+  color: var(--cf-btn-inverse-fg);
+  border: 1px solid transparent;
+  @media (hover: hover) {
+    &:hover:not(:disabled, [aria-disabled="true"]) { background-color: var(--cf-btn-inverse-bg-hover); color: var(--cf-btn-inverse-fg-hover); }
+  }
+  &:active:not(:disabled, [aria-disabled="true"]) { background-color: var(--cf-btn-inverse-bg-active); color: var(--cf-btn-inverse-fg-active); }
+  &:focus-visible { outline: var(--cf-btn-focus-ring); outline-offset: var(--cf-btn-focus-offset); }
+  &:disabled, &[aria-disabled="true"] { background-color: var(--cf-btn-disabled-bg); color: var(--cf-btn-disabled-fg); border-color: transparent; cursor: not-allowed; }
+}

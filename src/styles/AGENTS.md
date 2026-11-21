@@ -11,8 +11,8 @@
 ## Regenerating
 
 1. Edit nothing in `design/`. A token change arrives as a new `design/tokens.json`.
-2. Run `pnpm tokens:build` (TBD) to regenerate both files with the generator in `scripts/tokens/` ([ADR-008](../../docs/adr/ADR-008-token-generator.md)); commit the result.
-3. `pnpm tokens:check` (TBD) regenerates into a temp directory and fails CI if the output differs from the committed files.
+2. Run `pnpm tokens:build` to regenerate both files with the generator in `scripts/tokens/` ([ADR-008](../../docs/adr/ADR-008-token-generator.md)); commit the result.
+3. `pnpm tokens:check` regenerates into a temp directory and fails CI if the output differs from the committed files.
 4. Re-run the real-browser contrast pass if any color token changed ([technical-spec](../../docs/technical-spec.md) section 15.7).
 
 ## Rules

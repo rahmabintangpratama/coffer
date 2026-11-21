@@ -14,7 +14,9 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "tokens:build": "node scripts/tokens/build.ts",
+    "tokens:check": "node scripts/tokens/build.ts --check"
   },
   "dependencies": {
     "react": "19.3.1",
