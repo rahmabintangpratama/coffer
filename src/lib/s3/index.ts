@@ -16,3 +16,9 @@ export {
   type AppErrorCode,
   type ErrorHint,
 } from "./errors";
+export { attachmentDisposition } from "./disposition";
+export { DOWNLOAD_SECONDS, presignDownload } from "./download";
+export { decodeS3Key, fileKindOf, isHiddenName, keyByteLength, MAX_KEY_BYTES, nameOf, trashPrefixOf } from "./keys";
+export { listPage, PAGE_SIZE, type ListPage, type ListPageOptions } from "./list";
+export type { S3Client as S3Handle } from "@aws-sdk/client-s3";
+export { headObject, type ObjectHead } from "./head";
