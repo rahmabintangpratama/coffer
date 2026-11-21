@@ -195,6 +195,8 @@ describe("FR-34 Move", () => {
     expect(await within(dialog).findByRole("tree", { name: "Folders" })).toBeInTheDocument();
     expect(await within(dialog).findByRole("treeitem", { name: /pics/ })).toBeInTheDocument();
     expect(within(dialog).getByText("Current location")).toBeInTheDocument();
+    // The accessible name is the text that is drawn (WCAG 2.5.3, axe label-content-name-mismatch).
+    expect(within(dialog).getByRole("treeitem", { name: "docs Current location" })).toBeInTheDocument();
     expect(within(dialog).getByRole("button", { name: "Move here" })).toBeDisabled();
     expect(within(dialog).getByText("This is where it already is. Choose another folder.")).toBeInTheDocument();
   });

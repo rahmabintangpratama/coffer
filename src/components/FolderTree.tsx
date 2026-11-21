@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronRight, Folder, LoaderCircle } from "lucide-react";
-import { type KeyboardEvent, useEffect, useRef, useState } from "react";
+import { type KeyboardEvent, useEffect, useId, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 export interface TreeFolder {
@@ -54,6 +54,7 @@ export function FolderTree(props: FolderTreeProps) {
   });
   const [focused, setFocused] = useState(root.prefix);
   const tree = useRef<HTMLUListElement>(null);
+  const idBase = useId();
 
   const inflight = useRef(new Set<string>());
 
@@ -145,8 +146,9 @@ export function FolderTree(props: FolderTreeProps) {
             key={prefix === "" ? "root" : prefix}
             role="treeitem"
             aria-level={row.level}
-            // The visible name sits in an aria-hidden button (the row is the one control), so the item is named here.
-            aria-label={prefix === currentPrefix ? `${row.folder.name}, ${currentLabel}` : row.folder.name}
+            // The visible name sits in an aria-hidden button (the row is the one control), so the item is named from those texts:
+            // the name is exactly what is drawn, which is what a voice-control user says (WCAG 2.5.3).
+            aria-labelledby={prefix === currentPrefix ? `${idBase}-n${index.toString()} ${idBase}-c${index.toString()}` : `${idBase}-n${index.toString()}`}
             aria-selected={selected}
             aria-disabled={disabled}
             aria-expanded={row.hasChildren === false ? undefined : row.expanded}
@@ -189,8 +191,8 @@ export function FolderTree(props: FolderTreeProps) {
                 className="flex min-w-0 flex-1 items-center gap-2 text-left disabled:cursor-not-allowed"
               >
                 <Folder aria-hidden="true" className={cn("size-5 shrink-0", disabled ? "text-fg-disabled" : "text-accent")} />
-                <span className="truncate">{row.folder.name}</span>
-                {prefix === currentPrefix && <span className="shrink-0 text-sm text-fg-muted">{currentLabel}</span>}
+                <span id={`${idBase}-n${index.toString()}`} className="truncate">{row.folder.name}</span>
+                {prefix === currentPrefix && <span id={`${idBase}-c${index.toString()}`} className="shrink-0 text-sm text-fg-muted">{currentLabel}</span>}
               </button>
             </div>
             {row.expanded && state === undefined && <p role="status" className="sr-only">{loadingLabel}</p>}
