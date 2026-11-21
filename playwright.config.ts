@@ -31,7 +31,8 @@ export default defineConfig({
     })),
   ),
   webServer: {
-    command: `pnpm build && pnpm preview --host 127.0.0.1 --port ${port} --strictPort`,
+    // Serves dist with its _headers, so every e2e test runs under the real CSP.
+    command: `pnpm build && node scripts/serve/dist-server.ts --port ${port}`,
     url: `http://127.0.0.1:${port}`,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
