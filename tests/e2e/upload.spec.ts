@@ -21,7 +21,8 @@ async function keysUnder(prefix: string): Promise<string[]> {
   const listed = await s3.send(new ListObjectsV2Command({ Bucket: E2E_BUCKET, Prefix: prefix }));
   return (listed.Contents ?? []).map((object) => object.Key ?? "").sort();
 }
-const incomplete = async () => ((await s3.send(new ListMultipartUploadsCommand({ Bucket: E2E_BUCKET, Prefix: "e2e-up/" }))).Uploads ?? []).length;
+// Scoped to the test's own folder: specs run in parallel against one bucket, and another test's upload in flight must not count.
+const incompleteIn = async (folder: string) => ((await s3.send(new ListMultipartUploadsCommand({ Bucket: E2E_BUCKET, Prefix: `${folder}/` }))).Uploads ?? []).length;
 
 async function openFolder(page: Page, folder: string): Promise<void> {
   await page.evaluate((hash) => { window.location.hash = hash; }, `#/files/${folder}`);
@@ -128,17 +129,17 @@ test.describe("upload", () => {
   test("AC-41.3 cancel aborts the multipart upload at the provider", async ({ page }) => {
     await slowParts(page);
     await filesInput(page).setInputFiles(bigFile("cancel.bin", 60));
-    await expect.poll(incomplete, { timeout: 20_000 }).toBeGreaterThan(0);
+    await expect.poll(() => incompleteIn(folder), { timeout: 20_000 }).toBeGreaterThan(0);
     await page.getByRole("button", { name: "Cancel upload: cancel.bin" }).click();
     await expect(page.getByRole("progressbar", { name: "cancel.bin" })).toHaveCount(0);
-    await expect.poll(incomplete, { timeout: 20_000 }).toBe(0);
+    await expect.poll(() => incompleteIn(folder), { timeout: 20_000 }).toBe(0);
     expect(await keysUnder(`${folder}/`)).toEqual([]);
   });
 
   test("AC-41.5 and AC-44.5 a reload mid-upload leaves nothing open and the panel says it was interrupted", async ({ page }) => {
     await slowParts(page, 4000);
     await filesInput(page).setInputFiles(bigFile("interrupted.bin", 60));
-    await expect.poll(incomplete, { timeout: 20_000 }).toBeGreaterThan(0);
+    await expect.poll(() => incompleteIn(folder), { timeout: 20_000 }).toBeGreaterThan(0);
     // The record is stored before the first part; wait until it is in IndexedDB.
     await expect
       .poll(() =>
@@ -161,7 +162,7 @@ test.describe("upload", () => {
     await page.getByRole("button", { name: "Open bucket" }).click({ timeout: 30_000 });
     await expect(page.getByText("interrupted.bin was interrupted when the page closed. Start it again.")).toBeVisible({ timeout: 30_000 });
     await expect(page.getByRole("heading", { level: 2, name: "Upload interrupted" })).toBeVisible();
-    await expect.poll(incomplete, { timeout: 20_000 }).toBe(0);
+    await expect.poll(() => incompleteIn(folder), { timeout: 20_000 }).toBe(0);
   });
 });
 
@@ -173,7 +174,7 @@ test("D-36 reloading a second tab does not abort an upload that is still running
   // Each part waits 4 s, so the upload is still running while the second tab loads.
   await slowParts(page, 4000);
   await filesInput(page).setInputFiles(bigFile("shared.bin", 40));
-  await expect.poll(incomplete, { timeout: 20_000 }).toBeGreaterThan(0);
+  await expect.poll(() => incompleteIn(folder), { timeout: 20_000 }).toBeGreaterThan(0);
 
   const other = await context.newPage();
   await enterApp(other, "/files");
@@ -185,7 +186,7 @@ test("D-36 reloading a second tab does not abort an upload that is still running
   await expect(page.getByRole("heading", { level: 2, name: "Uploaded 1 item" })).toBeVisible({ timeout: 90_000 });
   const head = await s3.send(new HeadObjectCommand({ Bucket: E2E_BUCKET, Key: `${folder}/shared.bin` }));
   expect(head.ContentLength).toBe(40 * MIB);
-  expect(await incomplete()).toBe(0);
+  expect(await incompleteIn(folder)).toBe(0);
 });
 
 test.describe("conflicts (FR-43)", () => {
