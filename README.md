@@ -85,7 +85,7 @@ Current and previous major versions of Chrome, Edge and Firefox. Safari 16.4 or 
 
 ## Development
 
-Prerequisites: Node 22, pnpm 12 (enable it with `corepack enable`) and Docker (for a local MinIO). The commands below exist as of M0, the first milestone of the [implementation plan](docs/implementation-plan.md). The CI workflow in `.github/workflows/ci.yml` runs them on every push and pull request. There is still no usable application: the app is a placeholder page until M1.
+Prerequisites: Node 22 (`>=22 <23`; run `nvm use` or `fnm use` to read `.nvmrc`; pnpm refuses other Node versions), pnpm 12 (enable it with `corepack enable`) and Docker (for a local MinIO). `pnpm install` also installs the Git hooks. The commands below exist as of M0, the first milestone of the [implementation plan](docs/implementation-plan.md). The CI workflow in `.github/workflows/ci.yml` runs them on every push and pull request. There is still no usable application: the app is a placeholder page until M1.
 
 | Task | Command |
 |---|---|
@@ -117,7 +117,7 @@ Each directory has an `AGENTS.md` (with a `CLAUDE.md` that imports it) that guid
 
 ## Contributing
 
-The project is early and issues are welcome. Commits follow [Conventional Commits](https://www.conventionalcommits.org/) and must be signed. Read [`AGENTS.md`](AGENTS.md) for the working rules. The `design/` folder is read-only; propose design changes in [`docs/open-questions.md`](docs/open-questions.md).
+The project is early and issues are welcome. Commits follow [Conventional Commits](https://www.conventionalcommits.org/) and must be signed. A `commit-msg` hook installed by `pnpm install` runs commitlint (`pnpm commitlint --edit <file>` by hand), and CI lints every commit in a push or pull request. Read [`AGENTS.md`](AGENTS.md) for the working rules. The `design/` folder is read-only; propose design changes in [`docs/open-questions.md`](docs/open-questions.md).
 
 ## License
 

@@ -34,7 +34,7 @@ Each directory with an `AGENTS.md` has a `CLAUDE.md` that imports it. Nested fil
 
 ## Commands
 
-Package manager: **pnpm** 12 with Node 22 (`.nvmrc`; enable pnpm with `corepack enable`). Every command below exists. Update this table in the same change that adds or renames a script. CI (`.github/workflows/ci.yml`) runs them on every push and pull request.
+Package manager: **pnpm** 12 with Node 22 only (`engines` is `>=22 <23` and `engine-strict` is on, so pnpm refuses other Node versions; run `nvm use` or `fnm use` to read `.nvmrc`; enable pnpm with `corepack enable`). Every command below exists. Update this table in the same change that adds or renames a script. CI (`.github/workflows/ci.yml`) runs them on every push and pull request.
 
 | Task | Command |
 |---|---|
@@ -83,7 +83,8 @@ Package manager: **pnpm** 12 with Node 22 (`.nvmrc`; enable pnpm with `corepack 
 
 ## Git
 
-- Use Conventional Commits: `type(scope): subject` with `feat`, `fix`, `docs`, `chore`, `test`, `refactor`, `perf`, `build` or `ci`; imperative subject under 72 characters; the body explains why.
+- Use Conventional Commits: `type(scope): subject` with `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore` or `revert`; imperative, lowercase start, no trailing period, header at most 72 characters; the body explains why.
+- A `commit-msg` hook (lefthook, installed by `pnpm install`) runs commitlint, and CI lints every commit in the pushed range. Never bypass the hook (`--no-verify`).
 - **Do not add a `Co-Authored-By` trailer or any other attribution** (tool or author credit lines) to commits.
 - **Every commit must be signed** (SSH signing is configured for the maintainer). Never disable signing: no `-c commit.gpgsign=false`, no `--no-gpg-sign`. If signing fails, stop and tell the maintainer.
 - Commit to `main` for now. Remote `origin`: `git@github.com:rahmabintangpratama/coffer.git`. Never force-push or rewrite pushed history.

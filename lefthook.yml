@@ -1,0 +1,6 @@
+# Git hooks. Installed by `pnpm install` (the prepare script).
+# Never bypass them with --no-verify (AGENTS.md, Git).
+commit-msg:
+  commands:
+    commitlint:
+      run: pnpm exec commitlint --edit {1}

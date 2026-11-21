@@ -37,6 +37,7 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Enable pnpm
@@ -49,6 +50,23 @@ jobs:
 
       - name: Install
         run: pnpm install --frozen-lockfile
+
+      - name: Commit messages
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          PUSH_HEAD: ${{ github.sha }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            from="$PR_BASE"; to="$PR_HEAD"
+          else
+            from="$PUSH_BEFORE"; to="$PUSH_HEAD"
+          fi
+          # A new branch or a base that is not in the clone: check the tip commit only.
+          if ! git cat-file -e "${from}^{commit}" 2>/dev/null; then from="${to}~1"; fi
+          pnpm exec commitlint --from "$from" --to "$to" --verbose
 
       - name: Typecheck
         run: pnpm typecheck
