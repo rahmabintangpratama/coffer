@@ -147,9 +147,27 @@ describe("a local endpoint that cannot be reached", () => {
     expect(asked[0]).toBe("local-network");
   });
 
-  it.each(["granted", "prompt", "unsupported"] as const)("stays a network problem when the permission is %s", async (permission) => {
+  it("is localNetworkDenied when the prompt was dismissed, because access is still not allowed", async () => {
+    const { run } = dead("prompt");
+    expect((await run).steps[0]?.failure).toBe("localNetworkDenied");
+  });
+
+  it.each(["granted", "unsupported"] as const)("stays a network problem when the permission is %s", async (permission) => {
     const { run } = dead(permission);
     expect((await run).steps[0]?.failure).toBe("network");
+  });
+
+  it("stays a network problem when the page itself is on localhost, where no permission is needed", async () => {
+    const { client } = fake(ok);
+    const result = await runConnectionTest({
+      ...base,
+      client,
+      endpoint: "http://127.0.0.1:9000",
+      pageHostname: "localhost",
+      reach: () => Promise.reject(new TypeError("Failed to fetch")),
+      queryPermission: () => Promise.resolve("prompt"),
+    });
+    expect(result.steps[0]?.failure).toBe("network");
   });
 
   it("never asks about a public address", async () => {

@@ -164,7 +164,10 @@ export async function runConnectionTest(options: ConnectionTestOptions): Promise
     // A blocked local network and a stopped server look alike. Read the permission now: if it is denied, say so.
     const pageHostname = options.pageHostname ?? (typeof location === "undefined" ? "" : location.hostname);
     const local = needsLocalNetworkPermission(pageHostname, url.hostname);
-    const denied = local && (await localNetworkPermission(endpoint, options.queryPermission)) === "denied";
+    // Not granted after a failed request means the person has not allowed it: "denied" is a Block, and "prompt"
+    // is a dismissed prompt (headless Chromium too). Either way the fix is the same, so both get the remediation.
+    const permission = local ? await localNetworkPermission(endpoint, options.queryPermission) : "unsupported";
+    const denied = permission === "denied" || permission === "prompt";
     update("reach", { status: "fail", failure: denied ? "localNetworkDenied" : "network" });
     return finish("failed");
   }
