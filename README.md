@@ -97,6 +97,7 @@ Prerequisites: Node 22, pnpm 12 (enable it with `corepack enable`) and Docker (f
 | Generate token CSS from `design/tokens.json` | `pnpm tokens:build` |
 | Check generated CSS is current | `pnpm tokens:check` |
 | Integration tests (local MinIO) | `docker compose -f tests/integration/docker-compose.yml up -d --wait`, then `pnpm test:integration` |
+| End-to-end tests (once: `pnpm exec playwright install chromium webkit`) | `pnpm test:e2e` |
 | Check that copy keys used in code exist | `pnpm copy:check` |
 | Check the security headers file | `pnpm headers:check` (after `pnpm build` it also checks `dist`) |
 
