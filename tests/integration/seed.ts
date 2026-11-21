@@ -5,7 +5,7 @@ export async function putMany(client: S3Client, bucket: string, keys: readonly s
   let next = 0;
   const worker = async () => {
     for (let index = next++; index < keys.length; index = next++) {
-      await client.send(new PutObjectCommand({ Bucket: bucket, Key: keys[index] ?? "", Body: "" }));
+      await client.send(new PutObjectCommand({ Bucket: bucket, Key: keys[index] ?? "", Body: new Uint8Array(0), ContentLength: 0 }));
     }
   };
   await Promise.all(Array.from({ length: concurrency }, worker));

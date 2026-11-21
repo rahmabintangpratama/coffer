@@ -42,6 +42,7 @@ export interface ConnectionTestOptions {
 const STEP_ORDER: TestStepId[] = ["reach", "cors", "list", "write", "read", "clean"];
 const REACH_TIMEOUT_MS = 10_000;
 const BODY = "coffer connection test\n";
+const BODY_LENGTH = new TextEncoder().encode(BODY).length;
 
 
 function defaultHex(): string {
@@ -211,7 +212,7 @@ export async function runConnectionTest(options: ConnectionTestOptions): Promise
   // ------------------------------------------------------------ 4. write
   const key = `${prefix}.coffer-test-${(options.randomHex ?? defaultHex)()}.txt`;
   try {
-    await timed("write", () => send(new PutObjectCommand({ Bucket: bucket, Key: key, Body: BODY, ContentType: "text/plain" })));
+    await timed("write", () => send(new PutObjectCommand({ Bucket: bucket, Key: key, Body: BODY, ContentLength: BODY_LENGTH, ContentType: "text/plain" })));
   } catch (error) {
     checkAbort();
     const app = toAppError(error);

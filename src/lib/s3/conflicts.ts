@@ -53,7 +53,7 @@ export async function existingKeys(client: S3Client, options: { bucket: string; 
 /** A folder is a zero-byte placeholder object whose key ends in "/" (C-18, FR-35). */
 export async function putFolder(client: S3Client, options: { bucket: string; key: string }): Promise<void> {
   try {
-    await client.send(new PutObjectCommand({ Bucket: options.bucket, Key: options.key, Body: new Uint8Array(0), ContentType: "application/x-directory" }));
+    await client.send(new PutObjectCommand({ Bucket: options.bucket, Key: options.key, Body: new Uint8Array(0), ContentLength: 0, ContentType: "application/x-directory" }));
   } catch (error) {
     throw toAppError(error);
   }

@@ -105,7 +105,8 @@ export async function uploadObject(options: UploadOptions): Promise<void> {
           const bytes = new Uint8Array(await body.slice(0, body.size).arrayBuffer());
           await withThrottleRetry(pool, signal, () =>
             client.send(
-              new PutObjectCommand({ Bucket: bucket, Key: key, Body: bytes, ...(body.type === "" ? {} : { ContentType: body.type }) }),
+              // ContentLength is explicit: many providers reject a PutObject without it, and the SDK only fills it in for a non-empty body.
+              new PutObjectCommand({ Bucket: bucket, Key: key, Body: bytes, ContentLength: bytes.byteLength, ...(body.type === "" ? {} : { ContentType: body.type }) }),
               abortOption,
             ),
           );
@@ -175,7 +176,7 @@ export async function uploadObject(options: UploadOptions): Promise<void> {
             const bytes = new Uint8Array(await body.slice(start, end).arrayBuffer());
             const response = await withThrottleRetry(pool, inner.signal, () =>
               client.send(
-                new UploadPartCommand({ Bucket: bucket, Key: key, UploadId: uploadId, PartNumber: partNumber, Body: bytes }),
+                new UploadPartCommand({ Bucket: bucket, Key: key, UploadId: uploadId, PartNumber: partNumber, Body: bytes, ContentLength: bytes.byteLength }),
                 { abortSignal: inner.signal },
               ),
             );
