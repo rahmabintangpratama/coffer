@@ -57,7 +57,10 @@ const T_CALL = /\bt\(\s*(["'`])([A-Za-z0-9_.-]+)\1/g;
 
 export function findKeyUses(file: string, source: string): KeyUse[] {
   const uses: KeyUse[] = [];
-  source.split("\n").forEach((text, index) => {
+  const lines = source.split("\n");
+  lines.forEach((text, index) => {
+    // A line under `// @ts-expect-error` is a deliberate compile-time failure in a test.
+    if ((lines[index - 1] ?? "").includes("@ts-expect-error")) return;
     for (const match of text.matchAll(T_CALL)) {
       if (match[2] !== undefined) uses.push({ file, line: index + 1, key: match[2] });
     }

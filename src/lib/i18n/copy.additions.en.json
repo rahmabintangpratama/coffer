@@ -7,6 +7,9 @@
     "restore": "Restore",
     "unstar": "Remove from starred"
   },
+  "app": {
+    "placeholder": "This screen is not built yet."
+  },
   "conn": {
     "expired": {
       "body": "Enter new credentials to continue.",
@@ -44,6 +47,14 @@
       "hint": "Optional. Share links stop working at this time. Without it, links last at most 1 hour."
     },
     "tokenExpiresLabel": "Token expires at"
+  },
+  "nav": {
+    "files": "Files",
+    "sidebar": {
+      "collapse": "Collapse sidebar",
+      "expand": "Expand sidebar"
+    },
+    "skip": "Skip to content"
   },
   "ob": {
     "cors": {
@@ -103,7 +114,8 @@
     "still": "Still counting"
   },
   "toast": {
-    "copied": "Copied"
+    "copied": "Copied",
+    "region": "Notifications"
   },
   "trash": {
     "deleted": "Deleted {when}",

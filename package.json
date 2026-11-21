@@ -26,15 +26,20 @@
     "commitlint": "commitlint"
   },
   "dependencies": {
+    "@tanstack/react-router": "1.170.46",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
+    "intl-messageformat": "12.2.0",
+    "lucide-react": "1.77.0",
     "react": "19.3.1",
     "react-dom": "19.3.1",
-    "tailwind-merge": "3.7.1"
+    "tailwind-merge": "3.7.1",
+    "zustand": "5.1.0"
   },
   "devDependencies": {
     "@aws-sdk/client-s3": "3.1173.0",
     "@aws-sdk/s3-request-presigner": "3.1173.0",
+    "@axe-core/playwright": "4.14.0",
     "@commitlint/cli": "21.2.4",
     "@commitlint/config-conventional": "21.2.4",
     "@eslint/js": "10.0.1",

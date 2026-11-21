@@ -34,6 +34,10 @@ describe("copy check", () => {
     ]);
   });
 
+  it("ignores a line that deliberately fails typechecking", () => {
+    expect(findKeyUses("a.ts", "// @ts-expect-error not a key\nt('nope.nope');")).toEqual([]);
+  });
+
   it("reports only keys that do not exist", () => {
     const { keys } = mergeCopy(design, {});
     const unknown = findUnknownKeys(findKeyUses("a.tsx", "t('app.name'); t('nope.nope');"), keys);
