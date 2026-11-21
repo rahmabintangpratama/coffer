@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ReactNode, RefObject } from "react";
 import { ModalSurface } from "./ModalSurface";
 
 export interface DialogProps {
@@ -6,6 +6,7 @@ export interface DialogProps {
   onClose: () => void;
   title: string;
   closeLabel: string;
+  returnFocusRef?: RefObject<HTMLElement | null>;
   children: ReactNode;
 }
 

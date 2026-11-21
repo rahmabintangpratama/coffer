@@ -1,6 +1,6 @@
 import { cva } from "class-variance-authority";
 import { LoaderCircle } from "lucide-react";
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 // Variants and states follow design/button-states.md. Colors come from the
@@ -45,7 +45,7 @@ const button = cva(
 export type ButtonVariant = "primary" | "secondary" | "tonal" | "ghost" | "danger" | "danger-tonal" | "inverse" | "link";
 export type ButtonSize = "sm" | "md" | "lg";
 
-interface CommonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children"> {
+interface CommonProps extends Omit<ComponentProps<"button">, "children"> {
   variant?: ButtonVariant;
   size?: ButtonSize;
   block?: boolean;

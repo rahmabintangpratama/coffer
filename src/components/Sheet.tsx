@@ -1,4 +1,4 @@
-import type { HTMLAttributes, ReactNode } from "react";
+import type { HTMLAttributes, ReactNode, RefObject } from "react";
 import { ModalSurface } from "./ModalSurface";
 
 export interface SheetProps {
@@ -10,6 +10,7 @@ export interface SheetProps {
   side?: "bottom" | "start";
   /** Component name from design/components.md (for example MoreSheet or NavDrawer). */
   component: string;
+  returnFocusRef?: RefObject<HTMLElement | null>;
   panelProps?: HTMLAttributes<HTMLDivElement>;
   children: ReactNode;
 }

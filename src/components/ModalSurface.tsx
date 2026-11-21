@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { type HTMLAttributes, type ReactNode, useEffect, useId, useRef } from "react";
+import { type HTMLAttributes, type ReactNode, type RefObject, useEffect, useId, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "./Button";
 
@@ -19,6 +19,12 @@ export interface ModalSurfaceProps {
   /** Component name from design/components.md, written to data-component. */
   component: string;
   children: ReactNode;
+  /**
+   * The control that opened this layer. Focus goes back to it on close. The
+   * browser does this too, but Safari does not focus a button when it is
+   * clicked, so it would return to the page instead of the button.
+   */
+  returnFocusRef?: RefObject<HTMLElement | null>;
   /** Extra props for the panel, for example pointer handlers for a swipe. */
   panelProps?: HTMLAttributes<HTMLDivElement>;
   className?: string;
@@ -40,7 +46,7 @@ const panelByPlacement: Record<Placement, string> = {
  * container queries and the theme apply to it.
  */
 export function ModalSurface(props: ModalSurfaceProps) {
-  const { open, onClose, title, closeLabel, placement, component, children, panelProps, className } = props;
+  const { open, onClose, title, closeLabel, placement, component, children, panelProps, className, returnFocusRef } = props;
   const dialog = useRef<HTMLDialogElement>(null);
   const openRef = useRef(open);
   const titleId = useId();
@@ -50,8 +56,11 @@ export function ModalSurface(props: ModalSurfaceProps) {
     const element = dialog.current;
     if (!element) return;
     if (open && !element.open) element.showModal();
-    if (!open && element.open) element.close();
-  }, [open]);
+    if (!open && element.open) {
+      element.close();
+      returnFocusRef?.current?.focus();
+    }
+  }, [open, returnFocusRef]);
 
   const { className: panelClassName, ...otherPanelProps } = panelProps ?? {};
 
@@ -69,7 +78,9 @@ export function ModalSurface(props: ModalSurfaceProps) {
       )}
       // Escape and the dialog's own close() both end here; only report it if the parent still thinks it is open.
       onClose={() => {
-        if (openRef.current) onClose();
+        if (!openRef.current) return;
+        onClose();
+        returnFocusRef?.current?.focus();
       }}
       // A click on the dialog element itself is a click outside the panel.
       onClick={(event) => {
