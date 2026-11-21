@@ -1,0 +1,1757 @@
+{
+  "$schema": "./types.ts#ProviderPreset[]",
+  "groups": [
+    {
+      "id": "popular",
+      "label": "Popular"
+    },
+    {
+      "id": "global",
+      "label": "Global cloud"
+    },
+    {
+      "id": "asia",
+      "label": "Asia & regional"
+    },
+    {
+      "id": "selfhosted",
+      "label": "Self-hosted"
+    },
+    {
+      "id": "other",
+      "label": "Other S3-compatible"
+    }
+  ],
+  "providers": [
+    {
+      "id": "aws-s3",
+      "displayName": "Amazon S3",
+      "group": "popular",
+      "glyph": "S3",
+      "fields": [
+        {
+          "id": "region",
+          "label": "Region",
+          "control": "combobox",
+          "required": true,
+          "placeholder": "us-east-1",
+          "options": [
+            "us-east-1",
+            "us-west-2",
+            "eu-west-1",
+            "eu-central-1",
+            "ap-southeast-1",
+            "ap-southeast-3"
+          ]
+        },
+        {
+          "id": "accessKeyId",
+          "label": "Access Key ID",
+          "generic": "Access Key ID",
+          "control": "text",
+          "mono": true,
+          "required": true
+        },
+        {
+          "id": "secretAccessKey",
+          "label": "Secret Access Key",
+          "generic": "Secret Access Key",
+          "control": "password",
+          "mono": true,
+          "required": true
+        }
+      ],
+      "endpointTemplate": "https://s3.{region}.amazonaws.com",
+      "region": {
+        "rule": "required"
+      },
+      "addressingStyle": "virtual",
+      "sessionToken": true,
+      "badges": [],
+      "helpSteps": [
+        "In the AWS console, open IAM and create a user (or role) for Coffer.",
+        "Attach a policy that allows s3:ListBucket, s3:GetObject, s3:PutObject and s3:DeleteObject on your bucket.",
+        "Create an access key for that user and copy both values. The secret is shown once.",
+        "Using temporary STS credentials? Paste the session token under Advanced."
+      ],
+      "addressingLocked": false,
+      "checksumMode": "when_required",
+      "popular": true,
+      "popularOrder": 3,
+      "pasteHints": {
+        "envVars": [
+          "AWS_ACCESS_KEY_ID",
+          "AWS_SECRET_ACCESS_KEY",
+          "AWS_SESSION_TOKEN",
+          "AWS_ENDPOINT_URL",
+          "AWS_ENDPOINT_URL_S3",
+          "AWS_REGION",
+          "AWS_DEFAULT_REGION"
+        ],
+        "rcloneKeys": {
+          "accessKeyId": "access_key_id",
+          "secretAccessKey": "secret_access_key",
+          "sessionToken": "session_token",
+          "endpoint": "endpoint",
+          "region": "region"
+        },
+        "rcloneProviderValue": "AWS",
+        "endpointPattern": "^https://s3\\.(?<region>[a-z0-9-]+)\\.amazonaws\\.com/?$",
+        "endpointPatternNote": "Named groups map to this preset's field ids. Match case-insensitively."
+      },
+      "expectedHostPattern": "^s3\\.[a-z0-9-]+\\.amazonaws\\.com$",
+      "scopedKeyAdvice": "Create a key limited to one bucket."
+    },
+    {
+      "id": "cloudflare-r2",
+      "displayName": "Cloudflare R2",
+      "group": "popular",
+      "glyph": "R2",
+      "fields": [
+        {
+          "id": "accountId",
+          "label": "Account ID",
+          "control": "text",
+          "mono": true,
+          "required": true,
+          "validation": {
+            "pattern": "^[a-f0-9]{32}$",
+            "message": "Account ID is 32 lowercase hex characters."
+          }
+        },
+        {
+          "id": "jurisdiction",
+          "label": "Jurisdiction",
+          "control": "select",
+          "required": true,
+          "default": "default",
+          "options": [
+            "default",
+            "eu",
+            "fedramp"
+          ]
+        },
+        {
+          "id": "accessKeyId",
+          "label": "Access Key ID",
+          "generic": "Access Key ID",
+          "control": "text",
+          "mono": true,
+          "required": true
+        },
+        {
+          "id": "secretAccessKey",
+          "label": "Secret Access Key",
+          "generic": "Secret Access Key",
+          "control": "password",
+          "mono": true,
+          "required": true
+        }
+      ],
+      "endpointTemplate": "https://{accountId}.r2.cloudflarestorage.com",
+      "endpointTemplateByField": {
+        "jurisdiction": {
+          "eu": "https://{accountId}.eu.r2.cloudflarestorage.com",
+          "fedramp": "https://{accountId}.fedramp.r2.cloudflarestorage.com"
+        }
+      },
+      "region": {
+        "rule": "fixed",
+        "value": "auto"
+      },
+      "addressingStyle": "auto",
+      "sessionToken": true,
+      "badges": [],
+      "helpSteps": [
+        "In the Cloudflare dashboard, open R2 and choose Manage R2 API tokens.",
+        "Create a token with Object Read & Write permission, scoped to the buckets you want.",
+        "Copy the Access Key ID and Secret Access Key. The secret is shown once.",
+        "Your Account ID is on the R2 overview page."
+      ],
+      "addressingLocked": false,
+      "checksumMode": "when_required",
+      "popular": true,
+      "popularOrder": 0,
+      "pasteHints": {
+        "envVars": [
+          "AWS_ACCESS_KEY_ID",
+          "AWS_SECRET_ACCESS_KEY",
+          "AWS_SESSION_TOKEN",
+          "AWS_ENDPOINT_URL",
+          "AWS_ENDPOINT_URL_S3",
+          "AWS_REGION",
+          "AWS_DEFAULT_REGION"
+        ],
+        "rcloneKeys": {
+          "accessKeyId": "access_key_id",
+          "secretAccessKey": "secret_access_key",
+          "sessionToken": "session_token",
+          "endpoint": "endpoint",
+          "region": "region"
+        },
+        "rcloneProviderValue": "Cloudflare",
+        "endpointPattern": "^https://(?<accountId>[a-z0-9-]+)\\.(?:(?<jurisdiction>eu|fedramp)\\.)?r2\\.cloudflarestorage\\.com/?$",
+        "endpointPatternNote": "Named groups map to this preset's field ids. Match case-insensitively.",
+        "endpointPatternDefaults": {
+          "jurisdiction": "default"
+        }
+      },
+      "expectedHostPattern": "^[a-f0-9]{32}\\.(?:(?:eu|fedramp)\\.)?r2\\.cloudflarestorage\\.com$",
+      "scopedKeyAdvice": "Create a key limited to one bucket."
+    },
+    {
+      "id": "backblaze-b2",
+      "displayName": "Backblaze B2",
+      "group": "popular",
+      "glyph": "B2",
+      "fields": [
+        {
+          "id": "region",
+          "label": "Region",
+          "control": "combobox",
+          "required": true,
+          "placeholder": "us-west-004",
+          "options": [
+            "us-west-000",
+            "us-west-001",
+            "us-west-002",
+            "us-west-004",
+            "us-east-005",
+            "eu-central-003"
+          ]
+        },
+        {
+          "id": "accessKeyId",
+          "label": "Application Key ID",
+          "generic": "Access Key ID",
+          "control": "text",
+          "mono": true,
+          "required": true
+        },
+        {
+          "id": "secretAccessKey",
+          "label": "Application Key",
+          "generic": "Secret Access Key",
+          "control": "password",
+          "mono": true,
+          "required": true
+        }
+      ],
+      "endpointTemplate": "https://s3.{region}.backblazeb2.com",
+      "region": {
+        "rule": "equals",
+        "field": "region"
+      },
+      "addressingStyle": "auto",
+      "sessionToken": false,
+      "badges": [],
+      "helpSteps": [
+        "In Backblaze, open Application Keys and choose Add a New Application Key.",
+        "Create a standard application key. Master keys don't work with the S3 API.",
+        "Copy the keyID and applicationKey. The key is shown once.",
+        "Your region is part of the bucket's S3 endpoint, e.g. us-west-004.",
+        "Buckets created before May 2020 aren't S3-compatible."
+      ],
+      "addressingLocked": false,
+      "checksumMode": "when_required",
+      "popular": true,
+      "popularOrder": 1,
+      "pasteHints": {
+        "envVars": [
+          "AWS_ACCESS_KEY_ID",
+          "AWS_SECRET_ACCESS_KEY",
+          "AWS_SESSION_TOKEN",
+          "AWS_ENDPOINT_URL",
+          "AWS_ENDPOINT_URL_S3",
+          "AWS_REGION",
+          "AWS_DEFAULT_REGION"
+        ],
+        "rcloneKeys": {
+          "accessKeyId": "access_key_id",
+          "secretAccessKey": "secret_access_key",
+          "sessionToken": "session_token",
+          "endpoint": "endpoint",
+          "region": "region"
+        },
+        "rcloneProviderValue": "Other",
+        "endpointPattern": "^https://s3\\.(?<region>[a-z0-9-]+)\\.backblazeb2\\.com/?$",
+        "endpointPatternNote": "Named groups map to this preset's field ids. Match case-insensitively."
+      },
+      "expectedHostPattern": "^s3\\.[a-z0-9-]+\\.backblazeb2\\.com$",
+      "scopedKeyAdvice": "Create a key limited to one bucket."
+    },
+    {
+      "id": "wasabi",
+      "displayName": "Wasabi",
+      "group": "popular",
+      "glyph": "WA",
+      "fields": [
+        {
+          "id": "region",
+          "label": "Region",
+          "control": "combobox",
+          "required": true,
+          "placeholder": "us-east-1",
+          "options": [
+            "us-east-1",
+            "us-east-2",
+            "us-west-1",
+            "eu-central-1",
+            "ap-southeast-1",
+            "ap-northeast-1"
+          ]
+        },
+        {
+          "id": "accessKeyId",
+          "label": "Access Key ID",
+          "generic": "Access Key ID",
+          "control": "text",
+          "mono": true,
+          "required": true
+        },
+        {
+          "id": "secretAccessKey",
+          "label": "Secret Access Key",
+          "generic": "Secret Access Key",
+          "control": "password",
+          "mono": true,
+          "required": true
+        }
+      ],
+      "endpointTemplate": "https://s3.{region}.wasabisys.com",
+      "region": {
+        "rule": "equals",
+        "field": "region"
+      },
+      "addressingStyle": "auto",
+      "sessionToken": false,
+      "badges": [],
+      "helpSteps": [
+        "In the Wasabi console, open Access Keys and create a new key.",
+        "Copy the access key and secret key, or download the key file.",
+        "Pick the region your bucket lives in. A wrong region can allow reads but reject writes."
+      ],
+      "addressingLocked": false,
+      "checksumMode": "when_required",
+      "popular": true,
+      "popularOrder": 2,
+      "pasteHints": {
+        "envVars": [
+          "AWS_ACCESS_KEY_ID",
+          "AWS_SECRET_ACCESS_KEY",
+          "AWS_SESSION_TOKEN",
+          "AWS_ENDPOINT_URL",
+          "AWS_ENDPOINT_URL_S3",
+          "AWS_REGION",
+          "AWS_DEFAULT_REGION"
+        ],
+        "rcloneKeys": {
+          "accessKeyId": "access_key_id",
+          "secretAccessKey": "secret_access_key",
+          "sessionToken": "session_token",
+          "endpoint": "endpoint",
+          "region": "region"
+        },
+        "rcloneProviderValue": "Wasabi",
+        "endpointPattern": "^https://s3\\.(?<region>[a-z0-9-]+)\\.wasabisys\\.com/?$",
+        "endpointPatternNote": "Named groups map to this preset's field ids. Match case-insensitively."
+      },
+      "expectedHostPattern": "^s3\\.[a-z0-9-]+\\.wasabisys\\.com$",
+      "scopedKeyAdvice": "Create a key limited to one bucket."
+    },
+    {
+      "id": "digitalocean-spaces",
+      "displayName": "DigitalOcean Spaces",
+      "group": "global",
+      "glyph": "DO",
+      "fields": [
+        {
+          "id": "datacenter",
+          "label": "Datacenter",
+          "control": "combobox",
+          "required": true,
+          "placeholder": "nyc3",
+          "options": [
+            "nyc3",
+            "sfo3",
+            "ams3",
+            "fra1",
+            "sgp1",
+            "syd1"
+          ]
+        },
+        {
+          "id": "accessKeyId",
+          "label": "Access Key ID",
+          "generic": "Access Key ID",
+          "control": "text",
+          "mono": true,
+          "required": true
+        },
+        {
+          "id": "secretAccessKey",
+          "label": "Secret Access Key",
+          "generic": "Secret Access Key",
+          "control": "password",
+          "mono": true,
+          "required": true
+        }
+      ],
+      "endpointTemplate": "https://{datacenter}.digitaloceanspaces.com",
+      "region": {
+        "rule": "fixed",
+        "value": "us-east-1",
+        "signingOnly": true
+      },
+      "addressingStyle": "virtual",
+      "sessionToken": false,
+      "badges": [],
+      "helpSteps": [
+        "In DigitalOcean, open Spaces Object Storage and go to Access Keys.",
+        "Create a key with access to your bucket and copy both values.",
+        "The datacenter comes from your bucket's endpoint, e.g. sgp1. Signing always uses us-east-1."
+      ],
+      "addressingLocked": false,
+      "checksumMode": "when_required",
+      "popular": true,
+      "popularOrder": 4,
+      "pasteHints": {
+        "envVars": [
+          "AWS_ACCESS_KEY_ID",
+          "AWS_SECRET_ACCESS_KEY",
+          "AWS_SESSION_TOKEN",
+          "AWS_ENDPOINT_URL",
+          "AWS_ENDPOINT_URL_S3",
+          "AWS_REGION",
+          "AWS_DEFAULT_REGION"
+        ],
+        "rcloneKeys": {
+          "accessKeyId": "access_key_id",
+          "secretAccessKey": "secret_access_key",
+          "sessionToken": "session_token",
+          "endpoint": "endpoint",
+          "region": "region"
+        },
+        "rcloneProviderValue": "DigitalOcean",
+        "endpointPattern": "^https://(?<datacenter>[a-z0-9-]+)\\.digitaloceanspaces\\.com/?$",
+        "endpointPatternNote": "Named groups map to this preset's field ids. Match case-insensitively."
+      },
+      "expectedHostPattern": "^[a-z0-9-]+\\.digitaloceanspaces\\.com$",
+      "scopedKeyAdvice": "Create a key limited to one bucket."
+    },
+    {
+      "id": "akamai-linode",
+      "displayName": "Akamai (Linode)",
+      "group": "global",
+      "glyph": "AK",
+      "fields": [
+        {
+          "id": "cluster",
+          "label": "Endpoint",
+          "control": "combobox",
+          "required": true,
+          "placeholder": "us-ord-10",
+          "options": [
+            "us-ord-10",
+            "us-iad-10",
+            "fr-par-1",
+            "jp-osa-1",
+            "id-cgk-1",
+            "sg-sin-1"
+          ]
+        },
+        {
+          "id": "accessKeyId",
+          "label": "Access Key ID",
+          "generic": "Access Key ID",
+          "control": "text",
+          "mono": true,
+          "required": true
+        },
+        {
+          "id": "secretAccessKey",
+          "label": "Secret Access Key",
+          "generic": "Secret Access Key",
+          "control": "password",
+          "mono": true,
+          "required": true
+        }
+      ],
+      "endpointTemplate": "https://{cluster}.linodeobjects.com",
+      "region": {
+        "rule": "equals",
+        "field": "cluster"
+      },
+      "addressingStyle": "auto",
+      "sessionToken": false,
+      "badges": [],
+      "helpSteps": [
+        "In Akamai Cloud Manager, open Object Storage and choose Access Keys.",
+        "Create a key with read/write access to your bucket.",
+        "Copy the endpoint shown for the bucket. One region can have several endpoints."
+      ],
+      "addressingLocked": false,
+      "checksumMode": "when_required",
+      "popular": false,
+      "popularOrder": null,
+      "pasteHints": {
+        "envVars": [
+          "AWS_ACCESS_KEY_ID",
+          "AWS_SECRET_ACCESS_KEY",
+          "AWS_SESSION_TOKEN",
+          "AWS_ENDPOINT_URL",
+          "AWS_ENDPOINT_URL_S3",
+          "AWS_REGION",
+          "AWS_DEFAULT_REGION"
+        ],
+        "rcloneKeys": {
+          "accessKeyId": "access_key_id",
+          "secretAccessKey": "secret_access_key",
+          "sessionToken": "session_token",
+          "endpoint": "endpoint",
+          "region": "region"
+        },
+        "rcloneProviderValue": null,
+        "endpointPattern": "^https://(?<cluster>[a-z0-9-]+)\\.linodeobjects\\.com/?$",
+        "endpointPatternNote": "Named groups map to this preset's field ids. Match case-insensitively."
+      },
+      "expectedHostPattern": "^[a-z0-9-]+\\.linodeobjects\\.com$",
+      "scopedKeyAdvice": "Create a key limited to one bucket."
+    },
+    {
+      "id": "vultr",
+      "displayName": "Vultr",
+      "group": "global",
+      "glyph": "VU",
+      "fields": [
+        {
+          "id": "location",
+          "label": "Location",
+          "control": "combobox",
+          "required": true,
+          "placeholder": "ewr1",
+          "options": [
+            "ewr1",
+            "sjc1",
+            "ams1",
+            "blr1",
+            "sgp1",
+            "del1"
+          ]
+        },
+        {
+          "id": "accessKeyId",
+          "label": "Access Key ID",
+          "generic": "Access Key ID",
+          "control": "text",
+          "mono": true,
+          "required": true
+        },
+        {
+          "id": "secretAccessKey",
+          "label": "Secret Access Key",
+          "generic": "Secret Access Key",
+          "control": "password",
+          "mono": true,
+          "required": true
+        }
+      ],
+      "endpointTemplate": "https://{location}.vultrobjects.com",
+      "region": {
+        "rule": "equals",
+        "field": "location"
+      },
+      "addressingStyle": "virtual",
+      "sessionToken": false,
+      "badges": [],
+      "helpSteps": [
+        "In Vultr, open Object Storage and select your subscription.",
+        "Copy the hostname, access key and secret key from the overview.",
+        "Paste the hostname as shown. Coffer adds https:// for you."
+      ],
+      "addressingLocked": false,
+      "checksumMode": "when_required",
+      "popular": false,
+      "popularOrder": null,
+      "pasteHints": {
+        "envVars": [
+          "AWS_ACCESS_KEY_ID",
+          "AWS_SECRET_ACCESS_KEY",
+          "AWS_SESSION_TOKEN",
+          "AWS_ENDPOINT_URL",
+          "AWS_ENDPOINT_URL_S3",
+          "AWS_REGION",
+          "AWS_DEFAULT_REGION"
+        ],
+        "rcloneKeys": {
+          "accessKeyId": "access_key_id",
+          "secretAccessKey": "secret_access_key",
+          "sessionToken": "session_token",
+          "endpoint": "endpoint",
+          "region": "region"
+        },
+        "rcloneProviderValue": null,
+        "endpointPattern": "^https://(?<location>[a-z0-9-]+)\\.vultrobjects\\.com/?$",
+        "endpointPatternNote": "Named groups map to this preset's field ids. Match case-insensitively."
+      },
+      "expectedHostPattern": "^[a-z0-9-]+\\.vultrobjects\\.com$",
+      "scopedKeyAdvice": "Create a key limited to one bucket."
+    },
+    {
+      "id": "hetzner",
+      "displayName": "Hetzner",
+      "group": "global",
+      "glyph": "HZ",
+      "fields": [
+        {
+          "id": "location",
+          "label": "Location",
+          "control": "select",
+          "required": true,
+          "default": "fsn1",
+          "options": [
+            "fsn1",
+            "nbg1",
+            "hel1"
+          ]
+        },
+        {
+          "id": "accessKeyId",
+          "label": "Access Key ID",
+          "generic": "Access Key ID",
+          "control": "text",
+          "mono": true,
+          "required": true
+        },
+        {
+          "id": "secretAccessKey",
+          "label": "Secret Access Key",
+          "generic": "Secret Access Key",
+          "control": "password",
+          "mono": true,
+          "required": true
+        }
+      ],
+      "endpointTemplate": "https://{location}.your-objectstorage.com",
+      "region": {
+        "rule": "equals",
+        "field": "location"
+      },
+      "addressingStyle": "virtual",
+      "sessionToken": false,
+      "badges": [],
+      "helpSteps": [
+        "In Hetzner Console, open your project and go to Security, then S3 credentials.",
+        "Generate credentials. They work for every bucket in this project.",
+        "Pick the location where the bucket was created."
+      ],
+      "addressingLocked": false,
+      "checksumMode": "when_required",
+      "popular": false,
+      "popularOrder": null,
+      "pasteHints": {
+        "envVars": [
+          "AWS_ACCESS_KEY_ID",
+          "AWS_SECRET_ACCESS_KEY",
+          "AWS_SESSION_TOKEN",
+          "AWS_ENDPOINT_URL",
+          "AWS_ENDPOINT_URL_S3",
+          "AWS_REGION",
+          "AWS_DEFAULT_REGION"
+        ],
+        "rcloneKeys": {
+          "accessKeyId": "access_key_id",
+          "secretAccessKey": "secret_access_key",
+          "sessionToken": "session_token",
+          "endpoint": "endpoint",
+          "region": "region"
+        },
+        "rcloneProviderValue": null,
+        "endpointPattern": "^https://(?<location>[a-z0-9-]+)\\.your\\-objectstorage\\.com/?$",
+        "endpointPatternNote": "Named groups map to this preset's field ids. Match case-insensitively."
+      },
+      "expectedHostPattern": "^[a-z0-9-]+\\.your\\-objectstorage\\.com$",
+      "scopedKeyAdvice": "Create a key limited to one bucket."
+    },
+    {
+      "id": "scaleway",
+      "displayName": "Scaleway",
+      "group": "global",
+      "glyph": "SW",
+      "fields": [
+        {
+          "id": "region",
+          "label": "Region",
+          "control": "select",
+          "required": true,
+          "default": "fr-par",
+          "options": [
+            "nl-ams",
+            "fr-par",
+            "pl-waw",
+            "it-mil"
+          ]
+        },
+        {
+          "id": "accessKeyId",
+          "label": "Access Key ID",
+          "generic": "Access Key ID",
+          "control": "text",
+          "mono": true,
+          "required": true
+        },
+        {
+          "id": "secretAccessKey",
+          "label": "Secret Access Key",
+          "generic": "Secret Access Key",
+          "control": "password",
+          "mono": true,
+          "required": true
+        }
+      ],
+      "endpointTemplate": "https://s3.{region}.scw.cloud",
+      "region": {
+        "rule": "equals",
+        "field": "region"
+      },
+      "addressingStyle": "auto",
+      "sessionToken": false,
+      "badges": [],
+      "helpSteps": [
+        "In the Scaleway console, open IAM and create an API key.",
+        "Give its application or user ObjectStorage permissions.",
+        "Copy the access key and secret key. The secret is shown once."
+      ],
+      "addressingLocked": false,
+      "checksumMode": "when_required",
+      "popular": false,
+      "popularOrder": null,
+      "pasteHints": {
+        "envVars": [
+          "AWS_ACCESS_KEY_ID",
+          "AWS_SECRET_ACCESS_KEY",
+          "AWS_SESSION_TOKEN",
+          "AWS_ENDPOINT_URL",
+          "AWS_ENDPOINT_URL_S3",
+          "AWS_REGION",
+          "AWS_DEFAULT_REGION"
+        ],
+        "rcloneKeys": {
+          "accessKeyId": "access_key_id",
+          "secretAccessKey": "secret_access_key",
+          "sessionToken": "session_token",
+          "endpoint": "endpoint",
+          "region": "region"
+        },
+        "rcloneProviderValue": "Scaleway",
+        "endpointPattern": "^https://s3\\.(?<region>[a-z0-9-]+)\\.scw\\.cloud/?$",
+        "endpointPatternNote": "Named groups map to this preset's field ids. Match case-insensitively."
+      },
+      "expectedHostPattern": "^s3\\.[a-z0-9-]+\\.scw\\.cloud$",
+      "scopedKeyAdvice": "Create a key limited to one bucket."
+    },
+    {
+      "id": "google-gcs",
+      "displayName": "Google Cloud Storage",
+      "group": "global",
+      "glyph": "GC",
+      "fields": [
+        {
+          "id": "accessKeyId",
+          "label": "HMAC access ID",
+          "generic": "Access Key ID",
+          "control": "text",
+          "mono": true,
+          "required": true
+        },
+        {
+          "id": "secretAccessKey",
+          "label": "HMAC secret",
+          "generic": "Secret Access Key",
+          "control": "password",
+          "mono": true,
+          "required": true
+        }
+      ],
+      "endpointTemplate": "https://storage.googleapis.com",
+      "region": {
+        "rule": "fixed",
+        "value": "auto"
+      },
+      "addressingStyle": "auto",
+      "sessionToken": false,
+      "badges": [],
+      "helpSteps": [
+        "In Google Cloud console, open Cloud Storage, then Settings, then Interoperability.",
+        "Create an HMAC key for a service account with access to your bucket.",
+        "Copy the access ID and secret. The secret is shown once."
+      ],
+      "addressingLocked": false,
+      "checksumMode": "when_required",
+      "popular": false,
+      "popularOrder": null,
+      "pasteHints": {
+        "envVars": [
+          "AWS_ACCESS_KEY_ID",
+          "AWS_SECRET_ACCESS_KEY",
+          "AWS_SESSION_TOKEN",
+          "AWS_ENDPOINT_URL",
+          "AWS_ENDPOINT_URL_S3",
+          "AWS_REGION",
+          "AWS_DEFAULT_REGION"
+        ],
+        "rcloneKeys": {
+          "accessKeyId": "access_key_id",
+          "secretAccessKey": "secret_access_key",
+          "sessionToken": "session_token",
+          "endpoint": "endpoint",
+          "region": "region"
+        },
+        "rcloneProviderValue": null,
+        "endpointPattern": "^https://storage\\.googleapis\\.com/?$",
+        "endpointPatternNote": "Named groups map to this preset's field ids. Match case-insensitively."
+      },
+      "expectedHostPattern": "^storage\\.googleapis\\.com$",
+      "scopedKeyAdvice": "Create a key limited to one bucket."
+    },
+    {
+      "id": "ibm-cos",
+      "displayName": "IBM Cloud Object Storage",
+      "group": "global",
+      "glyph": "IB",
+      "fields": [
+        {
+          "id": "region",
+          "label": "Region",
+          "control": "combobox",
+          "required": true,
+          "placeholder": "us-south",
+          "options": [
+            "us-south",
+            "us-east",
+            "eu-de",
+            "eu-gb",
+            "jp-tok",
+            "au-syd"
+          ]
+        },
+        {
+          "id": "accessKeyId",
+          "label": "access_key_id",
+          "generic": "Access Key ID",
+          "control": "text",
+          "mono": true,
+          "required": true
+        },
+        {
+          "id": "secretAccessKey",
+          "label": "secret_access_key",
+          "generic": "Secret Access Key",
+          "control": "password",
+          "mono": true,
+          "required": true
+        }
+      ],
+      "endpointTemplate": "https://s3.{region}.cloud-object-storage.appdomain.cloud",
+      "region": {
+        "rule": "equals",
+        "field": "region"
+      },
+      "addressingStyle": "auto",
+      "sessionToken": false,
+      "badges": [],
+      "helpSteps": [
+        "In IBM Cloud, open your Object Storage instance and go to Service credentials.",
+        "Create a credential with Include HMAC Credential turned on.",
+        "Copy access_key_id and secret_access_key from cos_hmac_keys."
+      ],
+      "addressingLocked": false,
+      "checksumMode": "when_required",
+      "popular": false,
+      "popularOrder": null,
+      "pasteHints": {
+        "envVars": [
+          "AWS_ACCESS_KEY_ID",
+          "AWS_SECRET_ACCESS_KEY",
+          "AWS_SESSION_TOKEN",
+          "AWS_ENDPOINT_URL",
+          "AWS_ENDPOINT_URL_S3",
+          "AWS_REGION",
+          "AWS_DEFAULT_REGION"
+        ],
+        "rcloneKeys": {
+          "accessKeyId": "access_key_id",
+          "secretAccessKey": "secret_access_key",
+          "sessionToken": "session_token",
+          "endpoint": "endpoint",
+          "region": "region"
+        },
+        "rcloneProviderValue": "IBMCOS",
+        "endpointPattern": "^https://s3\\.(?<region>[a-z0-9-]+)\\.cloud\\-object\\-storage\\.appdomain\\.cloud/?$",
+        "endpointPatternNote": "Named groups map to this preset's field ids. Match case-insensitively."
+      },
+      "expectedHostPattern": "^s3\\.[a-z0-9-]+\\.cloud\\-object\\-storage\\.appdomain\\.cloud$",
+      "scopedKeyAdvice": "Create a key limited to one bucket."
+    },
+    {
+      "id": "oracle-oci",
+      "displayName": "Oracle OCI",
+      "group": "global",
+      "glyph": "OC",
+      "fields": [
+        {
+          "id": "namespace",
+          "label": "Namespace",
+          "control": "text",
+          "mono": true,
+          "required": true
+        },
+        {
+          "id": "region",
+          "label": "Region",
+          "control": "combobox",
+          "required": true,
+          "placeholder": "ap-singapore-1",
+          "options": [
+            "us-ashburn-1",
+            "eu-frankfurt-1",
+            "ap-singapore-1",
+            "ap-tokyo-1"
+          ]
+        },
+        {
+          "id": "accessKeyId",
+          "label": "Access Key ID",
+          "generic": "Access Key ID",
+          "control": "text",
+          "mono": true,
+          "required": true
+        },
+        {
+          "id": "secretAccessKey",
+          "label": "Secret Access Key",
+          "generic": "Secret Access Key",
+          "control": "password",
+          "mono": true,
+          "required": true
+        }
+      ],
+      "endpointTemplate": "https://{namespace}.compat.objectstorage.{region}.oraclecloud.com",
+      "region": {
+        "rule": "equals",
+        "field": "region"
+      },
+      "addressingStyle": "path",
+      "sessionToken": false,
+      "badges": [
+        {
+          "label": "Browser access not supported (CORS)",
+          "tone": "warning"
+        }
+      ],
+      "helpSteps": [
+        "In OCI, open your user profile and choose Customer secret keys.",
+        "Generate a key and copy both values. The secret is shown once.",
+        "Find your namespace under Tenancy details.",
+        "Oracle doesn't list CORS as supported for the S3 API, so the browser may block Coffer. Run the test before relying on it."
+      ],
+      "addressingLocked": false,
+      "checksumMode": "when_required",
+      "popular": false,
+      "popularOrder": null,
+      "pasteHints": {
+        "envVars": [
+          "AWS_ACCESS_KEY_ID",
+          "AWS_SECRET_ACCESS_KEY",
+          "AWS_SESSION_TOKEN",
+          "AWS_ENDPOINT_URL",
+          "AWS_ENDPOINT_URL_S3",
+          "AWS_REGION",
+          "AWS_DEFAULT_REGION"
+        ],
+        "rcloneKeys": {
+          "accessKeyId": "access_key_id",
+          "secretAccessKey": "secret_access_key",
+          "sessionToken": "session_token",
+          "endpoint": "endpoint",
+          "region": "region"
+        },
+        "rcloneProviderValue": null,
+        "endpointPattern": "^https://(?<namespace>[a-z0-9-]+)\\.compat\\.objectstorage\\.(?<region>[a-z0-9-]+)\\.oraclecloud\\.com/?$",
+        "endpointPatternNote": "Named groups map to this preset's field ids. Match case-insensitively."
+      },
+      "expectedHostPattern": "^[a-z0-9-]+\\.compat\\.objectstorage\\.[a-z0-9-]+\\.oraclecloud\\.com$",
+      "scopedKeyAdvice": "Create a key limited to one bucket."
+    },
+    {
+      "id": "tencent-cos",
+      "displayName": "Tencent COS",
+      "group": "asia",
+      "glyph": "TC",
+      "fields": [
+        {
+          "id": "appId",
+          "label": "APPID",
+          "control": "text",
+          "mono": true,
+          "required": true,
+          "validation": {
+            "pattern": "^[0-9]{6,12}$",
+            "message": "APPID is 6 to 12 digits."
+          }
+        },
+        {
+          "id": "region",
+          "label": "Region",
+          "control": "combobox",
+          "required": true,
+          "placeholder": "ap-jakarta",
+          "options": [
+            "ap-jakarta",
+            "ap-singapore",
+            "ap-hongkong",
+            "ap-tokyo",
+            "ap-guangzhou",
+            "na-siliconvalley"
+          ]
+        },
+        {
+          "id": "accessKeyId",
+          "label": "SecretId",
+          "generic": "Access Key ID",
+          "control": "text",
+          "mono": true,
+          "required": true,
+          "validation": {
+            "length": 36,
+            "message": "SecretId is 36 characters."
+          }
+        },
+        {
+          "id": "secretAccessKey",
+          "label": "SecretKey",
+          "generic": "Secret Access Key",
+          "control": "password",
+          "mono": true,
+          "required": true,
+          "validation": {
+            "length": 32,
+            "message": "SecretKey must be 32 characters."
+          }
+        }
+      ],
+      "endpointTemplate": "https://cos.{region}.myqcloud.com",
+      "region": {
+        "rule": "equals",
+        "field": "region"
+      },
+      "addressingStyle": "virtual",
+      "sessionToken": false,
+      "bucketSuffix": "-{appId}",
+      "badges": [],
+      "helpSteps": [
+        "In the Tencent Cloud console, open CAM, then API Keys.",
+        "Create a key and copy the SecretId and SecretKey.",
+        "Your APPID is on the Account Info page.",
+        "Bucket names end with your APPID, e.g. studio-assets-1250000000."
+      ],
+      "addressingLocked": false,
+      "checksumMode": "when_required",
+      "popular": false,
+      "popularOrder": null,
+      "pasteHints": {
+        "envVars": [
+          "AWS_ACCESS_KEY_ID",
+          "AWS_SECRET_ACCESS_KEY",
+          "AWS_SESSION_TOKEN",
+          "AWS_ENDPOINT_URL",
+          "AWS_ENDPOINT_URL_S3",
+          "AWS_REGION",
+          "AWS_DEFAULT_REGION"
+        ],
+        "rcloneKeys": {
+          "accessKeyId": "access_key_id",
+          "secretAccessKey": "secret_access_key",
+          "sessionToken": "session_token",
+          "endpoint": "endpoint",
+          "region": "region"
+        },
+        "rcloneProviderValue": "TencentCOS",
+        "endpointPattern": "^https://cos\\.(?<region>[a-z0-9-]+)\\.myqcloud\\.com/?$",
+        "endpointPatternNote": "Named groups map to this preset's field ids. Match case-insensitively."
+      },
+      "expectedHostPattern": "^cos\\.[a-z0-9-]+\\.myqcloud\\.com$",
+      "scopedKeyAdvice": "Create a key limited to one bucket."
+    },
+    {
+      "id": "alibaba-oss",
+      "displayName": "Alibaba OSS",
+      "group": "asia",
+      "glyph": "AL",
+      "fields": [
+        {
+          "id": "region",
+          "label": "Region",
+          "control": "combobox",
+          "required": true,
+          "placeholder": "ap-southeast-5",
+          "options": [
+            "ap-southeast-1",
+            "ap-southeast-5",
+            "cn-hangzhou",
+            "cn-shanghai",
+            "eu-central-1",
+            "us-west-1"
+          ]
+        },
+        {
+          "id": "accessKeyId",
+          "label": "AccessKey ID",
+          "generic": "Access Key ID",
+          "control": "text",
+          "mono": true,
+          "required": true
+        },
+        {
+          "id": "secretAccessKey",
+          "label": "AccessKey Secret",
+          "generic": "Secret Access Key",
+          "control": "password",
+          "mono": true,
+          "required": true
+        }
+      ],
+      "endpointTemplate": "https://s3.oss-{region}.aliyuncs.com",
+      "region": {
+        "rule": "equals",
+        "field": "region"
+      },
+      "addressingStyle": "virtual",
+      "addressingLocked": true,
+      "badges": [
+        {
+          "label": "Virtual-hosted only",
+          "tone": "neutral"
+        }
+      ],
+      "sessionToken": false,
+      "helpSteps": [
+        "In the Alibaba Cloud console, open RAM and create a user with programmatic access.",
+        "Grant it OSS permissions for your bucket.",
+        "Copy the AccessKey ID and AccessKey Secret.",
+        "OSS rejects path-style requests, so addressing is fixed to virtual-hosted."
+      ],
+      "checksumMode": "when_required",
+      "popular": false,
+      "popularOrder": null,
+      "pasteHints": {
+        "envVars": [
+          "AWS_ACCESS_KEY_ID",
+          "AWS_SECRET_ACCESS_KEY",
+          "AWS_SESSION_TOKEN",
+          "AWS_ENDPOINT_URL",
+          "AWS_ENDPOINT_URL_S3",
+          "AWS_REGION",
+          "AWS_DEFAULT_REGION"
+        ],
+        "rcloneKeys": {
+          "accessKeyId": "access_key_id",
+          "secretAccessKey": "secret_access_key",
+          "sessionToken": "session_token",
+          "endpoint": "endpoint",
+          "region": "region"
+        },
+        "rcloneProviderValue": "Alibaba",
+        "endpointPattern": "^https://s3\\.oss\\-(?<region>[a-z0-9-]+)\\.aliyuncs\\.com/?$",
+        "endpointPatternNote": "Named groups map to this preset's field ids. Match case-insensitively."
+      },
+      "expectedHostPattern": "^s3\\.oss\\-[a-z0-9-]+\\.aliyuncs\\.com$",
+      "scopedKeyAdvice": "Create a key limited to one bucket."
+    },
+    {
+      "id": "huawei-obs",
+      "displayName": "Huawei OBS",
+      "group": "asia",
+      "glyph": "HW",
+      "fields": [
+        {
+          "id": "region",
+          "label": "Region",
+          "control": "combobox",
+          "required": true,
+          "placeholder": "ap-southeast-4",
+          "options": [
+            "ap-southeast-1",
+            "ap-southeast-3",
+            "ap-southeast-4",
+            "cn-north-4",
+            "eu-west-101"
+          ]
+        },
+        {
+          "id": "accessKeyId",
+          "label": "Access Key ID (AK)",
+          "generic": "Access Key ID",
+          "control": "text",
+          "mono": true,
+          "required": true
+        },
+        {
+          "id": "secretAccessKey",
+          "label": "Secret Access Key (SK)",
+          "generic": "Secret Access Key",
+          "control": "password",
+          "mono": true,
+          "required": true
+        }
+      ],
+      "endpointTemplate": "https://obs.{region}.myhuaweicloud.com",
+      "region": {
+        "rule": "equals",
+        "field": "region"
+      },
+      "addressingStyle": "auto",
+      "sessionToken": false,
+      "badges": [],
+      "helpSteps": [
+        "In Huawei Cloud, open My Credentials, then Access Keys.",
+        "Create an access key and download the credentials file.",
+        "Use the region where the bucket was created. Other regions are rejected."
+      ],
+      "addressingLocked": false,
+      "checksumMode": "when_required",
+      "popular": false,
+      "popularOrder": null,
+      "pasteHints": {
+        "envVars": [
+          "AWS_ACCESS_KEY_ID",
+          "AWS_SECRET_ACCESS_KEY",
+          "AWS_SESSION_TOKEN",
+          "AWS_ENDPOINT_URL",
+          "AWS_ENDPOINT_URL_S3",
+          "AWS_REGION",
+          "AWS_DEFAULT_REGION"
+        ],
+        "rcloneKeys": {
+          "accessKeyId": "access_key_id",
+          "secretAccessKey": "secret_access_key",
+          "sessionToken": "session_token",
+          "endpoint": "endpoint",
+          "region": "region"
+        },
+        "rcloneProviderValue": "HuaweiOBS",
+        "endpointPattern": "^https://obs\\.(?<region>[a-z0-9-]+)\\.myhuaweicloud\\.com/?$",
+        "endpointPatternNote": "Named groups map to this preset's field ids. Match case-insensitively."
+      },
+      "expectedHostPattern": "^obs\\.[a-z0-9-]+\\.myhuaweicloud\\.com$",
+      "scopedKeyAdvice": "Create a key limited to one bucket."
+    },
+    {
+      "id": "minio",
+      "displayName": "MinIO",
+      "group": "selfhosted",
+      "glyph": "MI",
+      "fields": [
+        {
+          "id": "endpoint",
+          "label": "Endpoint URL",
+          "control": "text",
+          "mono": true,
+          "required": true,
+          "placeholder": "http://192.168.1.20:9000"
+        },
+        {
+          "id": "accessKeyId",
+          "label": "Access Key ID",
+          "generic": "Access Key ID",
+          "control": "text",
+          "mono": true,
+          "required": true
+        },
+        {
+          "id": "secretAccessKey",
+          "label": "Secret Access Key",
+          "generic": "Secret Access Key",
+          "control": "password",
+          "mono": true,
+          "required": true
+        }
+      ],
+      "endpointTemplate": null,
+      "region": {
+        "rule": "custom",
+        "default": "us-east-1"
+      },
+      "addressingStyle": "path",
+      "sessionToken": true,
+      "badges": [],
+      "helpSteps": [
+        "In the MinIO Console, open Access Keys and create a key.",
+        "Attach a policy with read/write access to your bucket.",
+        "Allow this app's origin in MinIO's CORS settings (MINIO_API_CORS_ALLOW_ORIGIN).",
+        "Serving over plain http on your LAN? Browsers block it from this https page. Use https, or run Coffer on localhost."
+      ],
+      "addressingLocked": false,
+      "checksumMode": "when_required",
+      "popular": true,
+      "popularOrder": 5,
+      "pasteHints": {
+        "envVars": [
+          "AWS_ACCESS_KEY_ID",
+          "AWS_SECRET_ACCESS_KEY",
+          "AWS_SESSION_TOKEN",
+          "AWS_ENDPOINT_URL",
+          "AWS_ENDPOINT_URL_S3",
+          "AWS_REGION",
+          "AWS_DEFAULT_REGION"
+        ],
+        "rcloneKeys": {
+          "accessKeyId": "access_key_id",
+          "secretAccessKey": "secret_access_key",
+          "sessionToken": "session_token",
+          "endpoint": "endpoint",
+          "region": "region"
+        },
+        "rcloneProviderValue": "Minio",
+        "endpointPattern": null,
+        "endpointPatternNote": "Named groups map to this preset's field ids. Match case-insensitively."
+      },
+      "expectedHostPattern": null,
+      "scopedKeyAdvice": "Create a key limited to one bucket."
+    },
+    {
+      "id": "supabase",
+      "displayName": "Supabase Storage",
+      "group": "other",
+      "glyph": "SB",
+      "fields": [
+        {
+          "id": "projectRef",
+          "label": "Project ref",
+          "control": "text",
+          "mono": true,
+          "required": true,
+          "role": "accessKeyId",
+          "roleWhen": {
+            "field": "authMode",
+            "equals": "session"
+          },
+          "validation": {
+            "pattern": "^[a-z]{20}$",
+            "message": "Project ref is 20 lowercase letters."
+          }
+        },
+        {
+          "id": "region",
+          "label": "Project region",
+          "control": "combobox",
+          "required": true,
+          "placeholder": "ap-southeast-1",
+          "options": [
+            "us-east-1",
+            "eu-central-1",
+            "ap-southeast-1",
+            "ap-northeast-1"
+          ]
+        },
+        {
+          "id": "authMode",
+          "label": "Authentication",
+          "control": "segmented",
+          "required": true,
+          "default": "keys",
+          "options": [
+            "keys",
+            "session"
+          ]
+        },
+        {
+          "id": "accessKeyId",
+          "label": "Access Key ID",
+          "generic": "Access Key ID",
+          "control": "text",
+          "mono": true,
+          "required": true,
+          "showWhen": {
+            "field": "authMode",
+            "equals": "keys"
+          }
+        },
+        {
+          "id": "secretAccessKey",
+          "label": "Secret Access Key",
+          "generic": "Secret Access Key",
+          "control": "password",
+          "mono": true,
+          "required": true,
+          "showWhen": {
+            "field": "authMode",
+            "equals": "keys"
+          }
+        },
+        {
+          "id": "publishableKey",
+          "label": "Publishable key",
+          "generic": "Secret Access Key",
+          "control": "password",
+          "mono": true,
+          "required": true,
+          "role": "secretAccessKey",
+          "showWhen": {
+            "field": "authMode",
+            "equals": "session"
+          }
+        },
+        {
+          "id": "sessionToken",
+          "label": "Session token",
+          "control": "password",
+          "mono": true,
+          "required": true,
+          "role": "sessionToken",
+          "showWhen": {
+            "field": "authMode",
+            "equals": "session"
+          }
+        }
+      ],
+      "endpointTemplate": "https://{projectRef}.storage.supabase.co/storage/v1/s3",
+      "region": {
+        "rule": "equals",
+        "field": "region"
+      },
+      "addressingStyle": "path",
+      "sessionToken": true,
+      "badges": [
+        {
+          "label": "Session token supported",
+          "tone": "info"
+        }
+      ],
+      "helpSteps": [
+        "In your Supabase project, open Storage, then S3 Connection.",
+        "Turn on the S3 connection and create an access key, or use session token auth.",
+        "Session token mode: the project ref is used as the access key, the publishable key as the secret, and the signed-in user's JWT as the session token.",
+        "Row-level security policies apply in session token mode."
+      ],
+      "addressingLocked": false,
+      "checksumMode": "when_required",
+      "popular": false,
+      "popularOrder": null,
+      "pasteHints": {
+        "envVars": [
+          "AWS_ACCESS_KEY_ID",
+          "AWS_SECRET_ACCESS_KEY",
+          "AWS_SESSION_TOKEN",
+          "AWS_ENDPOINT_URL",
+          "AWS_ENDPOINT_URL_S3",
+          "AWS_REGION",
+          "AWS_DEFAULT_REGION"
+        ],
+        "rcloneKeys": {
+          "accessKeyId": "access_key_id",
+          "secretAccessKey": "secret_access_key",
+          "sessionToken": "session_token",
+          "endpoint": "endpoint",
+          "region": "region"
+        },
+        "rcloneProviderValue": null,
+        "endpointPattern": "^https://(?<projectRef>[a-z0-9-]+)\\.storage\\.supabase\\.co/storage/v1/s3/?$",
+        "endpointPatternNote": "Named groups map to this preset's field ids. Match case-insensitively."
+      },
+      "expectedHostPattern": "^[a-z0-9-]+\\.storage\\.supabase\\.co$",
+      "scopedKeyAdvice": "Create a key limited to one bucket."
+    },
+    {
+      "id": "storj",
+      "displayName": "Storj",
+      "group": "other",
+      "glyph": "SJ",
+      "fields": [
+        {
+          "id": "accessKeyId",
+          "label": "Access Key ID",
+          "generic": "Access Key ID",
+          "control": "text",
+          "mono": true,
+          "required": true
+        },
+        {
+          "id": "secretAccessKey",
+          "label": "Secret Access Key",
+          "generic": "Secret Access Key",
+          "control": "password",
+          "mono": true,
+          "required": true
+        }
+      ],
+      "endpointTemplate": "https://gateway.storjshare.io",
+      "region": {
+        "rule": "optional"
+      },
+      "addressingStyle": "path",
+      "sessionToken": false,
+      "badges": [],
+      "helpSteps": [
+        "In the Storj console, open Access Keys and create a new access.",
+        "Choose S3 credentials, then pick permissions and buckets.",
+        "Copy the access key and secret key. The secret is shown once."
+      ],
+      "addressingLocked": false,
+      "checksumMode": "when_required",
+      "popular": false,
+      "popularOrder": null,
+      "pasteHints": {
+        "envVars": [
+          "AWS_ACCESS_KEY_ID",
+          "AWS_SECRET_ACCESS_KEY",
+          "AWS_SESSION_TOKEN",
+          "AWS_ENDPOINT_URL",
+          "AWS_ENDPOINT_URL_S3",
+          "AWS_REGION",
+          "AWS_DEFAULT_REGION"
+        ],
+        "rcloneKeys": {
+          "accessKeyId": "access_key_id",
+          "secretAccessKey": "secret_access_key",
+          "sessionToken": "session_token",
+          "endpoint": "endpoint",
+          "region": "region"
+        },
+        "rcloneProviderValue": "Storj",
+        "endpointPattern": "^https://gateway(?:\\.[a-z0-9]+)?\\.storjshare\\.io/?$",
+        "endpointPatternNote": "Named groups map to this preset's field ids. Match case-insensitively."
+      },
+      "expectedHostPattern": "^gateway(\\.[a-z0-9]+)?\\.storjshare\\.io$",
+      "scopedKeyAdvice": "Create a key limited to one bucket."
+    },
+    {
+      "id": "tigris",
+      "displayName": "Tigris",
+      "group": "other",
+      "glyph": "TG",
+      "fields": [
+        {
+          "id": "accessKeyId",
+          "label": "Access Key ID",
+          "generic": "Access Key ID",
+          "control": "text",
+          "mono": true,
+          "required": true,
+          "validation": {
+            "prefix": "tid_",
+            "message": "Tigris access keys start with tid_."
+          }
+        },
+        {
+          "id": "secretAccessKey",
+          "label": "Secret Access Key",
+          "generic": "Secret Access Key",
+          "control": "password",
+          "mono": true,
+          "required": true,
+          "validation": {
+            "prefix": "tsec_",
+            "message": "Tigris secret keys start with tsec_."
+          }
+        }
+      ],
+      "endpointTemplate": "https://t3.storage.dev",
+      "region": {
+        "rule": "fixed",
+        "value": "auto"
+      },
+      "addressingStyle": "virtual",
+      "sessionToken": false,
+      "badges": [],
+      "helpSteps": [
+        "In the Tigris console, open Access Keys and create a key.",
+        "Give it Editor access to your bucket.",
+        "Copy both values. The access key starts with tid_ and the secret with tsec_."
+      ],
+      "addressingLocked": false,
+      "checksumMode": "when_required",
+      "popular": false,
+      "popularOrder": null,
+      "pasteHints": {
+        "envVars": [
+          "AWS_ACCESS_KEY_ID",
+          "AWS_SECRET_ACCESS_KEY",
+          "AWS_SESSION_TOKEN",
+          "AWS_ENDPOINT_URL",
+          "AWS_ENDPOINT_URL_S3",
+          "AWS_REGION",
+          "AWS_DEFAULT_REGION"
+        ],
+        "rcloneKeys": {
+          "accessKeyId": "access_key_id",
+          "secretAccessKey": "secret_access_key",
+          "sessionToken": "session_token",
+          "endpoint": "endpoint",
+          "region": "region"
+        },
+        "rcloneProviderValue": null,
+        "endpointPattern": "^https://t3\\.storage\\.dev/?$",
+        "endpointPatternNote": "Named groups map to this preset's field ids. Match case-insensitively."
+      },
+      "expectedHostPattern": "^t3\\.storage\\.dev$",
+      "scopedKeyAdvice": "Create a key limited to one bucket."
+    },
+    {
+      "id": "idrive-e2",
+      "displayName": "IDrive e2",
+      "group": "other",
+      "glyph": "E2",
+      "fields": [
+        {
+          "id": "endpoint",
+          "label": "Endpoint",
+          "control": "text",
+          "mono": true,
+          "required": true,
+          "placeholder": "x1y2.sg.idrivee2-12.com"
+        },
+        {
+          "id": "accessKeyId",
+          "label": "Access Key ID",
+          "generic": "Access Key ID",
+          "control": "text",
+          "mono": true,
+          "required": true
+        },
+        {
+          "id": "secretAccessKey",
+          "label": "Secret Access Key",
+          "generic": "Secret Access Key",
+          "control": "password",
+          "mono": true,
+          "required": true
+        }
+      ],
+      "endpointTemplate": null,
+      "region": {
+        "rule": "fromEndpoint"
+      },
+      "addressingStyle": "auto",
+      "sessionToken": false,
+      "badges": [
+        {
+          "label": "Endpoint unique per account",
+          "tone": "neutral"
+        }
+      ],
+      "helpSteps": [
+        "In the IDrive e2 dashboard, open Access Keys and create a key.",
+        "Copy the access key and secret key.",
+        "Copy your region's endpoint from the Regions page. It's unique to your account."
+      ],
+      "addressingLocked": false,
+      "checksumMode": "when_required",
+      "popular": false,
+      "popularOrder": null,
+      "pasteHints": {
+        "envVars": [
+          "AWS_ACCESS_KEY_ID",
+          "AWS_SECRET_ACCESS_KEY",
+          "AWS_SESSION_TOKEN",
+          "AWS_ENDPOINT_URL",
+          "AWS_ENDPOINT_URL_S3",
+          "AWS_REGION",
+          "AWS_DEFAULT_REGION"
+        ],
+        "rcloneKeys": {
+          "accessKeyId": "access_key_id",
+          "secretAccessKey": "secret_access_key",
+          "sessionToken": "session_token",
+          "endpoint": "endpoint",
+          "region": "region"
+        },
+        "rcloneProviderValue": null,
+        "endpointPattern": null,
+        "endpointPatternNote": "Named groups map to this preset's field ids. Match case-insensitively."
+      },
+      "expectedHostPattern": null,
+      "scopedKeyAdvice": "Create a key limited to one bucket."
+    },
+    {
+      "id": "custom",
+      "displayName": "Other S3-compatible",
+      "group": "other",
+      "glyph": "S3",
+      "fields": [
+        {
+          "id": "endpoint",
+          "label": "Endpoint URL",
+          "control": "text",
+          "mono": true,
+          "required": true
+        },
+        {
+          "id": "region",
+          "label": "Region",
+          "control": "combobox",
+          "required": false,
+          "placeholder": "us-east-1",
+          "options": []
+        },
+        {
+          "id": "accessKeyId",
+          "label": "Access Key ID",
+          "generic": "Access Key ID",
+          "control": "text",
+          "mono": true,
+          "required": true
+        },
+        {
+          "id": "secretAccessKey",
+          "label": "Secret Access Key",
+          "generic": "Secret Access Key",
+          "control": "password",
+          "mono": true,
+          "required": true
+        }
+      ],
+      "endpointTemplate": null,
+      "region": {
+        "rule": "custom",
+        "default": "us-east-1"
+      },
+      "addressingStyle": "auto",
+      "sessionToken": true,
+      "badges": [],
+      "helpSteps": [
+        "Find the S3 API endpoint in your provider's docs or console.",
+        "Create an access key with read, write and delete on your bucket.",
+        "Allow this app's origin in the bucket's CORS settings.",
+        "If requests fail with a bucket-not-found error, try Path addressing under Advanced."
+      ],
+      "addressingLocked": false,
+      "checksumMode": "when_required",
+      "popular": false,
+      "popularOrder": null,
+      "pasteHints": {
+        "envVars": [
+          "AWS_ACCESS_KEY_ID",
+          "AWS_SECRET_ACCESS_KEY",
+          "AWS_SESSION_TOKEN",
+          "AWS_ENDPOINT_URL",
+          "AWS_ENDPOINT_URL_S3",
+          "AWS_REGION",
+          "AWS_DEFAULT_REGION"
+        ],
+        "rcloneKeys": {
+          "accessKeyId": "access_key_id",
+          "secretAccessKey": "secret_access_key",
+          "sessionToken": "session_token",
+          "endpoint": "endpoint",
+          "region": "region"
+        },
+        "rcloneProviderValue": null,
+        "endpointPattern": null,
+        "endpointPatternNote": "Named groups map to this preset's field ids. Match case-insensitively."
+      },
+      "expectedHostPattern": null,
+      "scopedKeyAdvice": "Create a key limited to one bucket."
+    }
+  ]
+}

@@ -1,0 +1,119 @@
+{
+  "about": {
+    "fonts": "IBM Plex Sans and Mono, licensed under the SIL Open Font License.",
+    "licenseText": "MIT License. Copyright (c) 2026 Coffer contributors."
+  },
+  "act": {
+    "restore": "Restore",
+    "unstar": "Remove from starred"
+  },
+  "conn": {
+    "expired": {
+      "body": "Enter new credentials to continue.",
+      "title": "Your session token expired"
+    },
+    "offline": {
+      "body": "Operations pause until the connection returns.",
+      "title": "You’re offline"
+    }
+  },
+  "dlg": {
+    "zip": {
+      "warn": "This folder is about {size}. Large downloads can run out of memory in some browsers."
+    }
+  },
+  "files": {
+    "capped": {
+      "body": "Coffer stopped loading at {count} items, so the list is incomplete.",
+      "title": "Showing the first {count} items"
+    },
+    "emptyBucket": {
+      "body": "Upload your first file, drag a folder in, or create a folder with New."
+    },
+    "loadAll": {
+      "progress": "Loaded {count} items"
+    }
+  },
+  "form": {
+    "prefix": {
+      "hint": "Optional. Coffer opens in this folder and can’t go above it. Use it for a key limited to one folder."
+    },
+    "prefixLabel": "Start in folder",
+    "sessionTokenLabel": "Session token",
+    "tokenExpires": {
+      "hint": "Optional. Share links stop working at this time. Without it, links last at most 1 hour."
+    },
+    "tokenExpiresLabel": "Token expires at"
+  },
+  "ob": {
+    "cors": {
+      "copyRule": "Copy rule",
+      "stillFailing": "Still failing? Some providers send error responses without CORS headers, so a wrong key can look like a CORS problem. Check the key and the rule, then try again.",
+      "tabJson": "JSON",
+      "tabXml": "XML"
+    },
+    "fail": {
+      "clean": {
+        "cta": "Try again",
+        "next": "Rename, move and delete need delete access. Give the key delete access, then try again.",
+        "title": "This key can’t delete files",
+        "why": "The test file was written, but the key isn’t allowed to delete it."
+      }
+    },
+    "locked": {
+      "stop": "Stop transfers and lock",
+      "transfers": "{count, plural, one {# transfer is still finishing in the background.} other {# transfers are still finishing in the background.}}"
+    },
+    "paste": {
+      "expiryIgnored": "Ignored the credential expiration because it isn’t a future time.",
+      "noMatch": "Nothing recognized. Paste AWS-style environment lines, an rclone remote, or an endpoint."
+    },
+    "ro": {
+      "unverified": "This bucket is empty, so Coffer couldn’t confirm that reading works."
+    },
+    "save": {
+      "strong": "Strong. 16 characters or more is best.",
+      "tooShort": "Use at least 12 characters. A longer passphrase is harder to guess."
+    }
+  },
+  "search": {
+    "all": "Search all of {bucket}",
+    "none": {
+      "bodyFolder": "Search looks at names in {folder}. Try a shorter word or remove a filter."
+    },
+    "placeholderFolder": "Search in {folder}",
+    "scope": {
+      "partial": "Results cover the {count} items loaded so far."
+    }
+  },
+  "share": {
+    "session": {
+      "none": "Your session token expires in under 15 minutes, so a link can’t be created. Use new credentials.",
+      "unknown": "Coffer doesn’t know when this token expires, so links last at most 1 hour."
+    }
+  },
+  "stor": {
+    "idle": {
+      "estimate": "About {requests} requests, based on the last count of {count} objects.",
+      "rule": "Coffer needs about one request per 1,000 objects."
+    },
+    "run": {
+      "requests": "{requests} requests so far."
+    },
+    "still": "Still counting"
+  },
+  "toast": {
+    "copied": "Copied"
+  },
+  "trash": {
+    "deleted": "Deleted {when}",
+    "originalPath": "Original location: {path}"
+  },
+  "upl": {
+    "interrupted": {
+      "body": "{name} was interrupted when the page closed. Start it again.",
+      "title": "Upload interrupted"
+    },
+    "waitingUnlock": "Waiting for unlock"
+  }
+}

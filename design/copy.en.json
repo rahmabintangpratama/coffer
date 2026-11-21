@@ -1,0 +1,660 @@
+{
+  "about": {
+    "license": "Free and open source. Runs entirely in your browser.",
+    "origin": "App origin",
+    "version": "Coffer {version}"
+  },
+  "act": {
+    "addConn": "Add connection",
+    "back": "Back",
+    "cancel": "Cancel",
+    "cancelItem": "Cancel upload",
+    "close": "Close",
+    "collapse": "Collapse",
+    "copy": "Copy",
+    "copyKey": "Copy key",
+    "copyLink": "Copy link",
+    "details": "Details",
+    "discard": "Discard",
+    "dismiss": "Dismiss",
+    "done": "Done",
+    "download": "Download",
+    "downloadZip": "Download as .zip",
+    "edit": "Edit",
+    "loadAll": "Load all",
+    "makeCopy": "Make a copy",
+    "more": "More actions",
+    "move": "Move",
+    "moveTo": "Move…",
+    "new": "New",
+    "newFolder": "New folder",
+    "pause": "Pause",
+    "preview": "Preview",
+    "rename": "Rename",
+    "resume": "Resume",
+    "review": "Review",
+    "share": "Share link",
+    "show": "Show",
+    "star": "Add to starred",
+    "trash": "Move to trash",
+    "undo": "Undo",
+    "uploadFiles": "Upload files",
+    "uploadFolder": "Upload folder"
+  },
+  "app": {
+    "density": {
+      "comfortable": "Comfortable",
+      "compact": "Compact"
+    },
+    "densityLabel": "Row density",
+    "name": "Coffer",
+    "theme": {
+      "dark": "Dark",
+      "light": "Light",
+      "system": "System"
+    },
+    "themeLabel": "Theme"
+  },
+  "badge": {
+    "alibabaOss": "Virtual-hosted only",
+    "oracleOci": "Browser access not supported (CORS)"
+  },
+  "beh": {
+    "confirmTrash": {
+      "sub": "Off by default. Undo is always offered."
+    },
+    "confirmTrashLabel": "Ask before moving to trash",
+    "hidden": {
+      "sub": "Names that start with a dot."
+    },
+    "hiddenLabel": "Show hidden files",
+    "parts": "Parallel upload parts"
+  },
+  "browser": {
+    "breadcrumb": {
+      "label": "Folder path"
+    }
+  },
+  "cmd": {
+    "goToStarred": "Go to Starred",
+    "goToTrash": "Go to Trash",
+    "keyboardShortcuts": "Keyboard shortcuts",
+    "label": "Command palette",
+    "lockCoffer": "Lock Coffer",
+    "placeholder": "Type a command or search files",
+    "searchInStudioAssets": "Search in studio-assets",
+    "suggested": "Suggested"
+  },
+  "coach": {
+    "dismiss": "Got it",
+    "step": "{n} of 3",
+    "tip1Body": "Every file has the same actions in its menu.",
+    "tip1Title": "Right-click or press ⋮",
+    "tip2Body": "Drop files or folders anywhere in the list.",
+    "tip2Title": "Drag files in to upload",
+    "tip3Body": "Search looks at file names in this bucket.",
+    "tip3Title": "Press / to search"
+  },
+  "col": {
+    "modified": "Last modified",
+    "name": "Name",
+    "size": "File size"
+  },
+  "conf": {
+    "all": "{count, plural, one {Apply to this conflict} other {Apply to all # conflicts}}",
+    "body": "{folder} already has {name}.",
+    "confirm": "Continue",
+    "keep": {
+      "sub": "The new file is saved as {name}."
+    },
+    "keepLabel": "Keep both",
+    "replace": {
+      "sub": "The new file overwrites the old one."
+    },
+    "replaceLabel": "Replace",
+    "skip": {
+      "sub": "Don’t upload this file."
+    },
+    "skipLabel": "Skip",
+    "title": "This file already exists"
+  },
+  "conn": {
+    "meta": "{provider} · {state}",
+    "name": "{provider} · {bucket}",
+    "state": {
+      "locked": "Locked · needs passphrase",
+      "unlocked": "Unlocked"
+    },
+    "switchLabel": "Switch connection"
+  },
+  "del": {
+    "bulk": {
+      "body": "{count, plural, one {This # item will} other {These # items will}} be deleted from {bucket}. You can’t undo this.",
+      "hint": "Large deletes need the count typed in.",
+      "title": "{count, plural, one {Delete # item forever?} other {Delete # items forever?}}"
+    },
+    "empty": {
+      "body": "{count, plural, one {The # item in Trash will be deleted forever.} other {All # items in Trash will be deleted forever.}} You can’t undo this.",
+      "title": "Empty trash?"
+    },
+    "forever": "Delete forever",
+    "one": {
+      "body": "{name} will be deleted from {bucket}. You can’t undo this.",
+      "title": "Delete forever?"
+    },
+    "typeCount": "Type {count} to confirm"
+  },
+  "demo": {
+    "banner": "Demo · sample files, read-only.",
+    "connect": "Connect your bucket"
+  },
+  "det": {
+    "contentType": "Content type",
+    "etag": "ETag",
+    "key": "Full key",
+    "label": "File details",
+    "location": {
+      "value": "{bucket} / {folder}"
+    },
+    "locationLabel": "Location",
+    "size": {
+      "value": "{size} ({bytes} bytes)"
+    },
+    "sizeLabel": "Size"
+  },
+  "dlg": {
+    "copy": {
+      "hint": "The copy is saved in {folder}.",
+      "label": "Name for the copy"
+    },
+    "move": {
+      "confirm": "Move here",
+      "current": "Current location",
+      "newFolder": "New folder here",
+      "sub": "Choose where to move {name}.",
+      "title": "{n, plural, one {Move # item} other {Move # items}}"
+    },
+    "rename": {
+      "err": {
+        "slash": "Names can’t contain slashes. Use Move to change folders."
+      }
+    }
+  },
+  "drop": {
+    "sub": "Folders keep their structure.",
+    "title": "Drop files to upload them to “{folder}”"
+  },
+  "files": {
+    "emptyBucket": {
+      "body": "Upload your first file, or drag a folder in. Folders are created from file paths.",
+      "title": "{bucket} has no files yet"
+    },
+    "emptyFolder": {
+      "body": "Drag files here, or use New to upload files or create a folder.",
+      "title": "This folder is empty"
+    },
+    "error": {
+      "body": "The bucket didn’t answer in time (timeout after {seconds} s). Your files are not affected.",
+      "title": "Couldn’t load this folder"
+    },
+    "list": {
+      "label": "Files in {folder}"
+    },
+    "loading": "Loading files",
+    "partial": {
+      "body": "Load all to sort by size.",
+      "title": "Showing {count} items"
+    },
+    "section": {
+      "folders": "Folders"
+    }
+  },
+  "filter": {
+    "label": "Filters",
+    "modified": "Modified",
+    "type": "Type"
+  },
+  "forget": {
+    "body": "This deletes from this browser:",
+    "connections": "{count, plural, one {# saved connection and its key} other {# saved connections and their keys}}",
+    "journal": "The operation journal",
+    "local": "Starred items and recent files",
+    "note": "Your buckets and files are not changed.",
+    "title": "Forget this device?"
+  },
+  "form": {
+    "accessKeyId": "Access Key ID",
+    "accountId": "Account ID",
+    "accountIdError": "Account ID is {length} lowercase letters and digits. Copy it from the {page} page.",
+    "addr": {
+      "auto": "Auto",
+      "hint": "Try Path if you get a bucket-not-found error.",
+      "path": "Path",
+      "virtual": "Virtual-hosted"
+    },
+    "addressing": "Addressing style",
+    "advanced": "Advanced options",
+    "appId": "APPID",
+    "auth": {
+      "keys": "S3 keys",
+      "session": "Session token"
+    },
+    "authMode": "Authentication",
+    "bucket": {
+      "hint": "Leave empty to pick from the buckets this key can see.",
+      "tencent": "Bucket names end with your APPID."
+    },
+    "bucketLabel": "Bucket",
+    "endpoint": {
+      "note": "Built from your details."
+    },
+    "endpointHostWarn": "This endpoint doesn’t look like a {provider} address. Check the spelling before you connect.",
+    "endpointLabel": "Endpoint",
+    "endpointPath": "Includes the path {path}. Edit only if your project uses a custom domain.",
+    "endpointUrl": "Endpoint URL",
+    "jur": {
+      "eu": "EU"
+    },
+    "jurisdiction": "Jurisdiction",
+    "optional": "optional",
+    "projectRef": "Project ref",
+    "projectRegion": "Project region",
+    "publishableKey": {
+      "hint": "Used as the secret in session token mode."
+    },
+    "publishableKeyLabel": "Publishable key",
+    "regionHint": "Leave empty to use {region}.",
+    "regionLabel": "Region",
+    "secret": "Secret Access Key",
+    "secretId": "SecretId",
+    "secretKey": "SecretKey",
+    "sessionToken": {
+      "hint": "The signed-in user’s JWT. Row-level security applies."
+    }
+  },
+  "home": {
+    "bucketMeta": "{provider} · {count, plural, one {# object} other {# objects}}",
+    "bucketProvider": "{provider}",
+    "buckets": "Buckets",
+    "recent": {
+      "note": "Saved in this browser. Nothing is read from your bucket for this list."
+    },
+    "recentLabel": "Recent files"
+  },
+  "kb": {
+    "act": "Act on selection",
+    "app": "App",
+    "nav": "Navigate",
+    "open": "Open",
+    "search": "Search",
+    "selectAll": "Select all",
+    "shortcuts": "Shortcuts"
+  },
+  "main": {
+    "label": "Files"
+  },
+  "menu": {
+    "context": {
+      "label": "Actions for {name}"
+    },
+    "folder": {
+      "label": "Actions for this folder"
+    },
+    "group": {
+      "organize": "Organize",
+      "share": "Share"
+    }
+  },
+  "nav": {
+    "home": "Home",
+    "lock": "Lock",
+    "menu": "Open menu",
+    "more": "More",
+    "settings": "Settings",
+    "sidebar": {
+      "label": "Main navigation"
+    },
+    "starred": "Starred",
+    "storage": "Storage",
+    "trash": "Trash"
+  },
+  "ob": {
+    "connect": "Connect a bucket",
+    "cors": {
+      "back": "Back to details",
+      "cta": "I’ve added it · Check again",
+      "s1": "In {console}, open {product}, then {bucket}, then Settings.",
+      "s2": "Under CORS policy, choose Add CORS policy and paste the JSON.",
+      "title": "Your bucket needs a CORS rule",
+      "warn": "Don’t use * as an allowed origin. It lets any website use your bucket from a visitor’s browser.",
+      "why": "The browser blocked the request because {origin} isn’t allowed by this bucket yet."
+    },
+    "cred": {
+      "cta": "Connect",
+      "foot": "Keys stay in this browser.",
+      "title": "Connect {provider}"
+    },
+    "explore": "Explore with sample files",
+    "factFree": "Free and open source",
+    "factKeys": "Your keys stay in this browser",
+    "factProviders": "Works with {count}+ S3-compatible providers",
+    "fail": {
+      "bucket": {
+        "cta": "Use {region}",
+        "next": "Switch the region and test again.",
+        "title": "Bucket not found in this region",
+        "why": "{bucket} exists in {actual}, not {requested}."
+      },
+      "denied": {
+        "cta": "Try again",
+        "next": "Give the key read and write access to this bucket, then try again.",
+        "title": "Access denied",
+        "why": "The key is valid, but it isn’t allowed to list {bucket}."
+      },
+      "net": {
+        "cta": "Edit endpoint",
+        "next": "Use an https endpoint, or run Coffer on your own machine.",
+        "title": "Can’t reach {endpoint}",
+        "why": "Browsers block http endpoints on https pages, except localhost."
+      },
+      "sig": {
+        "cta": "Edit keys",
+        "next": "Re-enter the secret key. If it’s right, set your device clock to automatic and try again.",
+        "title": "The signature didn’t match",
+        "why": "The secret key may have a stray space, or your device clock is off by {minutes, plural, one {# minute} other {# minutes}}."
+      }
+    },
+    "help": {
+      "scoped": "Create a key limited to one bucket. It’s safer if the key ever leaks.",
+      "title": "Where do I find these?"
+    },
+    "locked": {
+      "body": "It locked after {minutes, plural, one {# minute} other {# minutes}} away. Your files are safe. Enter your passphrase to continue.",
+      "title": "Coffer is locked"
+    },
+    "note": {
+      "allowed": "Allowed",
+      "blocked": "Blocked",
+      "buckets": "{count, plural, one {# bucket} other {# buckets}}",
+      "denied": "Denied",
+      "latency": "{ms} ms",
+      "notFound": "Not found",
+      "ok": "OK",
+      "rejected": "Rejected"
+    },
+    "pass": {
+      "body": "Reads and writes work. You can start managing files.",
+      "cta": "Choose a bucket",
+      "title": "Connected"
+    },
+    "paste": {
+      "detected": "detected",
+      "fill": "Fill the form",
+      "label": "Paste here",
+      "privacy": "The pasted text is cleared as soon as the form is filled. It isn’t stored or sent anywhere.",
+      "sub": "Fills the form from AWS-style environment lines, an rclone remote, or an endpoint."
+    },
+    "pasteLabel": "Paste credentials",
+    "pick": {
+      "cta": "Open bucket",
+      "manual": "Type a bucket name instead",
+      "more": "and {count} more",
+      "scope": "{count, plural, one {This key can access # bucket.} other {This key can access # buckets.}} A key limited to one bucket is safer.",
+      "search": "Search buckets"
+    },
+    "provider": {
+      "all": "All providers",
+      "none": {
+        "body": "Most services with an S3 API work. Use the generic option and enter the endpoint yourself.",
+        "title": "No provider named “{q}”"
+      },
+      "other": "Other S3-compatible service",
+      "popular": "Popular",
+      "search": "Search providers",
+      "title": "Choose your provider"
+    },
+    "ro": {
+      "bar": "Connecting",
+      "body": "You can still browse, preview and download. Uploads, renames, moves and deletes stay off.",
+      "cta": "Connect read-only",
+      "title": "This key can read but not write",
+      "why": "The bucket refused the test file with AccessDenied."
+    },
+    "save": {
+      "body": "Keep this connection on this device so you don’t enter keys again. It’s encrypted with a passphrase only you know.",
+      "cta": "Save with a passphrase",
+      "nofix": "We can’t recover this passphrase. If you forget it, you’ll add the connection again.",
+      "skip": "Not now",
+      "strength": "Strength: good. {count} characters or more is best.",
+      "title": "Save on this device?"
+    },
+    "step": {
+      "clean": "Clean up",
+      "cors": "Check CORS",
+      "list": "List objects",
+      "reach": "Reach endpoint",
+      "read": "Read it back",
+      "write": "Write a test file"
+    },
+    "test": {
+      "bar": "Test connection",
+      "note": "Coffer writes a small test file and deletes it again. It doesn’t touch your other files."
+    },
+    "testTitle": "Connecting to {name}",
+    "unlock": {
+      "body": "Enter the passphrase you chose when you saved them.",
+      "cta": "Unlock",
+      "forget": {
+        "note": "Forgetting removes saved connections, starred items and recent files from this browser."
+      },
+      "forgetLabel": "Forget this device",
+      "label": "Passphrase",
+      "other": "Use a different connection",
+      "title": "Unlock your connections",
+      "wrong": "That passphrase doesn’t match. Check for caps lock and try again."
+    },
+    "welcome": {
+      "body": "Coffer is a file manager for S3-compatible storage. It runs in your browser, with no server in between.",
+      "title": "Manage your bucket files the way you already manage files"
+    }
+  },
+  "op": {
+    "interrupted": {
+      "body": "{done} of {total} objects in {name} were moved before the page closed.",
+      "title": "A move was interrupted"
+    },
+    "progress": "{done} of {total} objects",
+    "title": "Moving “{name}”"
+  },
+  "pv": {
+    "code": {
+      "meta": "{type} · {lines, plural, one {# line} other {# lines}} · {size}"
+    },
+    "fit": "Fit to screen",
+    "html": {
+      "meta": "{type} · scripts never run · {size}",
+      "notice": "Shown as code for your safety.",
+      "render": "Render in sandbox"
+    },
+    "image": {
+      "alt": "Preview of {name}"
+    },
+    "md": {
+      "meta": "Markdown · sanitized"
+    },
+    "next": "Next file",
+    "nextPage": "Next page",
+    "none": {
+      "body": "{type} files can’t be shown in the browser. You can still download the file.",
+      "title": "No preview for this file type"
+    },
+    "page": "Page {page} of {total}",
+    "play": "Play",
+    "pos": "{position} of {total}",
+    "prev": "Previous file",
+    "prevPage": "Previous page",
+    "svg": {
+      "meta": "SVG · shown as an image, scripts never run"
+    },
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out"
+  },
+  "reveal": {
+    "body": "Enter your passphrase to show the secret key for {name}.",
+    "note": "The secret stays visible for {seconds} seconds, then hides again.",
+    "title": "Show secret key"
+  },
+  "ro": {
+    "badge": "Read-only",
+    "banner": {
+      "body": "You can browse, preview and download. To change files, connect with a key that has write access.",
+      "cta": "Use another key"
+    },
+    "reason": "This key is read-only"
+  },
+  "row": {
+    "more": "More actions for {name}"
+  },
+  "search": {
+    "clear": "Clear search",
+    "clearFilters": "Clear filters",
+    "none": {
+      "body": "Search looks at names in {bucket}. Try a shorter word or remove a filter.",
+      "title": "No results for “{q}”"
+    },
+    "placeholder": "Search in {bucket}"
+  },
+  "sec": {
+    "autolock": {
+      "sub": "Locks after you’ve been away. Unlocking needs your passphrase."
+    },
+    "autolockLabel": "Auto-lock",
+    "autolockValue": "{minutes, plural, one {# minute} other {# minutes}}",
+    "change": "Change passphrase",
+    "clipboard": "Copied. Clear your clipboard when you’re done.",
+    "forget": {
+      "btn": "Forget",
+      "sub": "Deletes saved connections, the operation journal, starred items and recent files from this browser. Your buckets are not changed."
+    },
+    "stored": {
+      "sub": "See everything Coffer keeps in this browser."
+    },
+    "storedLabel": "What’s stored on this device"
+  },
+  "sel": {
+    "clear": "Clear selection",
+    "count": "{n, plural, one {# selected} other {# selected}}",
+    "toolbar": "Selection actions"
+  },
+  "set": {
+    "about": {
+      "sub": "Version, licenses"
+    },
+    "aboutLabel": "About",
+    "appearance": {
+      "sub": "Theme, density"
+    },
+    "appearanceLabel": "Appearance",
+    "behavior": {
+      "sub": "Confirmations, upload parts"
+    },
+    "behaviorLabel": "Behavior",
+    "connections": {
+      "sub": "{count, plural, one {# connection} other {# connections}}"
+    },
+    "connectionsLabel": "Connections",
+    "nav": "Settings sections",
+    "security": {
+      "sub": "Auto-lock after {minutes, plural, one {# minute} other {# minutes}}"
+    },
+    "securityLabel": "Security"
+  },
+  "share": {
+    "body": "Anyone with the link can open this file until it expires. Links can’t be revoked early.",
+    "create": "Create link for {duration}",
+    "expDay": "{count, plural, one {# day} other {# days}}",
+    "expHour": "{count, plural, one {# hour} other {# hours}}",
+    "expMinutes": "{count, plural, one {# minute} other {# minutes}}",
+    "expiresAt": "Expires {date}.",
+    "expiry": "Link expires after",
+    "invalidate": "To cancel all links early, rotate the access key at your provider.",
+    "link": "Link",
+    "session": {
+      "body": "Your token expires at {time} ({minutes, plural, one {# minute} other {# minutes}} from now), so longer choices are unavailable.",
+      "title": "This link stops working when your session token expires"
+    }
+  },
+  "sort": {
+    "label": "Sort by"
+  },
+  "star": {
+    "empty": {
+      "body": "Star files and folders to find them fast. Stars are saved in this browser only.",
+      "cta": "Go to Files",
+      "title": "Nothing starred yet"
+    },
+    "note": "Saved in this browser. Starred items aren’t stored in your bucket."
+  },
+  "stor": {
+    "byFolder": "Largest folders",
+    "calc": "Calculate usage",
+    "idle": {
+      "body": "Coffer counts every object in {bucket}. On large buckets this can take a few minutes and many requests.",
+      "title": "Usage isn’t calculated yet"
+    },
+    "recalc": "Calculate again",
+    "run": {
+      "body": "Counted {count} objects so far.",
+      "title": "Calculating usage"
+    },
+    "total": {
+      "sub": "in {count, plural, one {# object} other {# objects}} · calculated {when}"
+    }
+  },
+  "stored": {
+    "creds": {
+      "sub": "{count, plural, one {# connection} other {# connections}} · encrypted with your passphrase"
+    },
+    "credsLabel": "Saved connections",
+    "journal": {
+      "sub": "{count, plural, one {# interrupted move} other {# interrupted moves}}"
+    },
+    "journalLabel": "Operation journal",
+    "note": "Coffer sends nothing to any server except your own storage provider.",
+    "recent": {
+      "sub": "{count, plural, one {# file} other {# files}} · names only"
+    },
+    "starred": {
+      "sub": "{count, plural, one {# item} other {# items}} · not encrypted"
+    },
+    "starredLabel": "Starred items"
+  },
+  "toast": {
+    "trashed": "Moved {count, plural, one {# item} other {# items}} to trash"
+  },
+  "trash": {
+    "empty": "Empty trash",
+    "note": "Trash is the {prefix} folder in your bucket. Items stay until you empty it."
+  },
+  "type": {
+    "folder": "Folder"
+  },
+  "upl": {
+    "label": "Transfers",
+    "resume": {
+      "body": "{name} stopped at part {part} of {total}. Choose the file again to continue.",
+      "cta": "Choose file",
+      "title": "Upload paused when the page reloaded"
+    },
+    "title": {
+      "failed": "{count, plural, one {# upload failed} other {# uploads failed}}",
+      "paused": "Upload paused",
+      "running": "{count, plural, one {Uploading # item} other {Uploading # items}}"
+    }
+  },
+  "view": {
+    "grid": "Grid layout",
+    "label": "Layout",
+    "list": "List layout"
+  }
+}

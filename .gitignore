@@ -1,0 +1,28 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+.vite/
+coverage/
+playwright-report/
+test-results/
+
+# OS and editor
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# environment files (no secrets belong in this repo; keep local config out of git)
+.env
+.env.*
+!.env.example
+
+# local overrides
+*.local
+.claude/settings.local.json
+
+# logs
+*.log
+pnpm-debug.log*
