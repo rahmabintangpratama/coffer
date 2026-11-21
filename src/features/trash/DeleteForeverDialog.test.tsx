@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { DeleteForeverDialog, needsTypedCount, TYPED_COUNT_OVER, type DeleteRequest } from "./DeleteForeverDialog";
 import type { TrashItem } from "./model";
 
-const item = (n: number): TrashItem => ({ key: `.trash/b/f${n.toString()}.txt`, batch: "b", deletedAt: null, original: `f${n.toString()}.txt`, path: `f${n.toString()}.txt`, name: `f${n.toString()}.txt`, size: 1, folder: false });
+const item = (n: number): TrashItem => ({ key: `.coffer-trash/20261122T090503Z-aaaaaa/f${n.toString()}.txt`, batch: "b", deletedAt: new Date(0), original: `f${n.toString()}.txt`, path: `f${n.toString()}.txt`, name: `f${n.toString()}.txt`, size: 1, folder: false });
 const keys = (count: number): DeleteRequest => ({ kind: "keys", items: Array.from({ length: count }, (_, n) => item(n)) });
 
 describe("FR-71 delete forever confirmation", () => {

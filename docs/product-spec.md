@@ -219,7 +219,7 @@ The UI never hides these. Each one is surfaced where it affects the person.
 - AC-20.6 Given file names, When rendered, Then they are text only and long names truncate in the middle of the extension (never wrap the layout).
 
 **States:** loading (skeleton), empty folder (`files.emptyFolder.*`), empty bucket (`files.emptyBucket.*`), error (`files.error.*`), partial (FR-21), success.
-**Edge cases:** hidden files (names starting with a dot) are hidden unless `showHiddenFiles`; the trash prefix (`.trash/` under the connection root) is always hidden here. Keys ending in `/` that are not placeholders. Names with leading or trailing spaces, RTL text and emoji render correctly.
+**Edge cases:** hidden files (names starting with a dot) are hidden unless `showHiddenFiles`; the trash prefix (`.coffer-trash/` under the connection root) is always hidden here, and a user's own `.trash/` folder is shown like any other folder. Keys ending in `/` that are not placeholders. Names with leading or trailing spaces, RTL text and emoji render correctly.
 **Screens:** `S10_FilesList`, `S11_FilesGrid`, `T10_FileStates`, `T10b_FileStates`
 
 #### FR-21 Listing pagination and "Load all" (MVP)
@@ -372,7 +372,7 @@ The UI never hides these. Each one is surfaced where it affects the person.
 #### FR-36 Move to trash with Undo (MVP)
 **Story:** As a user, I want delete to be safe.
 **Acceptance**
-- AC-36.1 Given selected items, When `Move to trash` is chosen, Then they move to `.trash/{UTC timestamp}-{6 random chars}/{original key}` (one batch prefix for the whole operation, under the connection root) with no confirmation and the toast "Moved N items to trash · Undo" shows for at least 8 s.
+- AC-36.1 Given selected items, When `Move to trash` is chosen, Then they move to `.coffer-trash/{UTC timestamp}-{6 random chars}/{original key}` (one batch prefix for the whole operation, under the connection root) with no confirmation and the toast "Moved N items to trash · Undo" shows for at least 8 s.
 - AC-36.2 Given `confirmTrash` is on, Then a confirmation shows first.
 - AC-36.3 Given `Undo`, When tapped, Then items return to their original keys.
 - AC-36.4 Given a folder, Then all objects under it move and the journal tracks it.
@@ -537,7 +537,7 @@ The UI never hides these. Each one is surfaced where it affects the person.
 #### FR-70 Trash view and restore (MVP)
 **Story:** As a user, I want to see deleted items and restore them.
 **Acceptance**
-- AC-70.1 Given Trash, Then it lists every item under the trash prefix flattened across batches, each with its original path and the deletion time read from its batch prefix, newest first, with the note `trash.note`.
+- AC-70.1 Given Trash, Then it lists every item under the trash prefix that is in Coffer's batch format (`{UTC timestamp}-{6 chars}/...`; anything else there is ignored) flattened across batches, each with its original path and the deletion time read from its batch prefix, newest first, with the note `trash.note`.
 - AC-70.2 Given selected items, When `Restore` is chosen, Then the batch prefix is stripped and they move back to their original keys.
 - AC-70.3 Given an original key now exists, Then the conflict dialog (FR-43 semantics) asks.
 - AC-70.4 Given an empty trash, Then an empty state shows.

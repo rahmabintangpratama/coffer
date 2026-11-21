@@ -5,7 +5,8 @@ import { toTrashItems } from "@/features/trash/model";
 import { DELETE_BATCH, deleteKeys, deleteUnder } from "@/lib/s3/delete";
 import { existingKeys } from "@/lib/s3/conflicts";
 import { runOperation } from "@/lib/s3/operations";
-import { newBatchId, trashKeyOf } from "@/lib/s3/trash";
+import { listPage } from "@/lib/s3/list";
+import { newBatchId, parseTrashKey, trashKeyOf } from "@/lib/s3/trash";
 import { startEntry, type JournalStore } from "@/lib/storage/journal";
 import type { JournalEntry } from "@/lib/types";
 import { createBucket, createClient } from "./client";
@@ -38,7 +39,7 @@ async function keys(prefix: string): Promise<string[]> {
 }
 
 /** What is under `root` outside its trash. */
-const live = async (root: string) => (await keys(root)).filter((key) => !key.startsWith(`${root}.trash/`));
+const live = async (root: string) => (await keys(root)).filter((key) => !key.startsWith(`${root}.coffer-trash/`));
 
 const unique = (name: string) => `${name}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}/`;
 const put = (key: string, body: string) => client.send(new PutObjectCommand({ Bucket: bucket, Key: key, Body: body }));
@@ -48,7 +49,7 @@ const run = (kind: JournalEntry["kind"], source: string, target: string) =>
 const trashIt = (root: string, key: string, batch = newBatchId()) => run("trash", key, trashKeyOf(root, batch, key));
 const noAsk = () => Promise.reject(new Error("should not ask"));
 const exists = async (key: string) => (await existingKeys(client, { bucket, keys: [key] })).has(key);
-const listed = async (root: string) => toTrashItems(root, (await keys(`${root}.trash/`)).map((key) => ({ key, size: 0 })));
+const listed = async (root: string) => toTrashItems(root, (await keys(`${root}.coffer-trash/`)).map((key) => ({ key, size: 0 })));
 const planFor = async (root: string, pick: (all: Awaited<ReturnType<typeof listed>>) => Awaited<ReturnType<typeof listed>>, ask: Parameters<typeof planRestore>[3]["ask"] = noAsk) => {
   const all = await listed(root);
   return planRestore(pick(all), all, root, { existing: (found) => existingKeys(client, { bucket, keys: found }), exists, ask });
@@ -65,7 +66,7 @@ describe("AC-36.1, AC-36.4, AC-36.6 trash", () => {
     await trashIt(root, `${root}a.txt`, batch);
     await trashIt(root, `${root}dir/`, batch);
     expect(await live(root)).toEqual([]);
-    expect(await keys(`${root}.trash/`)).toEqual([`${root}.trash/${batch}/a.txt`, `${root}.trash/${batch}/dir/`, `${root}.trash/${batch}/dir/b.txt`, `${root}.trash/${batch}/dir/sub/c.txt`]);
+    expect(await keys(`${root}.coffer-trash/`)).toEqual([`${root}.coffer-trash/${batch}/a.txt`, `${root}.coffer-trash/${batch}/dir/`, `${root}.coffer-trash/${batch}/dir/b.txt`, `${root}.coffer-trash/${batch}/dir/sub/c.txt`]);
   });
 
   it("AC-36.6 trashing the same key twice keeps both copies in separate batches", async () => {
@@ -74,7 +75,7 @@ describe("AC-36.1, AC-36.4, AC-36.6 trash", () => {
     await trashIt(root, `${root}a.txt`);
     await put(`${root}a.txt`, "second");
     await trashIt(root, `${root}a.txt`);
-    const stored = await keys(`${root}.trash/`);
+    const stored = await keys(`${root}.coffer-trash/`);
     expect(stored).toHaveLength(2);
     expect(new Set(stored.map((key) => key.split("/")[2])).size).toBe(2);
     expect((await Promise.all(stored.map(read))).sort()).toEqual(["first", "second"]);
@@ -87,7 +88,7 @@ describe("AC-36.1, AC-36.4, AC-36.6 trash", () => {
     await trashIt(root, `${root}dir/`, batch);
     await run("restore", trashKeyOf(root, batch, `${root}dir/`), `${root}dir/`);
     expect(await live(root)).toEqual([`${root}dir/a.txt`, `${root}dir/n/b.txt`]);
-    expect(await keys(`${root}.trash/`)).toEqual([]);
+    expect(await keys(`${root}.coffer-trash/`)).toEqual([]);
   });
 });
 
@@ -99,10 +100,10 @@ describe("AC-70.2 and AC-70.3 restore", () => {
     await trashIt(root, `${root}a.txt`, batch);
     await trashIt(root, `${root}d/`, batch);
     const moves = await planFor(root, (all) => all);
-    expect(moves).toEqual([{ source: `${root}.trash/${batch}/`, target: root }]);
+    expect(moves).toEqual([{ source: `${root}.coffer-trash/${batch}/`, target: root }]);
     for (const move of moves) await run("restore", move.source, move.target);
     expect(await live(root)).toEqual([`${root}a.txt`, `${root}d/b.txt`]);
-    expect(await keys(`${root}.trash/`)).toEqual([]);
+    expect(await keys(`${root}.coffer-trash/`)).toEqual([]);
   });
 
   it("a partial selection restores only those objects, one move each", async () => {
@@ -112,10 +113,10 @@ describe("AC-70.2 and AC-70.3 restore", () => {
     await trashIt(root, `${root}a.txt`, batch);
     await trashIt(root, `${root}b.txt`, batch);
     const moves = await planFor(root, (all) => all.filter((item) => item.name === "a.txt"));
-    expect(moves).toEqual([{ source: `${root}.trash/${batch}/a.txt`, target: `${root}a.txt` }]);
+    expect(moves).toEqual([{ source: `${root}.coffer-trash/${batch}/a.txt`, target: `${root}a.txt` }]);
     for (const move of moves) await run("restore", move.source, move.target);
     expect(await live(root)).toEqual([`${root}a.txt`]);
-    expect(await keys(`${root}.trash/`)).toEqual([`${root}.trash/${batch}/b.txt`]);
+    expect(await keys(`${root}.coffer-trash/`)).toEqual([`${root}.coffer-trash/${batch}/b.txt`]);
   });
 
   it("an original key that exists now asks; Keep both numbers the restored one and Replace overwrites", async () => {
@@ -145,7 +146,7 @@ describe("AC-70.2 and AC-70.3 restore", () => {
     await put(`${root}a.txt`, "new");
     const moves = await planFor(root, (all) => all, () => Promise.resolve({ choice: "skip", applyToAll: false }));
     expect(moves).toEqual([]);
-    expect((await keys(`${root}.trash/`)).length).toBe(1);
+    expect((await keys(`${root}.coffer-trash/`)).length).toBe(1);
   });
 });
 
@@ -183,11 +184,33 @@ describe("AC-71.3 delete forever", () => {
 
   it("Empty trash lists and deletes everything under the prefix, page by page", async () => {
     const root = unique("d2");
-    await putMany(client, bucket, Array.from({ length: 1500 }, (_, n) => `${root}.trash/20261122T090503Z-aaaaaa/f-${n.toString().padStart(4, "0")}.txt`), 48);
-    const result = await deleteUnder(client, `${root}.trash/`, { bucket });
+    await putMany(client, bucket, Array.from({ length: 1500 }, (_, n) => `${root}.coffer-trash/20261122T090503Z-aaaaaa/f-${n.toString().padStart(4, "0")}.txt`), 48);
+    const result = await deleteUnder(client, `${root}.coffer-trash/`, { bucket });
     expect(result).toEqual({ deleted: 1500, failed: [] });
     expect(await live(root)).toEqual([]);
   }, 120_000);
+
+  it("C-19 Empty trash leaves a foreign object under the prefix alone, and Trash does not list it", async () => {
+    const root = unique("d4");
+    const batch = "20261122T090503Z-bbbbbb";
+    const foreign = [`${root}.coffer-trash/loose.txt`, `${root}.coffer-trash/holiday/a.txt`, `${root}.coffer-trash/${batch.toUpperCase()}/b.txt`];
+    await putMany(client, bucket, [...foreign, `${root}.coffer-trash/${batch}/ours.txt`]);
+    expect((await listed(root)).map((item) => item.path)).toEqual(["ours.txt"]);
+    const result = await deleteUnder(client, `${root}.coffer-trash/`, { bucket, owns: (key) => parseTrashKey(root, key) !== null });
+    expect(result).toEqual({ deleted: 1, failed: [] });
+    expect(await keys(`${root}.coffer-trash/`)).toEqual([...foreign].sort());
+  });
+
+  it("D-10 a user's own .trash/ folder is untouched by Trash and by Empty trash", async () => {
+    const root = unique("d5");
+    await putMany(client, bucket, [`${root}.trash/mine.txt`, `${root}a.txt`]);
+    await trashIt(root, `${root}a.txt`);
+    expect((await listed(root)).map((item) => item.path)).toEqual(["a.txt"]);
+    await deleteUnder(client, `${root}.coffer-trash/`, { bucket, owns: (key) => parseTrashKey(root, key) !== null });
+    expect(await live(root)).toEqual([`${root}.trash/mine.txt`]);
+    const page = await listPage(client, { bucket, prefix: root, root });
+    expect(page.folders.map((folder) => folder.name)).toEqual([".trash"]);
+  });
 
   it("a provider that rejects DeleteObjects gets one DeleteObject per key", async () => {
     const root = unique("d3");

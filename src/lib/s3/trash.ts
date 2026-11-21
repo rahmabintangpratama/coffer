@@ -19,7 +19,7 @@ export function batchTime(batch: string): Date | null {
   return Number.isNaN(time.getTime()) ? null : time;
 }
 
-/** The batch prefix of one trash operation: `{root}.trash/{batch}/`. */
+/** The batch prefix of one trash operation: `{root}.coffer-trash/{batch}/`. */
 export const batchPrefixOf = (root: string, batch: string): string => `${trashPrefixOf(root)}${batch}/`;
 
 /** Where an item goes in the trash: the batch prefix plus its key relative to the connection root. Folders keep their trailing slash. */
@@ -31,20 +31,25 @@ export interface TrashedKey {
   /** The key in the trash. */
   key: string;
   batch: string;
-  /** When it was trashed; null for an object in the trash that Coffer did not put there. */
-  deletedAt: Date | null;
+  /** When it was trashed, read from the batch id. */
+  deletedAt: Date;
   /** The key it had, with the connection root: where Restore puts it. */
   original: string;
 }
 
-/** Read a key under the trash prefix: its batch, the deletion time and the original key. Null for a key outside the trash. */
+/**
+ * Read a key under the trash prefix: its batch, the deletion time and the original key. Null for a key outside the
+ * trash and for anything under the prefix that is not in our batch format `{root}.coffer-trash/{batch}/...` (C-19):
+ * Coffer never lists, restores or deletes what it did not put there.
+ */
 export function parseTrashKey(root: string, key: string): TrashedKey | null {
   const prefix = trashPrefixOf(root);
   if (!key.startsWith(prefix)) return null;
   const rest = key.slice(prefix.length);
   const slash = rest.indexOf("/");
-  // An object directly under .trash/ has no batch; it is shown and can be deleted, and restoring it is refused.
-  if (slash < 0) return { key, batch: "", deletedAt: null, original: "" };
+  if (slash < 0) return null;
   const batch = rest.slice(0, slash);
-  return { key, batch, deletedAt: batchTime(batch), original: `${root}${rest.slice(slash + 1)}` };
+  const deletedAt = batchTime(batch);
+  if (deletedAt === null) return null;
+  return { key, batch, deletedAt, original: `${root}${rest.slice(slash + 1)}` };
 }

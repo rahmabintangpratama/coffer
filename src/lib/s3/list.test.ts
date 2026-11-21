@@ -13,7 +13,7 @@ describe("listPage (technical-spec 6.2, 6.3)", () => {
     const client = fakeClient((input) => {
       inputs.push(input);
       return {
-        CommonPrefixes: [{ Prefix: "dir+one/" }, { Prefix: ".trash/" }],
+        CommonPrefixes: [{ Prefix: "dir+one/" }, { Prefix: ".coffer-trash/" }],
         Contents: [
           { Key: "x/", Size: 0 },
           { Key: "x/a+b%23.png", Size: 12, LastModified: new Date("2026-01-02T03:04:05Z"), ETag: '"abc"' },
@@ -34,7 +34,7 @@ describe("listPage (technical-spec 6.2, 6.3)", () => {
   });
 
   it("hides the trash prefix under a connection root", async () => {
-    const client = fakeClient(() => ({ CommonPrefixes: [{ Prefix: "team/.trash/" }, { Prefix: "team/docs/" }] }));
+    const client = fakeClient(() => ({ CommonPrefixes: [{ Prefix: "team/.coffer-trash/" }, { Prefix: "team/docs/" }] }));
     const page = await listPage(client, { bucket: "b", prefix: "team/", root: "team/" });
     expect(page.folders.map((folder) => folder.name)).toEqual(["docs"]);
   });

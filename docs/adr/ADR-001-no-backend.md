@@ -10,7 +10,7 @@ Coffer manages files in the user's own S3-compatible bucket. A server in the mid
 
 ## Decision
 
-Coffer is a static site on Cloudflare Pages. The browser signs requests with keys the person enters and talks directly to the provider. There are no Functions, no database and no accounts. All state lives in the browser (IndexedDB, localStorage, memory) or in the bucket (including the `.trash/` prefix).
+Coffer is a static site on Cloudflare Pages. The browser signs requests with keys the person enters and talks directly to the provider. There are no Functions, no database and no accounts. All state lives in the browser (IndexedDB, localStorage, memory) or in the bucket (including the `.coffer-trash/` prefix).
 
 ## Consequences
 

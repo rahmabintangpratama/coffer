@@ -43,7 +43,7 @@ describe("CopyBoundary", () => {
     const { CopyBoundary, Content } = await setup();
     const { loadCopyGroups, t } = await import("@/lib/i18n");
     await loadCopyGroups("pv");
-    const Other = () => <p>{t("trash.note", { prefix: ".trash/" })}</p>;
+    const Other = () => <p>{t("trash.note", { prefix: ".coffer-trash/" })}</p>;
     const { rerender } = render(
       <CopyBoundary groups={["pv"]} fallback={<p>loading</p>} errorFallback={<p>failed</p>}>
         <Content />
@@ -56,6 +56,6 @@ describe("CopyBoundary", () => {
       </CopyBoundary>,
     );
     expect(screen.getByText("loading")).toBeInTheDocument();
-    expect(await screen.findByText(/Trash is the \.trash\/ folder/)).toBeInTheDocument();
+    expect(await screen.findByText(/Trash is the \.coffer-trash\/ folder/)).toBeInTheDocument();
   });
 });

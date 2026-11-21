@@ -41,6 +41,7 @@ describe("listing (FR-20, FR-21)", () => {
       longKey,
       "root.txt",
       ".trash/old/x.txt",
+      ".coffer-trash/20261122T090503Z-aaaaaa/y.txt",
     ]);
   }, 120_000);
 
@@ -75,9 +76,11 @@ describe("listing (FR-20, FR-21)", () => {
     expect(page?.folders).toEqual([]);
   });
 
-  it("lists the root with its folders and hides the trash prefix", async () => {
+  it("D-10 lists the root with its folders, hides .coffer-trash/ and shows a user's own .trash/ folder", async () => {
     const [page] = await all("");
-    expect(page?.folders.map((folder) => folder.name).sort()).toEqual(["awk", "big", "long"]);
+    expect(page?.folders.map((folder) => folder.name).sort()).toEqual([".trash", "awk", "big", "long"]);
+    const [own] = await all(".trash/");
+    expect(own?.folders.map((folder) => folder.name)).toEqual(["old"]);
     expect(page?.files.map((file) => file.name)).toEqual(["root.txt"]);
   });
 });

@@ -9,7 +9,7 @@ export interface ListPageOptions {
   bucket: string;
   /** The folder to list: "" or a prefix ending in "/". */
   prefix: string;
-  /** The connection root ("" or ending in "/"), whose `.trash/` is hidden. */
+  /** The connection root ("" or ending in "/"), whose `.coffer-trash/` is hidden. */
   root: string;
   token?: string;
   signal?: AbortSignal;

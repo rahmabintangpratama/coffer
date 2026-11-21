@@ -15,7 +15,7 @@ export interface DeleteHooks extends RunHooks {
  * journaled: a delete is safe to repeat and what is left stays in the Trash view, so there is nothing to
  * resume or undo (technical-spec 8).
  */
-export function startDelete(input: { connection: ConnectionSummary; total: number; keys?: readonly string[]; prefix?: string }, hooks: DeleteHooks): void {
+export function startDelete(input: { connection: ConnectionSummary; total: number; keys?: readonly string[]; prefix?: string; owns?: (key: string) => boolean }, hooks: DeleteHooks): void {
   void enqueue(async () => {
     const s3 = await import("@/lib/s3");
     const client = s3.clientFor(input.connection);
@@ -27,7 +27,7 @@ export function startDelete(input: { connection: ConnectionSummary; total: numbe
     try {
       const options = { bucket, onProgress: show };
       const result =
-        input.keys !== undefined ? await s3.deleteKeys(client, input.keys, options) : await s3.deleteUnder(client, input.prefix ?? "", options);
+        input.keys !== undefined ? await s3.deleteKeys(client, input.keys, options) : await s3.deleteUnder(client, input.prefix ?? "", { ...options, owns: input.owns });
       hooks.onChanged();
       if (result.deleted > 0) hooks.notify(t("toast.deleted", { count: result.deleted }));
       if (result.failed.length > 0) {

@@ -33,8 +33,8 @@ describe("names and kinds", () => {
   });
 
   it("builds the trash prefix under the root", () => {
-    expect(trashPrefixOf("")).toBe(".trash/");
-    expect(trashPrefixOf("team/")).toBe("team/.trash/");
+    expect(trashPrefixOf("")).toBe(".coffer-trash/");
+    expect(trashPrefixOf("team/")).toBe("team/.coffer-trash/");
   });
 
   it("knows kinds by extension, case-insensitively, and leaves dotfiles and bare names unknown", () => {

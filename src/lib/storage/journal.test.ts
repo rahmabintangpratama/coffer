@@ -68,7 +68,7 @@ describe("AC-32.5 Undo", () => {
   });
 
   it("a trash entry is reversed as a restore", () => {
-    const trash = finish(startEntry({ id: "t", kind: "trash", connectionId: "c", endpoint: "http://x", bucket: "b", source: "k", target: ".trash/x/k" }, t0));
+    const trash = finish(startEntry({ id: "t", kind: "trash", connectionId: "c", endpoint: "http://x", bucket: "b", source: "k", target: ".coffer-trash/x/k" }, t0));
     expect(reversed(trash, "r")?.kind).toBe("restore");
   });
 

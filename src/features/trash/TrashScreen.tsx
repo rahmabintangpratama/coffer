@@ -11,6 +11,7 @@ import { useConflictPrompt } from "@/features/transfers";
 import { formatBytes } from "@/lib/format";
 import { t } from "@/lib/i18n";
 import { fileKindOf } from "@/lib/s3/keys";
+import { parseTrashKey } from "@/lib/s3/trash";
 import type { ConnectionSummary } from "@/lib/types";
 import { DeleteForeverDialog, type DeleteRequest } from "./DeleteForeverDialog";
 import { canRestore, toTrashItems, type TrashItem } from "./model";
@@ -47,7 +48,7 @@ function TrashRow({ item, selected, onToggle, index, count, offset }: { item: Tr
         </p>
       </div>
       <div className="shrink-0 text-right text-sm text-fg-muted">
-        <p>{item.deletedAt ? t("trash.deleted", { when: when.format(item.deletedAt) }) : t("trash.deletedUnknown")}</p>
+        <p>{t("trash.deleted", { when: when.format(item.deletedAt) })}</p>
         {!item.folder && <p>{formatBytes(item.size)}</p>}
       </div>
     </li>
@@ -55,7 +56,7 @@ function TrashRow({ item, selected, onToggle, index, count, offset }: { item: Tr
 }
 
 /**
- * Trash (FR-70, FR-71): everything under the `.trash/` prefix, flattened across batches, with its original
+ * Trash (FR-70, FR-71): everything under the `.coffer-trash/` prefix, flattened across batches, with its original
  * path and deletion time. Restore goes through the conflict dialog; Delete forever and Empty trash always ask,
  * and ask for the count to be typed above 50 items and for Empty trash.
  */
@@ -68,7 +69,7 @@ export function TrashScreen({ connection, writable, notify }: TrashScreenProps) 
     queryFn: async ({ signal }) => {
       const { clientFor, listUnder } = await import("@/lib/s3");
       const objects: { key: string; size: number }[] = [];
-      for await (const page of listUnder(clientFor(connection), { bucket, prefix: `${root}.trash/`, signal })) objects.push(...page);
+      for await (const page of listUnder(clientFor(connection), { bucket, prefix: `${root}.coffer-trash/`, signal })) objects.push(...page);
       return toTrashItems(root, objects);
     },
   });
@@ -141,7 +142,7 @@ export function TrashScreen({ connection, writable, notify }: TrashScreenProps) 
           {t("trash.empty")}
         </Button>
       </div>
-      <p className="mt-2 text-fg-muted">{t("trash.note", { prefix: ".trash/" })}</p>
+      <p className="mt-2 text-fg-muted">{t("trash.note", { prefix: ".coffer-trash/" })}</p>
       {ro && <p className="mt-1 text-sm text-fg-muted">{ro}</p>}
 
       {failures.length > 0 && (
@@ -214,7 +215,7 @@ export function TrashScreen({ connection, writable, notify }: TrashScreenProps) 
         onClose={() => { setRequest(null); }}
         onConfirm={(confirmed) => {
           setRequest(null);
-          if (confirmed.kind === "empty") startDelete({ connection, total: confirmed.count, prefix: `${root}.trash/` }, hooks);
+          if (confirmed.kind === "empty") startDelete({ connection, total: confirmed.count, prefix: `${root}.coffer-trash/`, owns: (key) => parseTrashKey(root, key) !== null }, hooks);
           else startDelete({ connection, total: confirmed.items.length, keys: confirmed.items.map((item) => item.key) }, hooks);
           setSelection(new Set());
         }}

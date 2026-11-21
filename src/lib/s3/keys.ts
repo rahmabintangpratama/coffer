@@ -29,7 +29,7 @@ export function nameOf(keyOrPrefix: string): string {
 export const isHiddenName = (name: string): boolean => name.startsWith(".");
 
 /** The trash prefix for a connection root ("" or ending in "/"). Always hidden from Files (ADR-004). */
-export const trashPrefixOf = (root: string): string => `${root}.trash/`;
+export const trashPrefixOf = (root: string): string => `${root}.coffer-trash/`;
 
 const KINDS: Record<Exclude<FileKind, "unknown">, readonly string[]> = {
   image: ["png", "jpg", "jpeg", "gif", "webp", "avif", "bmp", "ico", "heic", "heif", "tif", "tiff"],

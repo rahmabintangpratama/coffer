@@ -16,7 +16,7 @@ Vault, operation journal, upload state and IndexedDB. No React imports; must not
 ## Journal and uploads
 
 - Write the journal entry **before** the first request. Order per object: copy, verify, delete. Persist progress as in technical-spec section 8.
-- A trash entry stores its batch prefix (`.trash/{UTC timestamp}-{6 random chars}/`) when created; a resume reuses it. Never regenerate it.
+- A trash entry stores its batch prefix (`.coffer-trash/{UTC timestamp}-{6 random chars}/`) when created; a resume reuses it. Never regenerate it.
 - Resume re-lists from `cursor`; never trust in-memory state.
 - Upload state stores `uploadId`, `partSize`, `partsDone`; never file bytes.
 - Implement the `UploadStateStore` interface that `lib/s3` defines by shape; never import `lib/s3`.

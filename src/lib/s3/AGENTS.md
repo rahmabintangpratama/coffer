@@ -31,7 +31,7 @@ The only module that imports the AWS SDK. No UI imports (no React, no `component
 - Delete: `DeleteObjects` in batches of 1,000 with a single-delete fallback.
 - Upload: own orchestrator in `upload.ts` over SDK commands; do not use `lib-storage` ([ADR-009](../../../docs/adr/ADR-009-own-multipart-orchestrator.md)). Persist the upload id through the injected `UploadStateStore` before the first part; abort on error and cancel; export `abortUpload` for the app's abort-on-load.
 - Never delete a source before the copy is verified (the journal in `lib/storage` calls these in order).
-- Trash key: `{root}.trash/{batch}/{original key}` with `{root}` the connection's start folder; the batch is created once per operation. Restore strips it. Never overwrite trashed items.
+- Trash key: `{root}.coffer-trash/{batch}/{original key}` with `{root}` the connection's start folder; the batch is created once per operation. Restore strips it. Never overwrite trashed items.
 - Entry points refuse to run while the vault is locked unless the caller holds a credential lease.
 - The connection-test file goes under `{root}` (start folder) when set, else the bucket root.
 

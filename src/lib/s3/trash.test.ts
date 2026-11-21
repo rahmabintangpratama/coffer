@@ -25,10 +25,10 @@ describe("trash keys", () => {
   const batch = "20261122T090503Z-01az9k";
 
   it("puts the key under the batch prefix, relative to the connection root", () => {
-    expect(batchPrefixOf("", batch)).toBe(`.trash/${batch}/`);
-    expect(trashKeyOf("", batch, "docs/a.txt")).toBe(`.trash/${batch}/docs/a.txt`);
-    expect(trashKeyOf("team/", batch, "team/docs/a.txt")).toBe(`team/.trash/${batch}/docs/a.txt`);
-    expect(trashKeyOf("team/", batch, "team/docs/")).toBe(`team/.trash/${batch}/docs/`);
+    expect(batchPrefixOf("", batch)).toBe(`.coffer-trash/${batch}/`);
+    expect(trashKeyOf("", batch, "docs/a.txt")).toBe(`.coffer-trash/${batch}/docs/a.txt`);
+    expect(trashKeyOf("team/", batch, "team/docs/a.txt")).toBe(`team/.coffer-trash/${batch}/docs/a.txt`);
+    expect(trashKeyOf("team/", batch, "team/docs/")).toBe(`team/.coffer-trash/${batch}/docs/`);
   });
 
   it("parses a trash key into batch, time and original key, and round-trips", () => {
@@ -36,18 +36,21 @@ describe("trash keys", () => {
       const key = `${root}docs/a b#.txt`;
       const parsed = parseTrashKey(root, trashKeyOf(root, batch, key));
       expect(parsed).toMatchObject({ batch, original: key });
-      expect(parsed?.deletedAt?.toISOString()).toBe("2026-11-22T09:05:03.000Z");
+      expect(parsed?.deletedAt.toISOString()).toBe("2026-11-22T09:05:03.000Z");
     }
   });
 
   it("keeps a folder placeholder's trailing slash", () => {
-    expect(parseTrashKey("", `.trash/${batch}/docs/`)?.original).toBe("docs/");
+    expect(parseTrashKey("", `.coffer-trash/${batch}/docs/`)?.original).toBe("docs/");
   });
 
-  it("treats a key outside the trash as none, and a foreign object in it as one with no time", () => {
+  it("treats a key outside the trash, or under it but not in our batch format, as none (C-19)", () => {
     expect(parseTrashKey("", "docs/a.txt")).toBeNull();
-    expect(parseTrashKey("team/", ".trash/x/a.txt")).toBeNull();
-    expect(parseTrashKey("", ".trash/holiday/a.txt")).toMatchObject({ batch: "holiday", deletedAt: null, original: "a.txt" });
-    expect(parseTrashKey("", ".trash/loose.txt")).toMatchObject({ batch: "", original: "" });
+    expect(parseTrashKey("", ".trash/" + batch + "/a.txt")).toBeNull();
+    expect(parseTrashKey("team/", ".coffer-trash/x/a.txt")).toBeNull();
+    expect(parseTrashKey("", ".coffer-trash/holiday/a.txt")).toBeNull();
+    expect(parseTrashKey("", ".coffer-trash/loose.txt")).toBeNull();
+    expect(parseTrashKey("", `.coffer-trash/${batch}`)).toBeNull();
+    expect(parseTrashKey("", `.coffer-trash/${batch.toUpperCase()}/a.txt`)).toBeNull();
   });
 });

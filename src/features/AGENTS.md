@@ -12,7 +12,7 @@ One folder per feature area. Layer rules are in [../AGENTS.md](../AGENTS.md).
 - Cover **all** states from the spec (empty, loading, partial, error, success). A missing state is a bug.
 - Match the board IDs listed under **Screens** at 375, 768 and 1440; compare against `design/screens.md` and `design/components.md`.
 - Layout: `index.ts` exports the public surface; internals are private. Other features import only from `index.ts`.
-- Name tests after the AC they prove (`AC-36.1 moves to .trash without confirmation`).
+- Name tests after the AC they prove (`AC-36.1 moves to .coffer-trash without confirmation`).
 - Read-only connections: gate write actions with the shared capability helper, disabled with the reason `ro.reason`, never silently missing.
 - Mutations that touch many objects go through the journal in `lib/storage` (FR-45).
 - Render bucket data only through text nodes or the safe renderers in `preview/`.

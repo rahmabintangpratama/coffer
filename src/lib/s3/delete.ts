@@ -78,9 +78,10 @@ export async function deleteKeys(client: S3Client, keys: readonly string[], opti
 /**
  * Every key under a prefix, a page at a time: list a page, delete it, and list the next page after its
  * last key (Empty trash, a whole batch). The cursor moves past keys that failed, so they are listed once
- * as failures and do not stop the rest.
+ * as failures and do not stop the rest. `owns` limits what is deleted: a key it refuses is left alone (and
+ * not counted), so Empty trash never touches an object Coffer did not put under the trash prefix (C-19).
  */
-export async function deleteUnder(client: S3Client, prefix: string, options: DeleteOptions): Promise<DeleteResult> {
+export async function deleteUnder(client: S3Client, prefix: string, options: DeleteOptions & { owns?: ((key: string) => boolean) | undefined }): Promise<DeleteResult> {
   const failed: DeleteFailure[] = [];
   let deleted = 0;
   let done = 0;
@@ -93,10 +94,10 @@ export async function deleteUnder(client: S3Client, prefix: string, options: Del
     }
     const last = page[page.length - 1];
     if (last === undefined) break;
-    const result = await deleteKeys(client, page, { bucket: options.bucket, signal: options.signal });
+    const result = await deleteKeys(client, options.owns ? page.filter(options.owns) : page, { bucket: options.bucket, signal: options.signal });
     deleted += result.deleted;
     failed.push(...result.failed);
-    done += page.length;
+    done += result.deleted + result.failed.length;
     options.onProgress?.(done);
     cursor = last;
   }

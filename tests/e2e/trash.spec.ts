@@ -33,7 +33,7 @@ async function keysIn(bucket: string, prefix = ""): Promise<string[]> {
   } while (token !== undefined);
   return all.sort();
 }
-const liveKeys = async (bucket: string) => (await keysIn(bucket)).filter((key) => !key.startsWith(".trash/"));
+const liveKeys = async (bucket: string) => (await keysIn(bucket)).filter((key) => !key.startsWith(".coffer-trash/"));
 const put = (bucket: string, key: string, body = "x") => s3.send(new PutObjectCommand({ Bucket: bucket, Key: key, Body: body }));
 
 async function trashFromMenu(page: Page, layout: Layout, name: string): Promise<void> {
@@ -56,7 +56,7 @@ test("AC-36.1, AC-36.3, AC-70.1, AC-70.4 and AC-71.2 exit check: trash, undo, tr
   await toast(page, "Moved 1 item to trash").first().getByRole("button", { name: "Undo" }).click();
   await expect(fileRow(page, "a.txt")).toBeVisible({ timeout: 15_000 });
   expect(await liveKeys(bucket)).toEqual(["a.txt"]);
-  expect(await keysIn(bucket, ".trash/")).toEqual([]);
+  expect(await keysIn(bucket, ".coffer-trash/")).toEqual([]);
 
   // Trash it again, make the same key again behind the page, and trash that too.
   await trashFromMenu(page, layout, "a.txt");
@@ -66,7 +66,7 @@ test("AC-36.1, AC-36.3, AC-70.1, AC-70.4 and AC-71.2 exit check: trash, undo, tr
   await expect(fileRow(page, "a.txt")).toBeVisible({ timeout: 15_000 });
   await trashFromMenu(page, layout, "a.txt");
   await expect(fileRow(page, "a.txt")).toHaveCount(0, { timeout: 15_000 });
-  expect(await keysIn(bucket, ".trash/")).toHaveLength(2);
+  expect(await keysIn(bucket, ".coffer-trash/")).toHaveLength(2);
 
   // Two entries in Trash, each with its original path and deletion time.
   await goToRoute(page, "/trash");
@@ -92,13 +92,13 @@ test("AC-36.1, AC-36.3, AC-70.1, AC-70.4 and AC-71.2 exit check: trash, undo, tr
   await dialog.getByLabel(/Type 1 to confirm/).fill("1");
   await dialog.getByRole("button", { name: "Delete forever" }).click();
   await expect(page.getByRole("heading", { name: "Trash is empty" })).toBeVisible({ timeout: 15_000 });
-  expect(await keysIn(bucket, ".trash/")).toEqual([]);
+  expect(await keysIn(bucket, ".coffer-trash/")).toEqual([]);
   expect(await liveKeys(bucket)).toEqual(["a.txt"]);
 });
 
 test("AC-70.3 restoring onto a name that exists asks, and Keep both numbers the restored one", async ({ page }) => {
   const bucket = await freshBucket();
-  await put(bucket, `.trash/${BATCH}/a.txt`, "old");
+  await put(bucket, `.coffer-trash/${BATCH}/a.txt`, "old");
   await put(bucket, "a.txt", "new");
   await enterApp(page, "/trash", { bucket });
   await expect(trashRows(page)).toHaveCount(1, { timeout: 15_000 });
@@ -114,7 +114,7 @@ test("AC-70.3 restoring onto a name that exists asks, and Keep both numbers the 
 
 test("AC-71.2 and AC-71.3 deleting more than 50 items asks for the count, then deletes them all with progress", async ({ page }) => {
   const bucket = await freshBucket();
-  const names = Array.from({ length: 55 }, (_, n) => `.trash/${BATCH}/f-${n.toString().padStart(2, "0")}.txt`);
+  const names = Array.from({ length: 55 }, (_, n) => `.coffer-trash/${BATCH}/f-${n.toString().padStart(2, "0")}.txt`);
   await putMany(s3, bucket, names);
   await enterApp(page, "/trash", { bucket });
   await expect(trashRows(page).first()).toBeVisible({ timeout: 15_000 });
@@ -131,13 +131,13 @@ test("AC-71.2 and AC-71.3 deleting more than 50 items asks for the count, then d
   await confirm.click();
   await expect(page.getByRole("heading", { name: "Trash is empty" })).toBeVisible({ timeout: 20_000 });
   await expect(toast(page, "Deleted 55 items forever")).toBeVisible();
-  expect(await keysIn(bucket, ".trash/")).toEqual([]);
+  expect(await keysIn(bucket, ".coffer-trash/")).toEqual([]);
 });
 
 test("the Trash screen and its delete dialog pass axe", async ({ page }) => {
   const bucket = await freshBucket();
-  await put(bucket, `.trash/${BATCH}/a.txt`);
-  await put(bucket, `.trash/${BATCH}/docs/b.md`);
+  await put(bucket, `.coffer-trash/${BATCH}/a.txt`);
+  await put(bucket, `.coffer-trash/${BATCH}/docs/b.md`);
   await enterApp(page, "/trash", { bucket });
   await expect(trashRows(page)).toHaveCount(2, { timeout: 15_000 });
   const serious = (violations: Awaited<ReturnType<typeof axeViolations>>) => violations.filter((v) => v.impact === "serious" || v.impact === "critical");
@@ -159,8 +159,8 @@ test("AC-36.5 a folder in the trash is not offered Move to trash again, and a tr
   await expect(fileRow(page, "docs")).toHaveCount(0, { timeout: 15_000 });
   expect(await liveKeys(bucket)).toEqual([]);
   // Inside the trash prefix Files offers no Move to trash.
-  await goToRoute(page, "/files/.trash/");
-  const inner = fileRow(page, ".trash").or(page.locator('[data-component="FolderTile"], [data-component="FileRow"]').first());
+  await goToRoute(page, "/files/.coffer-trash/");
+  const inner = fileRow(page, ".coffer-trash").or(page.locator('[data-component="FolderTile"], [data-component="FileRow"]').first());
   await expect(inner).toBeVisible({ timeout: 15_000 });
   await page.getByRole("button", { name: /More actions for/ }).first().click();
   await expect(page.getByRole("menuitem", { name: /^Move to trash/ }).or(page.getByRole("dialog").getByRole("button", { name: /^Move to trash/ }))).toHaveCount(0);

@@ -211,7 +211,7 @@ Total: 35 days plus buffer. Every MVP FR in the product spec appears in at least
 
 **Requirements:** FR-36, FR-70, FR-71.
 
-**Deliverables:** trash batch prefixes (`{root}.trash/{timestamp}-{6 chars}/`, one per operation, stored in the journal), Move to trash with the 8-second Undo toast, the `confirmTrash` hook, the Trash view flattening batches with original path and deletion time, selection with Restore and Delete forever, the conflict dialog on restore, typed-count confirmations (over 50 items and Empty trash), `DeleteObjects` batching with a single-delete fallback.
+**Deliverables:** trash batch prefixes (`{root}.coffer-trash/{timestamp}-{6 chars}/`, one per operation, stored in the journal), Move to trash with the 8-second Undo toast, the `confirmTrash` hook, the Trash view flattening batches with original path and deletion time, selection with Restore and Delete forever, the conflict dialog on restore, typed-count confirmations (over 50 items and Empty trash), `DeleteObjects` batching with a single-delete fallback.
 
 **Tests:** unit for batch id format and parsing; integration for trashing the same key twice (two batches, nothing overwritten), restore with and without a conflict, 2,500-object delete in batches, `DeleteObjects` rejected so the fallback runs; e2e for the undo toast and typed-count dialogs; axe.
 

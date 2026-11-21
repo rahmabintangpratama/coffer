@@ -133,7 +133,7 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
   const { trash, dialog: trashDialog } = useTrashAction({ connection, root, hooks: runHooks, confirm: settings.confirmTrash });
   const readOnly = !writable;
   // Nothing in the trash is trashed again (AC-36.5): inside it Files offers no Move to trash.
-  const inTrash = (root + relative).startsWith(`${root}.trash/`);
+  const inTrash = (root + relative).startsWith(`${root}.coffer-trash/`);
 
   const handlers: ActionHandlers = useMemo(
     () => ({

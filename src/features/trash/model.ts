@@ -5,8 +5,8 @@ export interface TrashItem {
   /** The key in the trash: what Restore and Delete forever act on. */
   key: string;
   batch: string;
-  deletedAt: Date | null;
-  /** The key it had, with the connection root; empty for an object Coffer did not put there (it cannot be restored). */
+  deletedAt: Date;
+  /** The key it had, with the connection root; empty only for a batch folder placeholder at the root, which cannot be restored. */
   original: string;
   /** The original key without the connection root, shown as the original path. */
   path: string;
@@ -21,18 +21,18 @@ const nameOfPath = (path: string): string => {
   return trimmed.slice(trimmed.lastIndexOf("/") + 1) || trimmed;
 };
 
-/** Read the objects under `{root}.trash/` into items, newest deletion first, then by path (AC-70.1). */
+/** Read the objects under `{root}.coffer-trash/` in our batch format into items (anything else is skipped, C-19), newest deletion first, then by path (AC-70.1). */
 export function toTrashItems(root: string, objects: readonly { key: string; size: number }[]): TrashItem[] {
   const items: TrashItem[] = [];
   for (const object of objects) {
     const parsed = parseTrashKey(root, object.key);
     if (!parsed) continue;
     const path = parsed.original.slice(root.length);
-    // A batch folder with nothing else in it, or a key straight under .trash/, still shows by its trash key.
-    const shown = path === "" ? object.key.slice(`${root}.trash/`.length) : path;
+    // A batch folder with nothing else in it still shows by its trash key.
+    const shown = path === "" ? object.key.slice(`${root}.coffer-trash/`.length) : path;
     items.push({ key: object.key, batch: parsed.batch, deletedAt: parsed.deletedAt, original: parsed.original, path: shown, name: nameOfPath(shown), size: object.size, folder: object.key.endsWith("/") });
   }
-  return items.sort((a, b) => (b.deletedAt?.getTime() ?? 0) - (a.deletedAt?.getTime() ?? 0) || a.path.localeCompare(b.path));
+  return items.sort((a, b) => b.deletedAt.getTime() - a.deletedAt.getTime() || a.path.localeCompare(b.path));
 }
 
 /** Objects per batch, to tell when a selection is a whole batch. */

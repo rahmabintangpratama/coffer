@@ -263,11 +263,11 @@ One client per connection, destroyed on lock or connection removal. No logging m
 | Rename / Make a copy / Move (object) | `CopyObject` (`CopySource` URL-encoded, `MetadataDirective: "COPY"`) → `HeadObject` on target → `DeleteObject` source (not for copy) | Verify rules in section 8. |
 | Copy above 5 GB | `CreateMultipartUpload` on target → `UploadPartCopy` per range (`CopySourceRange: bytes=a-b`, parts of 256 MiB to 1 GiB) → `CompleteMultipartUpload` | Max 10,000 parts; the target keeps metadata by sending the source's `ContentType`, `CacheControl`, `ContentDisposition`, `ContentEncoding`, `ContentLanguage`, `Metadata` from a `HeadObject`. |
 | Folder rename / move / trash / restore | `ListObjectsV2` (no delimiter) under the prefix, then per object as above, journaled | Folder placeholder is moved too. |
-| Move to trash | move `key` → `{root}.trash/{batch}/{key}` where `batch` = `YYYYMMDDTHHMMSSZ-xxxxxx` (UTC, six random base-36 characters), generated once per operation | [ADR-004](adr/ADR-004-trash-as-prefix.md). |
-| Restore | strip `{root}.trash/{batch}/` and move the object back to `{root}{key}` | Conflict dialog if the original key now exists. One prefix entry when a whole batch comes back with no clash; otherwise one entry per object (D-44). |
+| Move to trash | move `key` → `{root}.coffer-trash/{batch}/{key}` where `batch` = `YYYYMMDDTHHMMSSZ-xxxxxx` (UTC, six random base-36 characters), generated once per operation | [ADR-004](adr/ADR-004-trash-as-prefix.md). |
+| Restore | strip `{root}.coffer-trash/{batch}/` and move the object back to `{root}{key}` | Conflict dialog if the original key now exists. One prefix entry when a whole batch comes back with no clash; otherwise one entry per object (D-44). |
 | Delete forever | `DeleteObjects` (`Quiet: true`, up to 1,000 keys per request) | Fallback to single `DeleteObject` calls if the provider rejects `DeleteObjects` (`MissingContentMD5`, `NotImplemented`); see compatibility matrix. |
-| Trash view | `ListObjectsV2` `Prefix: "{root}.trash/"`, no delimiter, flattened across batches | Deletion time and original path come from the batch prefix. |
-| Empty trash | `ListObjectsV2` `Prefix: "{root}.trash/"` → `DeleteObjects` batches of up to 1,000, then one `DeleteObject` per key if the provider rejects the batch call | Typed count. Not journaled: a delete is safe to repeat and what is left stays in Trash (D-44). |
+| Trash view | `ListObjectsV2` `Prefix: "{root}.coffer-trash/"`, no delimiter, flattened across batches; keys not matching `{root}.coffer-trash/{batch}/...` are dropped | Deletion time and original path come from the batch prefix. |
+| Empty trash | `ListObjectsV2` `Prefix: "{root}.coffer-trash/"` → `DeleteObjects` batches of up to 1,000, then one `DeleteObject` per key if the provider rejects the batch call; only keys in the batch format are deleted, others under the prefix are left alone | Typed count. Not journaled: a delete is safe to repeat and what is left stays in Trash (D-44). |
 | Storage usage | `ListObjectsV2`, no delimiter, under the root, paged, cancellable | Sums by top-level prefix; shows requests made and an estimate of one request per 1,000 objects. |
 | Download folder zip (v1) | `ListObjectsV2` → ranged `GetObject` per file → `fflate` | Streams to disk where supported. |
 | Share link | none (local presign) | Section 10. |
@@ -278,7 +278,7 @@ One client per connection, destroyed on lock or connection removal. No logging m
 - S3 returns keys in UTF-8 binary order; the UI sorts folders first, then by the chosen key using `Intl.Collator` (numeric, case-insensitive) for names.
 - `LastModified` and `Size` sort needs all items; until loaded, the UI says so.
 - Keys are limited to 1,024 bytes; the UI rejects longer ones. Characters that XML 1.0 cannot carry are why `EncodingType: "url"` is requested; if a provider rejects that parameter (see matrix) the client retries once without it.
-- The trash prefix (`{root}.trash/`) is filtered from Files, search and Storage-by-folder, always.
+- The trash prefix (`{root}.coffer-trash/`) is filtered from Files, search and Storage-by-folder, always.
 
 ### 6.4 Error mapping
 
@@ -615,7 +615,7 @@ Design contrast numbers are computed from tokens, not observed. Before release, 
 | [ADR-001](adr/ADR-001-no-backend.md) | No backend, no database |
 | [ADR-002](adr/ADR-002-aws-sdk-v3.md) | AWS SDK v3 with `WHEN_REQUIRED` checksums |
 | [ADR-003](adr/ADR-003-container-queries.md) | Container queries for layout |
-| [ADR-004](adr/ADR-004-trash-as-prefix.md) | Trash as the `.trash/` prefix |
+| [ADR-004](adr/ADR-004-trash-as-prefix.md) | Trash as the `.coffer-trash/` prefix |
 | [ADR-005](adr/ADR-005-encrypted-local-vault.md) | Encrypted local vault (PBKDF2 to AES-GCM) |
 | [ADR-006](adr/ADR-006-danger-tonal-contrast-deviation.md) | Danger-tonal light surface contrast deviation |
 | [ADR-007](adr/ADR-007-local-data-placement.md) | Local data placement (IndexedDB versus localStorage) |

@@ -282,7 +282,6 @@
   "trash": {
     "deleted": "Deleted {when}",
     "originalPath": "Original location: {path}",
-    "deletedUnknown": "Deleted at an unknown time",
     "select": "Select {name}",
     "selectAll": "Select all",
     "toolbar": "Trash actions",
