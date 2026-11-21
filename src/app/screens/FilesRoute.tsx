@@ -1,4 +1,6 @@
 import { FilesScreen } from "@/features/files";
+// Loaded with the Files chunk, so the app bar finds its Files content ready instead of suspending (the pill must exist when "/" is pressed).
+import "@/features/files/AppBarContent";
 import type { ConnectionSummary } from "@/lib/types";
 import { useSettings } from "../settings";
 import { useToasts } from "../toast";

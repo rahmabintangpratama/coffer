@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Download } from "lucide-react";
-import { type DragEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type DragEvent, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { Banner } from "@/components/Banner";
 import { Button } from "@/components/Button";
@@ -23,15 +23,14 @@ import { NewFolderDialog } from "./NewFolderDialog";
 import { NewMenu } from "./NewMenu";
 import { filterItems, hasFilters, type Item, noFilters, pathFromPrefix, prefixFromPath, sortItems, withoutHidden } from "./model";
 import { ViewControls } from "./Toolbar";
+import { closePreview, openPreview, readHashRoute, stepPreview } from "./previewRoute";
 import { useFilesChrome } from "./chrome";
+
+// The viewer is its own chunk, loaded the first time a file is opened.
+const Preview = lazy(() => import("@/features/preview").then((module) => ({ default: module.Preview })));
 import { useListing } from "./useListing";
 import { usePullToRefresh } from "./usePullToRefresh";
 import { useSelection } from "./selection";
-
-/** The raw hash path. wouter decodes the location it hands out, which would turn `%2541` into `%41` and then `A`, so the path is read here. */
-function rawHashPath(): string {
-  return `/${window.location.hash.replace(/^#\/?/, "")}`;
-}
 
 /** Files: the folder named by the hash path, under the connection root. The folder is the key, so state resets on navigation. */
 export interface FilesScreenProps {
@@ -45,7 +44,7 @@ export interface FilesScreenProps {
 export function FilesScreen(props: FilesScreenProps) {
   useLocation(); // subscribe to hash changes
   const root = props.connection.prefix ?? "";
-  const relative = prefixFromPath(rawHashPath());
+  const relative = prefixFromPath(readHashRoute().path);
   return <Folder key={`${props.connection.id}|${relative}`} {...props} relative={relative} root={root} />;
 }
 
@@ -66,6 +65,7 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
   const [contextItem, setContextItem] = useState<Item | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [newFolderOpen, setNewFolderOpen] = useState(false);
+  const [focusRequest, setFocusRequest] = useState<{ index: number; nonce: number } | undefined>(undefined);
   const [dragging, setDragging] = useState(false);
   const queryClient = useQueryClient();
   const hasTransfers = useTransfers((state) => state.transfers.length + state.interrupted.length > 0);
@@ -86,6 +86,20 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
   }, [listing.items, settings.showHiddenFiles, settings.sort, filters]);
 
   const selected = useMemo(() => visible.filter((item) => selection.keys.has(item.key)), [visible, selection.keys]);
+  // The preview shows the files of this folder in the order of the list (FR-50); its key is in the address.
+  const previewKey = readHashRoute().preview;
+  const previewFiles = useMemo(() => visible.filter((item): item is FileItem => item.kind === "file"), [visible]);
+  const previewIndex = previewKey === null ? -1 : previewFiles.findIndex((file) => file.key === previewKey);
+  const closeViewer = useCallback(() => { closePreview(); }, []);
+  // Once the viewer has closed, the row of the file it was showing takes focus, even if the list scrolled while moving between files.
+  const viewerClosed = useCallback(
+    (previewed: number) => {
+      const key = previewFiles[previewed]?.key;
+      const index = visible.findIndex((item) => item.key === key);
+      if (index >= 0) setFocusRequest((current) => ({ index, nonce: (current?.nonce ?? 0) + 1 }));
+    },
+    [previewFiles, visible],
+  );
   const activate = useFilesChrome((state) => state.activate);
   const deactivate = useFilesChrome((state) => state.deactivate);
   const setSelection = useFilesChrome((state) => state.setSelection);
@@ -118,6 +132,7 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
         const chosen = first && items.length === 1 && state.keys.has(first.key) && state.keys.size > 1 ? visible.filter((item) => state.keys.has(item.key)) : items;
         void downloadItems(connection, chosen, notify);
       },
+      preview: (item) => { if (item.kind === "file") openPreview(item.key); },
       details: (item) => { if (item.kind === "file") setDetailsKey(item.key); },
       copyKey: (item) => {
         void navigator.clipboard.writeText(item.key).then(() => { notify(t("toast.copied")); });
@@ -196,7 +211,7 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
     onSettings({ sort: { by, dir: settings.sort.by === by && settings.sort.dir === "asc" ? "desc" : "asc" } });
   };
 
-  const viewProps = { items: visible, density: settings.density, folderLabel, handlers, onOpenFolder: openFolder, onSearchShortcut: focusSearch, onContextItem };
+  const viewProps = { items: visible, density: settings.density, folderLabel, handlers, onOpenFolder: openFolder, onSearchShortcut: focusSearch, onContextItem, focusRequest };
 
   let body;
   if (listing.isPending) {
@@ -261,6 +276,24 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
         {body}
       </div>
       {conflictDialog}
+      {previewIndex >= 0 && (
+        <Suspense fallback={null}>
+          <Preview
+            connection={connection}
+            files={previewFiles}
+            index={previewIndex}
+            onClose={closeViewer}
+            onClosed={viewerClosed}
+            onStep={(delta) => {
+              const next = previewFiles[previewIndex + delta];
+              if (next) stepPreview(next.key);
+            }}
+            onDownload={(file) => { void downloadItems(connection, [file], notify); }}
+            onDetails={(file) => { setDetailsKey(file.key); }}
+            onCopyKey={handlers.copyKey}
+          />
+        </Suspense>
+      )}
       <NewFolderDialog open={newFolderOpen} onClose={() => { setNewFolderOpen(false); }} parentPrefix={root + relative} existingNames={existingFolderNames} onCreate={createFolder} />
       {dragging && (
         <div role="status" data-component="DropOverlay" className="pointer-events-none fixed inset-0 z-(--cf-z-overlay) flex items-center justify-center bg-overlay p-6">

@@ -1,6 +1,6 @@
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import { ArrowDown, ArrowUp } from "lucide-react";
-import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useLayout } from "@/components/layout";
 import { t } from "@/lib/i18n";
 import type { Density, FolderItem } from "@/lib/types";
@@ -21,6 +21,8 @@ export interface ItemViewProps {
   onOpenFolder: (folder: FolderItem) => void;
   onSearchShortcut: () => void;
   onContextItem: (item: Item) => boolean;
+  /** Move focus to this item (the preview closed and the row it came from takes focus back). `nonce` makes the same index fire again. */
+  focusRequest?: { index: number; nonce: number } | undefined;
 }
 
 const rowHeight = (layout: string, density: Density): number =>
@@ -69,6 +71,11 @@ export function FileList(props: ItemViewProps & { sort: Sort; onSort: (by: Sort[
     },
     [virtualizer],
   );
+  const requested = props.focusRequest;
+  useEffect(() => {
+    if (requested) focusIndex(requested.index);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fire once per request, not when focusIndex changes
+  }, [requested?.nonce]);
   const nextIndex = useCallback(
     (current: number, key: string) => {
       if (key === "ArrowDown") return Math.min(items.length - 1, current + 1);
@@ -82,7 +89,7 @@ export function FileList(props: ItemViewProps & { sort: Sort; onSort: (by: Sort[
     items,
     layout,
     onOpenFolder: props.onOpenFolder,
-    onActivateFile: handlers.details,
+    onActivateFile: handlers.preview,
     focusIndex,
     nextIndex,
     onSearchShortcut: props.onSearchShortcut,

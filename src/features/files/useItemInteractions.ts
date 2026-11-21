@@ -10,7 +10,7 @@ export interface InteractionOptions {
   items: readonly Item[];
   layout: LayoutMode;
   onOpenFolder: (folder: FolderItem) => void;
-  /** A file was activated (Enter, or a tap outside selection mode on a phone). */
+  /** A file was activated (Enter, Space, or a tap outside selection mode on a phone): it opens in the preview. */
   onActivateFile: (item: Item) => void;
   /** Where focus goes for an arrow key: the screen scrolls the item into view and focuses it. */
   focusIndex: (index: number) => void;
@@ -67,8 +67,10 @@ export function useItemInteractions(options: InteractionOptions) {
         else onActivateFile(item);
       } else if (event.key === " ") {
         event.preventDefault();
+        // Space previews a file (ux-patterns); with Shift it ranges and with Ctrl or Cmd it toggles.
         if (event.shiftKey) state.range(item.key, order);
-        else state.toggle(item.key);
+        else if (event.metaKey || event.ctrlKey || item.kind === "folder") state.toggle(item.key);
+        else onActivateFile(item);
       } else if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "a") {
         event.preventDefault();
         state.selectAll(order);

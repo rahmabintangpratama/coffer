@@ -1,6 +1,6 @@
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import { Check } from "lucide-react";
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ActionMenu } from "@/components/ActionMenu";
 import { useLayout } from "@/components/layout";
 import { t } from "@/lib/i18n";
@@ -84,6 +84,11 @@ export function FileGrid(props: ItemViewProps) {
     [rows, virtualizer],
   );
 
+  const requested = props.focusRequest;
+  useEffect(() => {
+    if (requested) focusIndex(requested.index);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fire once per request, not when focusIndex changes
+  }, [requested?.nonce]);
   const nextIndex = useCallback(
     (current: number, key: string) => {
       if (key === "ArrowRight") return Math.min(items.length - 1, current + 1);
@@ -116,7 +121,7 @@ export function FileGrid(props: ItemViewProps) {
     items,
     layout,
     onOpenFolder: props.onOpenFolder,
-    onActivateFile: handlers.details,
+    onActivateFile: handlers.preview,
     focusIndex,
     nextIndex,
     onSearchShortcut: props.onSearchShortcut,

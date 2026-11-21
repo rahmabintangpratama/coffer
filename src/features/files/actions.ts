@@ -1,10 +1,11 @@
-import { Download, Info, Link2 } from "lucide-react";
+import { Download, Eye, Info, Link2 } from "lucide-react";
 import { createElement } from "react";
 import type { MenuGroup } from "@/components/ActionMenu";
 import { t } from "@/lib/i18n";
 import type { Item } from "./model";
 
 export interface ActionHandlers {
+  preview: (item: Item) => void;
   download: (items: Item[]) => void;
   details: (item: Item) => void;
   copyKey: (item: Item) => void;
@@ -23,6 +24,7 @@ export function actionsFor(item: Item, handlers: ActionHandlers): MenuGroup[] {
     {
       id: "file",
       actions: [
+        { id: "preview", label: t("act.preview"), icon: icon(Eye), onSelect: () => { handlers.preview(item); } },
         { id: "download", label: t("act.download"), icon: icon(Download), onSelect: () => { handlers.download([item]); } },
         { id: "details", label: t("act.details"), icon: icon(Info), onSelect: () => { handlers.details(item); } },
         { id: "copyKey", label: t("act.copyKey"), icon: icon(Link2), onSelect: () => { handlers.copyKey(item); } },

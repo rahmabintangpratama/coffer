@@ -309,5 +309,14 @@
     "html": "HTML",
     "archive": "Archive",
     "unknown": "File"
+  },
+  "pv": {
+    "label": "Preview of {name}",
+    "loading": "Loading preview",
+    "truncated": "Only the first 1 MiB is shown.",
+    "zoomLabel": "Zoom",
+    "type": {
+      "unknown": "Unknown"
+    }
   }
 }

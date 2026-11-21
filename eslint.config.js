@@ -13,6 +13,8 @@ export default tseslint.config(
       "test-results/**",
       "node_modules/**",
       "design/**",
+      // Sample files that previews open, some hostile on purpose; they are data, not code.
+      "tests/fixtures/preview/**",
       "src/styles/*.css",
       "pnpm-lock.yaml",
     ],
