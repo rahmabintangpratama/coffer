@@ -1,3 +1,4 @@
+import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, type TestInfo } from "@playwright/test";
 import { admin, s3Fixture } from "../integration/config";
 import { E2E_BUCKET } from "./fixture";
@@ -76,15 +77,20 @@ export interface ConnectOptions {
   endpoint?: string;
 }
 
+/** Fill the open "Other S3-compatible service" form against the fixture and press Connect. */
+export async function fillCustomForm(page: Page, options: ConnectOptions = {}): Promise<void> {
+  await page.getByLabel("Endpoint URL").fill(options.endpoint ?? s3Fixture.endpoint);
+  await page.getByLabel("Access Key ID").fill(options.accessKeyId ?? admin.accessKeyId);
+  await page.getByLabel("Secret Access Key").fill(options.secretAccessKey ?? admin.secretAccessKey);
+  await page.getByLabel("Bucket", { exact: true }).fill(options.bucket ?? E2E_BUCKET);
+  await page.getByRole("button", { name: "Connect", exact: true }).click();
+}
+
 /** From Welcome to the connection test, through the real screens: Other S3-compatible service against the fixture. */
 export async function connectCustom(page: Page, options: ConnectOptions = {}): Promise<void> {
   await page.getByRole("button", { name: "Connect a bucket" }).click();
   await page.getByRole("button", { name: "Other S3-compatible service" }).click();
-  await page.getByLabel("Endpoint URL").fill(options.endpoint ?? s3Fixture.endpoint);
-  await page.getByLabel("Access Key ID").fill(options.accessKeyId ?? admin.accessKeyId);
-  await page.getByLabel("Secret Access Key").fill(options.secretAccessKey ?? admin.secretAccessKey);
-  if (options.bucket !== "") await page.getByLabel("Bucket", { exact: true }).fill(options.bucket ?? E2E_BUCKET);
-  await page.getByRole("button", { name: "Connect", exact: true }).click();
+  await fillCustomForm(page, options);
 }
 
 /**
@@ -105,3 +111,27 @@ export async function goToRoute(page: Page, route: string): Promise<void> {
     window.location.hash = hash;
   }, `#${route}`);
 }
+
+/** Contrast is measured on the final colors, so wait for the open animation to end first. */
+async function settled(page: Page): Promise<void> {
+  await page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        // A spinner repeats forever and never finishes.
+        .filter((animation) => animation.effect?.getComputedTiming().iterations !== Infinity)
+        .map((animation) => animation.finished),
+    ),
+  );
+}
+
+export async function axeViolations(page: Page) {
+  await settled(page);
+  const result = await new AxeBuilder({ page }).analyze();
+  return result.violations.map((violation) => ({
+    rule: violation.id,
+    impact: violation.impact,
+    nodes: violation.nodes.map((node) => node.target.join(" ")).slice(0, 5),
+  }));
+}
+

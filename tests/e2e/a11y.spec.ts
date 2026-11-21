@@ -1,24 +1,8 @@
-import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "@playwright/test";
-import { enterApp, layoutFor } from "./helpers";
+import { expect, test } from "@playwright/test";
+import { axeViolations as violations, enterApp, layoutFor } from "./helpers";
 
 const routes = ["/", "/files", "/starred", "/trash", "/storage", "/settings"] as const;
 const themes = ["light", "dark"] as const;
-
-/** Contrast is measured on the final colors, so wait for the open animation to end first. */
-async function settled(page: Page): Promise<void> {
-  await page.evaluate(() => Promise.all(document.getAnimations().map((animation) => animation.finished)));
-}
-
-async function violations(page: Page) {
-  await settled(page);
-  const result = await new AxeBuilder({ page }).analyze();
-  return result.violations.map((violation) => ({
-    rule: violation.id,
-    impact: violation.impact,
-    nodes: violation.nodes.map((node) => node.target.join(" ")).slice(0, 5),
-  }));
-}
 
 test.describe("accessibility (axe, WCAG 2.2 A and AA)", () => {
   for (const colorScheme of themes) {
