@@ -134,7 +134,7 @@ test.describe("rename, copy and move", () => {
   test("the Move dialog passes axe", async ({ page }, testInfo) => {
     await chooseFromMenu(page, layoutFor(testInfo), "a.txt", /^Move/);
     const dialog = page.getByRole("dialog", { name: "Move 1 item" });
-    await expect(dialog.getByRole("treeitem").first()).toBeVisible();
+    await expect(dialog.getByRole("treeitem", { name: /Current location/ })).toBeVisible();
     // Contrast is measured on final colours, after the dialog's open animation (as in the other axe checks).
     const violations = await axeViolations(page);
     expect(violations.filter((v) => v.impact === "serious" || v.impact === "critical")).toEqual([]);

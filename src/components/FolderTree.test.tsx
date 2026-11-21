@@ -13,6 +13,8 @@ describe("FolderTree", () => {
   it("names a tree item with the text that is drawn, also while its folders are still loading (WCAG 2.5.3)", async () => {
     render(<FolderTree {...props(() => new Promise<TreeFolder[]>(() => undefined), { currentPrefix: "" })} />);
     const item = await screen.findByRole("treeitem", { name: "bucket Current location" });
+    // The words that are drawn are the words of the name, with the space between them (axe label-content-name-mismatch).
+    expect(item.textContent).toBe("bucket Current location");
     // The loading line is a status of its own, not part of what the item says.
     expect(item).not.toHaveTextContent("Loading");
     expect(screen.getByRole("status")).toHaveTextContent("Loading");

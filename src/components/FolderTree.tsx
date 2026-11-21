@@ -194,6 +194,8 @@ export function FolderTree(props: FolderTreeProps) {
               >
                 <Folder aria-hidden="true" className={cn("size-5 shrink-0", disabled ? "text-fg-disabled" : "text-accent")} />
                 <span id={`${idBase}-n${index.toString()}`} className="truncate">{row.folder.name}</span>
+                {/* A real space between the two texts: the item's visible text must read exactly as its accessible name (WCAG 2.5.3). */}
+                {prefix === currentPrefix && " "}
                 {prefix === currentPrefix && <span id={`${idBase}-c${index.toString()}`} className="shrink-0 text-sm text-fg-muted">{currentLabel}</span>}
               </button>
             </div>
