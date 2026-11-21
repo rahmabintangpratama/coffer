@@ -17,7 +17,14 @@ export {
   type ResolvedConnection,
   type ResolveResult,
 } from "./connection";
-export { buildEndpoint, hostLooksRight, normalizeEndpoint, type EndpointProblem } from "./endpoint";
+export {
+  addressSpaceOf,
+  buildEndpoint,
+  hostLooksRight,
+  normalizeEndpoint,
+  type AddressSpace,
+  type EndpointProblem,
+} from "./endpoint";
 export {
   ADVANCED_FIELDS,
   defaultValues,

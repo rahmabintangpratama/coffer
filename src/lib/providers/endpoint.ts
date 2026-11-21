@@ -5,12 +5,46 @@ export type EndpointProblem = "missing" | "invalid" | "insecure" | "credentials"
 
 export type EndpointResult = { ok: true; endpoint: string } | { ok: false; problem: EndpointProblem; fieldId: string };
 
-const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
 // One value that is spliced into a host name: letters, digits, dots and hyphens, no slashes or colons.
 const HOST_VALUE = /^[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?$/;
 
+/**
+ * Where an address sits, as Chrome's Local Network Access sees it: `loopback`
+ * (localhost, 127.0.0.0/8, ::1), `local` (private ranges, link-local, .local
+ * names) or `public`. Browsers treat loopback as a secure context, so plain http
+ * is allowed there; for the other two it is not.
+ */
+export type AddressSpace = "loopback" | "local" | "public";
+
+function ipv4(hostname: string): [number, number, number, number] | null {
+  const match = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(hostname);
+  if (!match) return null;
+  const parts = [1, 2, 3, 4].map((index) => Number(match[index]));
+  return parts.every((part) => part <= 255) ? (parts as [number, number, number, number]) : null;
+}
+
+export function addressSpaceOf(hostname: string): AddressSpace {
+  const host = hostname.toLowerCase();
+  if (host === "localhost" || host.endsWith(".localhost") || host === "[::1]") return "loopback";
+  const v4 = ipv4(host);
+  if (v4) {
+    const [a, b] = v4;
+    if (a === 127) return "loopback";
+    if (a === 10 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 169 && b === 254)) return "local";
+    if (a === 100 && b >= 64 && b <= 127) return "local";
+    return "public";
+  }
+  if (host.startsWith("[")) {
+    const inner = host.slice(1, -1);
+    if (inner === "::1") return "loopback";
+    if (/^f[cd][0-9a-f]{2}:/.test(inner) || /^fe[89ab][0-9a-f]:/.test(inner)) return "local";
+    return "public";
+  }
+  return host.endsWith(".local") ? "local" : "public";
+}
+
 export function isLocalHost(hostname: string): boolean {
-  return LOCAL_HOSTS.has(hostname);
+  return addressSpaceOf(hostname) === "loopback";
 }
 
 /**

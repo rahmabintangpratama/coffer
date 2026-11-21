@@ -1,5 +1,5 @@
 import { S3Client } from "@aws-sdk/client-s3";
-import type { Credentials } from "@/lib/providers";
+import type { Credentials } from "@/lib/types";
 
 export interface ClientConfig {
   endpoint: string;

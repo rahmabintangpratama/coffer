@@ -111,7 +111,17 @@ export interface Credentials {
 
 export type TestStepId = "reach" | "cors" | "list" | "write" | "read" | "clean";
 export type TestStatus = "pending" | "running" | "pass" | "fail" | "skipped";
-export type TestFailure = "cors" | "accessDenied" | "signatureDoesNotMatch" | "noSuchBucket" | "wrongRegion" | "network" | "mixedContent" | "unknown";
+export type TestFailure =
+  | "cors"
+  | "accessDenied"
+  | "signatureDoesNotMatch"
+  | "noSuchBucket"
+  | "wrongRegion"
+  | "network"
+  | "mixedContent"
+  /** T-9: a loopback or private-network endpoint and the browser denied local network access. */
+  | "localNetworkDenied"
+  | "unknown";
 export interface ConnectionTestResult {
   steps: ConnectionTestStep[];
   /** readOnly: write step failed with AccessDenied while list and read passed. Offer "Connect read-only" (copy: ob.ro.*). */

@@ -83,6 +83,13 @@ describe("failures before the signed call", () => {
     expect(calls).toEqual([]);
   });
 
+  it("fails with mixedContent for http on a private address too, since only loopback is exempt", async () => {
+    const { client, calls } = fake(ok);
+    const run = await runConnectionTest({ ...base, client, endpoint: "http://192.168.2.120:9000", pageProtocol: "https:" });
+    expect(run.steps[0]).toMatchObject({ status: "fail", failure: "mixedContent" });
+    expect(calls).toEqual([]);
+  });
+
   it("allows http for localhost on an https page", async () => {
     const { client } = fake(ok);
     const run = await runConnectionTest({ ...base, client, endpoint: "http://localhost:9000" });
@@ -104,6 +111,51 @@ describe("failures before the signed call", () => {
     expect(statuses(run)).toMatchObject({ cors: "skipped", list: "skipped", write: "skipped" });
     expect(attempts).toBe(2);
     expect(calls).toEqual([]);
+  });
+});
+
+describe("a local endpoint that cannot be reached", () => {
+  const dead = (permission: "granted" | "prompt" | "denied" | "unsupported", endpoint = "http://localhost:9000") => {
+    const { client, calls } = fake(ok);
+    const asked: string[] = [];
+    return {
+      calls,
+      asked,
+      run: runConnectionTest({
+        ...base,
+        client,
+        endpoint,
+        reach: () => Promise.reject(new TypeError("Failed to fetch")),
+        queryPermission: (name) => {
+          asked.push(name);
+          return Promise.resolve(permission);
+        },
+      }),
+    };
+  };
+
+  it("is localNetworkDenied when the browser denied local network access", async () => {
+    const { run, asked } = dead("denied");
+    const result = await run;
+    expect(result.steps[0]).toMatchObject({ id: "reach", status: "fail", failure: "localNetworkDenied" });
+    expect(asked[0]).toBe("loopback-network");
+  });
+
+  it("asks for the local-network name for a private address", async () => {
+    const { run, asked } = dead("denied", "https://192.168.2.120:9000");
+    expect((await run).steps[0]?.failure).toBe("localNetworkDenied");
+    expect(asked[0]).toBe("local-network");
+  });
+
+  it.each(["granted", "prompt", "unsupported"] as const)("stays a network problem when the permission is %s", async (permission) => {
+    const { run } = dead(permission);
+    expect((await run).steps[0]?.failure).toBe("network");
+  });
+
+  it("never asks about a public address", async () => {
+    const { run, asked } = dead("denied", "https://s3.example.com");
+    expect((await run).steps[0]?.failure).toBe("network");
+    expect(asked).toEqual([]);
   });
 });
 

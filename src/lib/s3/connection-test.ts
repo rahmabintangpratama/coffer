@@ -8,6 +8,7 @@ import {
 } from "@aws-sdk/client-s3";
 import type { ConnectionTestResult, ConnectionTestStep, TestFailure, TestStepId } from "@/lib/types";
 import { AppError, isNetworkFailure, toAppError } from "./errors";
+import { addressSpaceOf, type PermissionQuery, localNetworkPermission } from "./local-network";
 
 export interface ConnectionTestRun extends ConnectionTestResult {
   /** Bucket names, when no bucket was given and the key may list them. */
@@ -32,13 +33,14 @@ export interface ConnectionTestOptions {
   signal?: AbortSignal;
   /** For tests: 16 hex characters. */
   randomHex?: () => string;
+  /** For tests: reads the local network permission. Default: the browser's Permissions API. */
+  queryPermission?: PermissionQuery;
 }
 
 const STEP_ORDER: TestStepId[] = ["reach", "cors", "list", "write", "read", "clean"];
 const REACH_TIMEOUT_MS = 10_000;
 const BODY = "coffer connection test\n";
 
-const LOCAL = new Set(["localhost", "127.0.0.1", "[::1]"]);
 
 function defaultHex(): string {
   const bytes = new Uint8Array(8);
@@ -124,7 +126,7 @@ export async function runConnectionTest(options: ConnectionTestOptions): Promise
   // ------------------------------------------------------------ 1. reach
   const pageProtocol = options.pageProtocol ?? (typeof location === "undefined" ? undefined : location.protocol);
   const url = new URL(endpoint);
-  if (pageProtocol === "https:" && url.protocol === "http:" && !LOCAL.has(url.hostname)) {
+  if (pageProtocol === "https:" && url.protocol === "http:" && addressSpaceOf(url.hostname) !== "loopback") {
     update("reach", { status: "fail", failure: "mixedContent", ms: 0 });
     return finish("failed");
   }
@@ -157,7 +159,10 @@ export async function runConnectionTest(options: ConnectionTestOptions): Promise
     });
   } catch {
     checkAbort();
-    update("reach", { status: "fail", failure: "network" });
+    // A blocked local network and a stopped server look alike. Read the permission now: if it is denied, say so.
+    const local = addressSpaceOf(url.hostname) !== "public";
+    const denied = local && (await localNetworkPermission(endpoint, options.queryPermission)) === "denied";
+    update("reach", { status: "fail", failure: denied ? "localNetworkDenied" : "network" });
     return finish("failed");
   }
 

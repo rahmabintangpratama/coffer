@@ -7,6 +7,7 @@ import {
   buildEndpoint,
   credentialsFromValues,
   getPreset,
+  addressSpaceOf,
   hostLooksRight,
   jwtExpiry,
   normalizeEndpoint,
@@ -171,6 +172,41 @@ describe("endpoints", () => {
   it("flags an http endpoint that is not local when resolving", () => {
     const result = resolveConnection(getPreset("custom"), { endpoint: "http://s3.example.com", accessKeyId: "a", secretAccessKey: "b" });
     expect(result).toMatchObject({ ok: false, problems: [{ kind: "endpoint", problem: "insecure", fieldId: "endpoint" }] });
+  });
+});
+
+describe("address space (Local Network Access)", () => {
+  it.each([
+    ["localhost", "loopback"],
+    ["app.localhost", "loopback"],
+    ["127.0.0.1", "loopback"],
+    ["127.12.3.4", "loopback"],
+    ["[::1]", "loopback"],
+    ["10.1.2.3", "local"],
+    ["172.16.0.1", "local"],
+    ["172.31.255.255", "local"],
+    ["192.168.2.120", "local"],
+    ["169.254.10.10", "local"],
+    ["100.64.0.5", "local"],
+    ["nas.local", "local"],
+    ["[fd12:3456::1]", "local"],
+    ["[fe80::1]", "local"],
+    ["172.32.0.1", "public"],
+    ["172.15.0.1", "public"],
+    ["100.128.0.1", "public"],
+    ["8.8.8.8", "public"],
+    ["s3.example.com", "public"],
+    ["999.1.1.1", "public"],
+    ["[2001:db8::1]", "public"],
+  ])("puts %s in the %s space", (host, space) => {
+    expect(addressSpaceOf(host)).toBe(space);
+  });
+
+  it("allows plain http only for loopback, and rejects a private address", () => {
+    expect(normalizeEndpoint("http://127.0.0.2:9000")).toEqual({ ok: true, endpoint: "http://127.0.0.2:9000" });
+    expect(normalizeEndpoint("http://app.localhost:9000")).toMatchObject({ ok: true });
+    expect(normalizeEndpoint("http://192.168.2.120:9000")).toMatchObject({ ok: false, problem: "insecure" });
+    expect(normalizeEndpoint("https://192.168.2.120:9000")).toMatchObject({ ok: true });
   });
 });
 
