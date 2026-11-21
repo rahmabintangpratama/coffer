@@ -91,6 +91,7 @@ Package manager: **pnpm** 12 with Node 22 only (`engines` is `>=22 <23` and `eng
 - **Do not add a `Co-Authored-By` trailer or any other attribution** (tool or author credit lines) to commits.
 - **Every commit must be signed** (SSH signing is configured for the maintainer). Never disable signing: no `-c commit.gpgsign=false`, no `--no-gpg-sign`. If signing fails, stop and tell the maintainer.
 - Commit to `main` for now. Remote `origin`: `git@github.com:rahmabintangpratama/coffer.git`. Never force-push or rewrite pushed history.
+- **Before any history rewrite** (a rebase, an amend of more than the last commit, `filter-branch` or the like) create a backup branch named `backup/<YYYY-MM-DD>-<purpose>`. Delete it only after the result is verified (log, signatures, a diff against the backup). Never run `git reset --hard` without such a backup. Rewrite only commits that were never pushed.
 - Commit and push only when asked. Keep each commit to one logical change.
 - Review `.gitignore` before committing. It must keep covering `node_modules/`, `dist/`, `coverage/`, `playwright-report/`, `test-results/`, `.vite/`, `*.log`, `.DS_Store`, `.env` and `.env.*` (except `.env.example`), `*.local`, `.claude/settings.local.json`, `.idea/` and `.vscode/` (except shared settings).
 - Never commit secrets, real credentials or local settings files.
