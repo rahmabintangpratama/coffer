@@ -83,6 +83,17 @@ Package manager: **pnpm** 12 with Node 22 only (`engines` is `>=22 <23` and `eng
 4. **Never edit `design/`.** If the design is wrong, missing or conflicting, add an entry to [docs/open-questions.md](docs/open-questions.md) and follow the recommended default until it is answered.
 5. Do not guess provider behavior; add it to the compatibility matrix as a manual check.
 
+## Working efficiently
+
+- CI is the source of truth for the full gate set. Do not re-run all gates in a clean clone locally.
+- Locally, run only what the change touches: affected unit tests (`vitest related` or `--changed`) and affected e2e specs in one browser at one viewport. The full e2e matrix runs in CI only.
+- The pre-push hook (typecheck, lint, unit) is the local gate. Do not repeat it by hand right before pushing.
+- Do not re-verify deterministic outputs (scripts, generators, CI results). Verify only judgment claims from subagents.
+- Prove a test meaningful (it fails without the feature) only for a new kind of test, not for every test.
+- Record a D-entry only for decisions that change behavior, scope or contracts. Small implementation choices go in commit messages.
+- Run docs-checker once per milestone, not per commit.
+- Reports are short: CI run link, deviations, decisions needed, blockers. No tables of passing commands.
+
 ## Git
 
 - Use Conventional Commits: `type(scope): subject` with `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore` or `revert`; imperative, lowercase start, no trailing period, header at most 72 characters; the body explains why.

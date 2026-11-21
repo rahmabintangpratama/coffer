@@ -81,7 +81,7 @@ Answered by the project owner. The **From** column gives the question that was o
 
 ### OQ-36: http to private-IP endpoints
 - **Owner:** Product, Eng (needs an ADR if the answer is yes)
-- **Status:** Open
+- **Status:** Closed. The owner kept the rule "http only for loopback" and decided no ADR is needed ([D-29](#decisions-made-on-the-owners-behalf)).
 - **Question:** People who run MinIO or RustFS on a LAN address often have only http. Chrome and Edge let a public https page reach it after the person allows local network access, but Safari and Firefox do not, and the CSP forbids it today.
 - **Recommended:** Keep the rule (http only for localhost) and document the options: run Coffer on the same machine, or put the server behind https (a reverse proxy or a local certificate). Revisit only if people ask, with an ADR that weighs `connect-src http:` against the security rules.
 - **Affects:** FR-3, FR-6, `public/_headers`, technical-spec 11.2
