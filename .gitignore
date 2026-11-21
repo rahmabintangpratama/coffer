@@ -26,3 +26,6 @@ test-results/
 # logs
 *.log
 pnpm-debug.log*
+
+# Per-module bundle sizes written by pnpm size:analyze
+bundle-stats.json
