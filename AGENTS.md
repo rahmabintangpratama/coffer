@@ -49,7 +49,7 @@ Package manager: **pnpm** 12 with Node 22 (`.nvmrc`; enable pnpm with `corepack 
 | Start local MinIO | `docker compose -f tests/integration/docker-compose.yml up -d` (TBD) |
 | Generate token CSS from `design/tokens.json` | `pnpm tokens:build` |
 | Check generated CSS matches committed files | `pnpm tokens:check` |
-| Check copy keys used in code exist | `pnpm copy:check` (TBD) |
+| Check copy keys used in code exist | `pnpm copy:check` |
 | Check `public/_headers` and `dist/_headers` against the spec | `pnpm headers:check` |
 
 ## Conventions

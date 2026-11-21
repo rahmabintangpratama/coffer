@@ -18,7 +18,8 @@
     "tokens:build": "node scripts/tokens/build.ts",
     "tokens:check": "node scripts/tokens/build.ts --check",
     "lint": "eslint .",
-    "headers:check": "node scripts/headers/check.ts"
+    "headers:check": "node scripts/headers/check.ts",
+    "copy:check": "node scripts/copy/check.ts"
   },
   "dependencies": {
     "class-variance-authority": "0.7.1",

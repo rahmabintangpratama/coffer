@@ -96,6 +96,7 @@ Prerequisites: Node 22, pnpm 12 (enable it with `corepack enable`) and Docker (f
 | Unit tests | `pnpm test` |
 | Generate token CSS from `design/tokens.json` | `pnpm tokens:build` |
 | Check generated CSS is current | `pnpm tokens:check` |
+| Check that copy keys used in code exist | `pnpm copy:check` |
 | Check the security headers file | `pnpm headers:check` (after `pnpm build` it also checks `dist`) |
 
 ## Documentation
