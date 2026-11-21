@@ -117,7 +117,7 @@ Each directory has an `AGENTS.md` (with a `CLAUDE.md` that imports it) that guid
 
 ## Contributing
 
-The project is early and issues are welcome. Commits follow [Conventional Commits](https://www.conventionalcommits.org/) and must be signed. A `commit-msg` hook installed by `pnpm install` runs commitlint (`pnpm commitlint --edit <file>` by hand), and CI lints every commit in a push or pull request. Read [`AGENTS.md`](AGENTS.md) for the working rules. The `design/` folder is read-only; propose design changes in [`docs/open-questions.md`](docs/open-questions.md).
+The project is early and issues are welcome. Commits follow [Conventional Commits](https://www.conventionalcommits.org/) and must be signed. A `commit-msg` hook installed by `pnpm install` runs commitlint (`pnpm commitlint --edit <file>` by hand), a `pre-push` hook runs typecheck, lint and the unit tests, and CI lints every commit in a push or pull request. Read [`AGENTS.md`](AGENTS.md) for the working rules. The `design/` folder is read-only; propose design changes in [`docs/open-questions.md`](docs/open-questions.md).
 
 ## License
 

@@ -4,3 +4,10 @@ commit-msg:
   commands:
     commitlint:
       run: pnpm exec commitlint --edit {1}
+
+# Runs before a push. The steps are chained with && so a failing step stops
+# the push and no later step can hide it.
+pre-push:
+  commands:
+    checks:
+      run: pnpm typecheck && pnpm lint && pnpm test

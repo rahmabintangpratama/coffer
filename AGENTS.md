@@ -84,7 +84,8 @@ Package manager: **pnpm** 12 with Node 22 only (`engines` is `>=22 <23` and `eng
 ## Git
 
 - Use Conventional Commits: `type(scope): subject` with `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore` or `revert`; imperative, lowercase start, no trailing period, header at most 72 characters; the body explains why.
-- A `commit-msg` hook (lefthook, installed by `pnpm install`) runs commitlint, and CI lints every commit in the pushed range. Never bypass the hook (`--no-verify`).
+- A `commit-msg` hook (lefthook, installed by `pnpm install`) runs commitlint, and CI lints every commit in the pushed range. A `pre-push` hook runs `pnpm typecheck && pnpm lint && pnpm test`. Never bypass the hooks (`--no-verify`).
+- Chain every gate with `&&`, in scripts, hooks and by hand. Never use `;` or a pipe (`| tail`) to join steps whose failure must stop the work: it hides the failing exit code.
 - **Do not add a `Co-Authored-By` trailer or any other attribution** (tool or author credit lines) to commits.
 - **Every commit must be signed** (SSH signing is configured for the maintainer). Never disable signing: no `-c commit.gpgsign=false`, no `--no-gpg-sign`. If signing fails, stop and tell the maintainer.
 - Commit to `main` for now. Remote `origin`: `git@github.com:rahmabintangpratama/coffer.git`. Never force-push or rewrite pushed history.
