@@ -194,3 +194,11 @@ Each candidate was run in Docker and checked with the same probe (later turned i
 | MinIO `bitnamilegacy/minio` (frozen, 2025-08) | Global environment variable only | Yes | Yes | Yes | Yes | Yes | Yes, but frozen and unmaintained |
 
 RustFS is the only candidate that met every criterion. RustFS is young (1.0.x, frequent releases), so the image is pinned to an exact version and bumped on purpose, with the capability suite as the safety net. Its built-in `readonly` policy does not allow listing, so the tests create their own read-and-list policy.
+
+## Tracked flaky tests
+
+A test that failed at first and passed on retry, and whose cause is not yet known, is listed here with the trace of the failed attempt (the `blob-report-<project>` artifact of the run; open it with `pnpm exec playwright show-trace`). Remove the entry when the cause is fixed or the test has run clean for ten CI runs.
+
+| Test | First seen | What the trace shows | Status |
+|---|---|---|---|
+| `webkit-375` `upload.spec.ts:88` AC-40.4 a name the bucket cannot store is reported before any upload starts | [run 44968455734](https://github.com/rahmabintangpratama/coffer/actions/runs/44968455734), artifact `blob-report-webkit-375` | `beforeEach` timed out in `page.goto("/")` after 30 s: `GET /` was sent to the app server and got no response. The server (`scripts/serve/dist-server.ts`) has no path that holds a request, and the retry passed. One occurrence; the app code did not run. | Open. If it repeats, log the server's request and response times in CI and check whether WebKit reuses a stalled connection to `127.0.0.1:4173`. |

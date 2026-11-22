@@ -24,10 +24,12 @@ export function AppBar({
   menuOpen: boolean;
   menuRef: RefObject<HTMLButtonElement | null>;
 }) {
-  // The Files screen says it is mounted; the address says whether Files is still the route. Both must hold, so the search and chips
-  // leave the bar the moment the route changes instead of when the next screen has finished loading.
+  // The address decides the bar: the search and chips leave it the moment the route changes, not when the next screen has finished
+  // loading. The Files screen says when it is mounted; until then the Files bar is only reserved space, so its search placeholder
+  // never shows an empty folder name.
   const [location] = useLocation();
-  const filesActive = useFilesChrome((state) => state.active) && isActiveRoute(routes.files, location);
+  const screenMounted = useFilesChrome((state) => state.active);
+  const onFiles = isActiveRoute(routes.files, location);
   const menuButton = (
     <Button
       ref={menuRef}
@@ -53,8 +55,9 @@ export function AppBar({
       {brand}
     </div>
   );
-  // The bar of the Files route is a lazy chunk. Until it arrives the fallback keeps its height (the chips row included), so the
-  // list does not drop by one row when the chunk lands. A tap aimed at a row would otherwise hit what moved under it.
+  // The bar of the Files route is a lazy chunk, and the screen only says it is mounted after its first render. Until both are
+  // true the bar keeps its final height (the chips row included), so the list does not drop by one row when they land. A tap
+  // aimed at a row would otherwise hit what moved under it.
   const filesFallback = (
     <div data-component="FilesAppBarLoading" className="flex flex-col">
       {plain}
@@ -65,10 +68,14 @@ export function AppBar({
   );
   return (
     <header data-component="AppBar" className="sticky top-0 z-(--cf-z-sticky) shrink-0 border-b border-line bg-surface">
-      {filesActive ? (
-        <Suspense fallback={filesFallback}>
-          <FilesAppBar menuButton={menuButton} brand={brand} />
-        </Suspense>
+      {onFiles ? (
+        screenMounted ? (
+          <Suspense fallback={filesFallback}>
+            <FilesAppBar menuButton={menuButton} brand={brand} />
+          </Suspense>
+        ) : (
+          filesFallback
+        )
       ) : (
         plain
       )}
