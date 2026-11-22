@@ -394,7 +394,7 @@ test.describe("lock and forget reach every tab (C-27)", () => {
     await context.close();
   });
 
-  test("AC-10.1 to AC-10.4 Forget this device lists what goes, asks for the count, empties storage and sends every tab to Welcome", async ({ browser }) => {
+  test("AC-10.1 to AC-10.5 Forget this device lists what goes, asks for the count, empties storage and sends every tab to Welcome", async ({ browser }) => {
     const context = await browser.newContext();
     const first = await context.newPage();
     await enterApp(first, "/files", { passphrase: PASS });

@@ -161,7 +161,7 @@ describe("a message from another tab", () => {
     lease.release();
   });
 
-  it("forget lets go of the database and sends this tab to Welcome", async () => {
+  it("AC-10.5 forget lets go of the database and sends this tab to Welcome", async () => {
     const { lock } = await modules();
     const release = vi.spyOn(forget, "releaseStorage").mockResolvedValue();
     const reload = vi.fn();
