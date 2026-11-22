@@ -42,6 +42,9 @@ describe("OnboardingFlow", () => {
     render(<OnboardingFlow onConnected={onConnected} />);
     await fillCustom("photos");
     await userEvent.click(await screen.findByRole("button", { name: "Open bucket" }));
+    // O51: the connection passed; "Not now" keeps the keys in memory only (AC-8.4).
+    expect(onConnected).not.toHaveBeenCalled();
+    await userEvent.click(await screen.findByRole("button", { name: "Not now" }));
 
     expect(onConnected).toHaveBeenCalledTimes(1);
     const summary = onConnected.mock.calls[0]?.[0];
@@ -68,6 +71,7 @@ describe("OnboardingFlow", () => {
     render(<OnboardingFlow onConnected={onConnected} />);
     await fillCustom("photos");
     await userEvent.click(await screen.findByRole("button", { name: "Connect read-only" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Not now" }));
     expect(onConnected.mock.calls[0]?.[0].access).toBe("readOnly");
   });
 
@@ -80,6 +84,7 @@ describe("OnboardingFlow", () => {
     expect(await screen.findByText(/This key can access 2 buckets/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "beta" }));
     await userEvent.click(await screen.findByRole("button", { name: "Open bucket" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Not now" }));
     expect(onConnected.mock.calls[0]?.[0].bucket).toBe("beta");
     expect(mocks.runConnectionTest).toHaveBeenCalledTimes(2);
   });
@@ -92,6 +97,7 @@ describe("OnboardingFlow", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Choose a bucket" }));
     await userEvent.click(await screen.findByRole("button", { name: "Open bucket" }));
     expect(screen.queryByText(/This key can access/)).toBeNull();
+    await userEvent.click(await screen.findByRole("button", { name: "Not now" }));
     expect(onConnected.mock.calls[0]?.[0].bucket).toBe("solo");
   });
 

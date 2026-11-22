@@ -6,7 +6,9 @@
   "act": {
     "restore": "Restore",
     "unstar": "Remove from starred",
-    "retry": "Try again"
+    "retry": "Try again",
+    "lock": "Lock",
+    "copySecret": "Copy"
   },
   "app": {
     "loadError": {
@@ -28,7 +30,15 @@
     "offline": {
       "body": "Operations pause until the connection returns.",
       "title": "You’re offline"
-    }
+    },
+    "listLabel": "Connections",
+    "switcherTitle": "Connections",
+    "remove": "Remove",
+    "removeTitle": "Remove {name}?",
+    "removeBody": "Its saved keys are deleted from this device. Your bucket and files are not changed.",
+    "active": "Current",
+    "notSaved": "Not saved on this device",
+    "removed": "Removed {name}"
   },
   "dlg": {
     "zip": {
@@ -206,7 +216,9 @@
     },
     "locked": {
       "stop": "Stop transfers and lock",
-      "transfers": "{count, plural, one {# transfer is still finishing in the background.} other {# transfers are still finishing in the background.}}"
+      "transfers": "{count, plural, one {# transfer is still finishing in the background.} other {# transfers are still finishing in the background.}}",
+      "manual": "You locked Coffer. Your files are safe. Enter your passphrase to continue.",
+      "elsewhere": "Coffer was locked in another tab. Enter your passphrase to continue."
     },
     "paste": {
       "expiryIgnored": "Ignored the credential expiration because it isn’t a future time.",
@@ -229,7 +241,12 @@
     },
     "save": {
       "strong": "Strong. 16 characters or more is best.",
-      "tooShort": "Use at least 12 characters. A longer passphrase is harder to guess."
+      "tooShort": "Use at least 12 characters. A longer passphrase is harder to guess.",
+      "label": "Passphrase",
+      "reuse": "Your saved connections share one passphrase, so you won’t be asked for a new one.",
+      "ctaSame": "Save on this device",
+      "working": "Saving…",
+      "strengthLabel": "Passphrase strength"
     },
     "status": {
       "fail": "Failed",
@@ -241,6 +258,10 @@
     "stepsLabel": "Connection checks",
     "welcome": {
       "factsLabel": "What Coffer does"
+    },
+    "unlock": {
+      "working": "Unlocking…",
+      "wait": "Too many tries. Wait {seconds, plural, one {# second} other {# seconds}} before trying again."
     }
   },
   "search": {
@@ -412,5 +433,34 @@
     "merge": {
       "sub": "Files with the same name are replaced. Files only in the existing folder stay."
     }
+  },
+  "sec": {
+    "lock": {
+      "title": "Lock Coffer now?",
+      "body": "Transfers that are already running keep going. You’ll enter your passphrase to continue.",
+      "cta": "Lock now",
+      "sub": "Clears the keys from this tab and every other tab of Coffer."
+    },
+    "autolockNever": "Never",
+    "autolockNeverWarn": "Without auto-lock, anyone who opens this browser can use your saved connections.",
+    "noSaved": "No connections are saved on this device. Keys stay in memory and are gone when you close the tab.",
+    "forgetLabel": "Forget this device",
+    "autolockGroup": "Auto-lock after",
+    "unsaved": "Not saved"
+  },
+  "forget": {
+    "typeLabel": "Type {count} to confirm",
+    "working": "Forgetting…"
+  },
+  "reveal": {
+    "cta": "Show secret key",
+    "secretLabel": "Secret key",
+    "hide": "Hide now",
+    "copy": "Copy secret key",
+    "memoryOnly": "This connection isn’t saved, so its secret key can’t be shown again.",
+    "wrong": "That passphrase doesn’t match. Check for caps lock and try again."
+  },
+  "stored": {
+    "recentLabel": "Recent files"
   }
 }

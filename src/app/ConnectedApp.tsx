@@ -16,6 +16,7 @@ import { PlaceholderScreen } from "./screens/PlaceholderScreen";
 import { SettingsScreen } from "./screens/SettingsScreen";
 import { useSettings } from "./settings";
 import { Shell } from "./Shell";
+import { useAutoLock } from "./useAutoLock";
 
 // Browsing is its own chunk too: the listing code, the virtualizer and the menus load when Files opens.
 const FilesRoute = lazy(() => import("./screens/FilesRoute"));
@@ -23,6 +24,7 @@ const TrashRoute = lazy(() => import("./screens/TrashRoute"));
 const HomeScreen = lazy(() => import("@/features/files").then((module) => ({ default: module.HomeScreen })));
 const filesGroups = ["files", "det", "filter", "search", "sel", "kind", "col", "view", "sort", "row", "menu", "home", "type", "dlg", "conf", "upl", "drop", "pv", "op", "ro", "share"] as const;
 const trashGroups = ["trash", "del", "sel", "conf", "op", "ro"] as const;
+const settingsGroups = ["sec", "stored", "forget", "reveal", "conn", "ob"] as const;
 
 // The upload queue reads how many parts may be in flight from the settings at the moment each part starts.
 configureTransfers({ getConcurrency: () => useSettings.getState().uploadConcurrency });
@@ -50,6 +52,8 @@ export default function ConnectedApp({ connection }: { connection: ConnectionSum
     void loadInterrupted(connection).catch(() => undefined);
   }, [connection]);
   const push = useToasts((state) => state.push);
+  // Auto-lock watches for input while the saved connections are open (FR-9).
+  useAutoLock();
 
   const screenFallback = <div aria-busy="true" className="min-h-40" />;
   return (
@@ -86,7 +90,9 @@ export default function ConnectedApp({ connection }: { connection: ConnectionSum
               <PlaceholderScreen titleKey="nav.storage" />
             </Route>
             <Route path={routes.settings}>
-              <SettingsScreen />
+              <CopyBoundary groups={settingsGroups} fallback={screenFallback} errorFallback={<LoadError />}>
+                <SettingsScreen connection={connection} notify={(message) => { push({ message }); }} />
+              </CopyBoundary>
             </Route>
             <Route>
               <NotFoundScreen />

@@ -1,4 +1,5 @@
 import { t } from "@/lib/i18n";
+import { ConnectionSwitch } from "./ConnectionSwitch";
 import { mainDestinations } from "./nav-items";
 import { NavLink } from "./NavLink";
 
@@ -19,6 +20,9 @@ export function NavRail() {
           className="w-full"
         />
       ))}
+      <div className="mt-auto">
+        <ConnectionSwitch variant="icon" />
+      </div>
     </nav>
   );
 }

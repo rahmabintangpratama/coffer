@@ -2,6 +2,7 @@ import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { Button } from "@/components/Button";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { ConnectionSwitch } from "./ConnectionSwitch";
 import { mainDestinations } from "./nav-items";
 import { NavLink } from "./NavLink";
 
@@ -31,6 +32,7 @@ export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle:
           />
         ))}
       </div>
+      <ConnectionSwitch variant={collapsed ? "icon" : "block"} className={collapsed ? "self-center" : "w-full"} />
       <Button
         variant="ghost"
         iconOnly

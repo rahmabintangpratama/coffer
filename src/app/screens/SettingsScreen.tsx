@@ -1,5 +1,9 @@
+import { SecuritySettings } from "@/features/vault";
 import { t } from "@/lib/i18n";
-import type { Theme } from "@/lib/types";
+import { vault } from "@/lib/storage/vault";
+import type { ConnectionSummary, Theme } from "@/lib/types";
+import { useSession } from "../session";
+import { useSettings } from "../settings";
 import { useTheme } from "../theme";
 
 const themes: { value: Theme; labelKey: "app.theme.system" | "app.theme.light" | "app.theme.dark" }[] = [
@@ -8,9 +12,13 @@ const themes: { value: Theme; labelKey: "app.theme.system" | "app.theme.light" |
   { value: "dark", labelKey: "app.theme.dark" },
 ];
 
-/** Settings. Only Appearance exists so far; the other pages arrive in M9. */
-export function SettingsScreen() {
+/** Settings. Appearance and Security (with Connections) exist so far; the page layout and the other pages arrive in M9. */
+export function SettingsScreen({ connection, notify }: { connection: ConnectionSummary; notify: (message: string) => void }) {
   const { theme, setTheme } = useTheme();
+  const autoLockMinutes = useSettings((state) => state.autoLockMinutes);
+  const update = useSettings((state) => state.update);
+  const saved = useSession((state) => state.saved);
+  const session = useSession.getState();
   return (
     <section data-component="SettingsScreen">
       <h1 className="text-xl font-semibold">{t("nav.settings")}</h1>
@@ -38,6 +46,26 @@ export function SettingsScreen() {
           ))}
         </div>
       </fieldset>
+      <SecuritySettings
+        autoLockMinutes={autoLockMinutes}
+        onAutoLock={(minutes) => { update({ autoLockMinutes: minutes }); }}
+        active={connection}
+        saved={saved}
+        onLock={() => { void import("../lock").then((module) => { module.lockNow("manual"); }); }}
+        onForget={() => import("../lock").then((module) => module.forgetThisDevice())}
+        notify={notify}
+        onRemoved={(removed) => {
+          session.setSaved(saved.filter((entry) => entry.id !== removed.id));
+          // Removing the connection that is open ends the session with it; another saved one opens through Unlock.
+          if (removed.id === connection.id) {
+            void vault.savedCount().then((count) => {
+              session.disconnect();
+              if (count > 0) session.lock({ reason: "start" });
+              else session.leaveLock();
+            });
+          }
+        }}
+      />
     </section>
   );
 }

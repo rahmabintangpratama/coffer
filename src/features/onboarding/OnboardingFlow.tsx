@@ -39,8 +39,9 @@ const blank = <div aria-busy="true" className="min-h-dvh" />;
  * Welcome to a tested connection (FR-1 to FR-7). Welcome is all this chunk draws; the steps after it
  * are `ConnectFlow`, a lazy chunk.
  */
-export function OnboardingFlow({ onConnected }: { onConnected: (connection: ConnectionSummary) => void }) {
-  const [connecting, setConnecting] = useState(false);
+export function OnboardingFlow({ onConnected, adding = false, onCancel }: { onConnected: (connection: ConnectionSummary) => void; adding?: boolean; onCancel?: () => void }) {
+  // "Add connection" starts at the provider list and goes back to the app, not to Welcome.
+  const [connecting, setConnecting] = useState(adding);
   useEffect(() => whenIdle(prefetchConnect), []);
   return (
     // .cf-root is the container the layout queries measure; .cf-app stays directly inside it, as in the shell.
@@ -49,7 +50,7 @@ export function OnboardingFlow({ onConnected }: { onConnected: (connection: Conn
         {connecting ? (
           <CopyBoundary groups={connectGroups} fallback={blank} errorFallback={<LoadFailed />}>
             <Suspense fallback={blank}>
-              <ConnectFlow onBack={() => { setConnecting(false); }} onConnected={onConnected} />
+              <ConnectFlow onBack={() => { if (adding && onCancel) onCancel(); else setConnecting(false); }} onConnected={onConnected} />
             </Suspense>
           </CopyBoundary>
         ) : (

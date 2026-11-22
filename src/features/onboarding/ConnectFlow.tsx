@@ -7,10 +7,13 @@ import { type ConnectedResult, ConnectingScreen } from "./ConnectingScreen";
 import { CredentialsScreen, type CredentialsSubmit } from "./CredentialsScreen";
 import type { ConnectionPlan } from "./form-model";
 import { PickBucketScreen } from "./PickBucketScreen";
+import { SaveDeviceScreen } from "./SaveDeviceScreen";
 import { ProviderScreen } from "./ProviderScreen";
 
 type Step =
   | { name: "provider" }
+  /** O51: the connection passed its test; offer to keep it on this device. */
+  | { name: "save"; summary: ConnectionSummary }
   | { name: "credentials"; preset: ProviderPreset; values: Record<string, string>; bucket: string }
   | {
       name: "connecting";
@@ -112,7 +115,7 @@ export default function ConnectFlow({ onBack, onConnected }: { onBack: () => voi
     if (bucket !== undefined) {
       // Done: the keys stay in the vault for the connection that now exists.
       pendingId.current = null;
-      onConnected(summaryOf(from, result, bucket));
+      setStep({ name: "save", summary: summaryOf(from, result, bucket) });
       return;
     }
     const buckets = result.buckets;
@@ -126,6 +129,8 @@ export default function ConnectFlow({ onBack, onConnected }: { onBack: () => voi
   };
 
   switch (step.name) {
+    case "save":
+      return <SaveDeviceScreen summary={step.summary} onSaved={onConnected} onSkip={onConnected} />;
     case "provider":
       return (
         <ProviderScreen
