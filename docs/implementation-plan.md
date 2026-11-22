@@ -227,6 +227,8 @@ Total: 35 days plus buffer. Every MVP FR in the product spec appears in at least
 
 **Tests:** unit for limits (7 days, token left, under 15 minutes, unknown expiry); integration that a link downloads the file and that a link with a test-only 2-second expiry then fails; clock-offset signing test; e2e for the dialogs at three widths; axe; a check that no link is logged or stored.
 
+**Status: complete.** Differences from the plan above: see [D-46](open-questions.md#decisions-made-on-the-owners-behalf) (the fixture rejects a made-up session token, so the token cases are component tests; the e2e covers the dialog, the viewer, folders and selection at three widths in two engines).
+
 **Exit check (demo):** create a link, open it in a private window to download, wait out a short test expiry and show it fail; connect with a session token and show longer choices disabled with the reason.
 
 **AGENTS.md commands landing:** none new.

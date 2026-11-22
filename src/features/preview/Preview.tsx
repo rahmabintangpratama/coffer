@@ -1,4 +1,4 @@
-import { ArrowLeft, ChevronLeft, ChevronRight, Download, Info, Link2, SkipBack, SkipForward } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Download, Info, Link2, Share2, SkipBack, SkipForward } from "lucide-react";
 import { type KeyboardEvent, lazy, Suspense } from "react";
 import { ActionMenu } from "@/components/ActionMenu";
 import { Button } from "@/components/Button";
@@ -37,6 +37,7 @@ export interface PreviewProps {
   onDownload: (file: FileItem) => void;
   onDetails: (file: FileItem) => void;
   onCopyKey: (file: FileItem) => void;
+  onShare: (file: FileItem) => void;
 }
 
 function Body({ connection, file, onSwipe, onDownload }: { connection: ConnectionSummary; file: FileItem; onSwipe: (direction: 1 | -1) => void; onDownload: () => void }) {
@@ -67,7 +68,7 @@ function Body({ connection, file, onSwipe, onDownload }: { connection: Connectio
  * and by the menu; the position is announced. It is a dialog named "Preview of
  * {name}"; closing returns focus to the row.
  */
-export function Preview({ connection, files, index, onClose, onClosed, onStep, onDownload, onDetails, onCopyKey }: PreviewProps) {
+export function Preview({ connection, files, index, onClose, onClosed, onStep, onDownload, onDetails, onCopyKey, onShare }: PreviewProps) {
   const file = files[index];
   if (!file) return null;
 
@@ -88,6 +89,7 @@ export function Preview({ connection, files, index, onClose, onClosed, onStep, o
         <h1 className="min-w-0 flex-1 truncate text-md font-semibold" title={file.name}>{file.name}</h1>
         <p role="status" className="shrink-0 text-sm text-(--cf-color-inverse-muted)">{t("pv.pos", { position: index + 1, total: files.length })}</p>
         <Button variant="ghost" iconOnly aria-label={t("act.download")} icon={<Download aria-hidden="true" className="size-5" />} onClick={() => { onDownload(file); }} />
+        <Button variant="ghost" iconOnly aria-label={t("act.share")} icon={<Share2 aria-hidden="true" className="size-5" />} onClick={() => { onShare(file); }} />
         <Button variant="ghost" iconOnly aria-label={t("act.details")} icon={<Info aria-hidden="true" className="size-5" />} onClick={() => { onDetails(file); }} />
         <ActionMenu
           component="ContextMenu"

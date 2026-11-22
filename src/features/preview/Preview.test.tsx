@@ -44,7 +44,7 @@ afterEach(() => {
 
 function setup(files: FileItem[], index = 0, over: Partial<PreviewProps> = {}) {
   const props: PreviewProps = {
-    connection: loopback, files, index, onClose: vi.fn(), onStep: vi.fn(), onDownload: vi.fn(), onDetails: vi.fn(), onCopyKey: vi.fn(), ...over,
+    connection: loopback, files, index, onClose: vi.fn(), onStep: vi.fn(), onDownload: vi.fn(), onDetails: vi.fn(), onCopyKey: vi.fn(), onShare: vi.fn(), ...over,
   };
   render(<Preview {...props} />);
   return props;

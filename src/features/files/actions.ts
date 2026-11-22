@@ -1,4 +1,4 @@
-import { Copy, Download, Eye, FolderInput, Info, Link2, Pencil, Trash2 } from "lucide-react";
+import { Copy, Download, Eye, FolderInput, Info, Link2, Pencil, Share2, Trash2 } from "lucide-react";
 import { createElement } from "react";
 import type { MenuGroup } from "@/components/ActionMenu";
 import { t } from "@/lib/i18n";
@@ -9,6 +9,8 @@ export interface ActionHandlers {
   download: (items: Item[]) => void;
   details: (item: Item) => void;
   copyKey: (item: Item) => void;
+  /** One file only; a folder's menu shows it disabled (AC-60.4). */
+  share: (item: Item) => void;
   rename: (item: Item) => void;
   makeCopy: (item: Item) => void;
   move: (items: Item[]) => void;
@@ -36,16 +38,23 @@ export function actionsFor(item: Item, handlers: ActionHandlers, readOnly = fals
       { id: "move", label: t("act.moveTo"), icon: icon(FolderInput), ...write(false), onSelect: () => { handlers.move([item]); } },
     ],
   };
+  const share = (disabledReason?: string) => ({
+    id: "share",
+    label: t("act.share"),
+    icon: icon(Share2),
+    ...(disabledReason === undefined ? { onSelect: () => { handlers.share(item); } } : { disabled: true, reason: disabledReason, onSelect: () => undefined }),
+  });
   const remove: MenuGroup[] = handlers.trash
     ? [{ id: "remove", actions: [{ id: "trash", label: t("act.trash"), icon: icon(Trash2), ...write(false), onSelect: () => { handlers.trash?.([item]); } }] }]
     : [];
-  if (item.kind === "folder") return [organize, ...remove];
+  if (item.kind === "folder") return [{ id: "share", actions: [share(t("share.reason.folder"))] }, organize, ...remove];
   return [
     {
       id: "file",
       actions: [
         { id: "preview", label: t("act.preview"), icon: icon(Eye), onSelect: () => { handlers.preview(item); } },
         { id: "download", label: t("act.download"), icon: icon(Download), onSelect: () => { handlers.download([item]); } },
+        share(),
       ],
     },
     organize,

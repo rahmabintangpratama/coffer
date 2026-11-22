@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { Download, FolderInput, FolderPlus, Trash2 } from "lucide-react";
+import { Download, FolderInput, FolderPlus, Share2, Trash2 } from "lucide-react";
 import { type DragEvent, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { Banner } from "@/components/Banner";
@@ -12,6 +12,7 @@ import { t } from "@/lib/i18n";
 import type { AppError } from "@/lib/s3/errors";
 import type { ConnectionSummary, FileItem, FolderItem, Settings } from "@/lib/types";
 import { useOperationDialogs, useTrashAction } from "@/features/operations";
+import { useShareAction } from "@/features/share";
 import { candidatesFromDrop, useTransfers, useUpload } from "@/features/transfers";
 import { actionsFor, type ActionHandlers } from "./actions";
 import { Breadcrumb } from "./Breadcrumb";
@@ -131,6 +132,7 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
   const runHooks = useMemo(() => ({ notify, onChanged: reload }), [notify, reload]);
   const { rename, copy: makeCopy, move, dialogs: operationDialogs } = useOperationDialogs({ connection, folderPrefix: root + relative, folderName: folderLabel, root, hooks: runHooks });
   const { trash, dialog: trashDialog } = useTrashAction({ connection, root, hooks: runHooks, confirm: settings.confirmTrash });
+  const { share, dialog: shareDialog } = useShareAction({ connection, notify });
   const readOnly = !writable;
   // Nothing in the trash is trashed again (AC-36.5): inside it Files offers no Move to trash.
   const inTrash = (root + relative).startsWith(`${root}.coffer-trash/`);
@@ -149,6 +151,7 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
       copyKey: (item) => {
         void navigator.clipboard.writeText(item.key).then(() => { notify(t("toast.copied")); });
       },
+      share: (item) => { if (item.kind === "file") share({ key: item.key, name: item.name }); },
       rename: (item) => { rename({ key: item.key, name: item.name, kind: item.kind }); },
       makeCopy: (item) => { if (item.kind === "file") makeCopy({ key: item.key, name: item.name, kind: "file" }); },
       // A menu opened on a selected item moves the whole selection, like Download.
@@ -170,7 +173,7 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
             },
           }),
     }),
-    [connection, visible, notify, rename, makeCopy, move, trash, inTrash],
+    [connection, visible, notify, rename, makeCopy, move, trash, share, inTrash],
   );
 
   // The selection bar is drawn by the app bar; it is told what is selected and which actions apply (AC-30.3).
@@ -178,6 +181,7 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
     const onlyFiles = selected.every((item) => item.kind === "file");
     setSelection(selected.length, [
       { id: "download", label: t("act.download"), icon: <Download aria-hidden="true" className="size-5" />, disabled: !onlyFiles, onSelect: () => { handlers.download(selected); } },
+      { id: "share", label: t("act.share"), icon: <Share2 aria-hidden="true" className="size-5" />, disabled: selected.length !== 1 || !onlyFiles, onSelect: () => { { const only = selected[0]; if (only) handlers.share(only); }; } },
       { id: "move", label: t("act.move"), icon: <FolderInput aria-hidden="true" className="size-5" />, disabled: readOnly, onSelect: () => { handlers.move(selected); } },
       ...(handlers.trash ? [{ id: "trash", label: t("act.trash"), icon: <Trash2 aria-hidden="true" className="size-5" />, disabled: readOnly, onSelect: () => { handlers.trash?.(selected); } }] : []),
     ]);
@@ -316,6 +320,7 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
       {conflictDialog}
       {operationDialogs}
       {trashDialog}
+      {shareDialog}
       {previewIndex >= 0 && (
         <Suspense fallback={null}>
           <Preview
@@ -331,6 +336,7 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
             onDownload={(file) => { void downloadItems(connection, [file], notify); }}
             onDetails={(file) => { setDetailsKey(file.key); }}
             onCopyKey={handlers.copyKey}
+            onShare={(file) => { handlers.share(file); }}
           />
         </Suspense>
       )}

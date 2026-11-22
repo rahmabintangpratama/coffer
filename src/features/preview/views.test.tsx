@@ -32,7 +32,7 @@ const file = (name: string, fileKind: FileItem["fileKind"], size = 100): FileIte
 const enc = (text: string) => new TextEncoder().encode(text);
 
 function setup(item: FileItem, over: Partial<PreviewProps> = {}) {
-  const props: PreviewProps = { connection, files: [item], index: 0, onClose: vi.fn(), onStep: vi.fn(), onDownload: vi.fn(), onDetails: vi.fn(), onCopyKey: vi.fn(), ...over };
+  const props: PreviewProps = { connection, files: [item], index: 0, onClose: vi.fn(), onStep: vi.fn(), onDownload: vi.fn(), onDetails: vi.fn(), onCopyKey: vi.fn(), onShare: vi.fn(), ...over };
   render(<Preview {...props} />);
   return props;
 }
@@ -191,7 +191,7 @@ describe("FR-53 PDF", () => {
   it("releases the document when the viewer closes", async () => {
     getDocument.mockReturnValue({ promise: Promise.resolve(pdfDocument(1)), destroy });
     readObject.mockResolvedValue(enc("%PDF-1.4"));
-    const { unmount } = render(<Preview connection={connection} files={[file("doc.pdf", "pdf")]} index={0} onClose={vi.fn()} onStep={vi.fn()} onDownload={vi.fn()} onDetails={vi.fn()} onCopyKey={vi.fn()} />);
+    const { unmount } = render(<Preview connection={connection} files={[file("doc.pdf", "pdf")]} index={0} onClose={vi.fn()} onStep={vi.fn()} onDownload={vi.fn()} onDetails={vi.fn()} onCopyKey={vi.fn()} onShare={vi.fn()} />);
     await screen.findByText("Page 1 of 1");
     unmount();
     expect(destroy).toHaveBeenCalled();

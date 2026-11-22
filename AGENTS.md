@@ -73,7 +73,7 @@ Package manager: **pnpm** 12 with Node 22 only (`engines` is `>=22 <23` and `eng
 
 ## Security rules (non-negotiable)
 
-- Never log, display, store unencrypted or put in a URL: access keys, secret keys, session tokens, passphrases, derived keys or presigned URLs.
+- Never log, display, store unencrypted or put in a URL: access keys, secret keys, session tokens, passphrases, derived keys or presigned URLs. The one exception is the Share link dialog, which shows the link it just made, once, from component state (FR-60, D-46).
 - Never render bucket data (names, contents, metadata) as HTML. HTML is shown as source, SVG as `<img>`, Markdown sanitized.
 - No third-party scripts, fonts, analytics, CDNs or error-reporting SDKs. Self-host fonts.
 - Keep the CSP in `public/_headers` valid; do not add inline scripts, `unsafe-eval` or new origins to loosen it.

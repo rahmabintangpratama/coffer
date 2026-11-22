@@ -21,7 +21,7 @@ import { Shell } from "./Shell";
 const FilesRoute = lazy(() => import("./screens/FilesRoute"));
 const TrashRoute = lazy(() => import("./screens/TrashRoute"));
 const HomeScreen = lazy(() => import("@/features/files").then((module) => ({ default: module.HomeScreen })));
-const filesGroups = ["files", "det", "filter", "search", "sel", "kind", "col", "view", "sort", "row", "menu", "home", "type", "dlg", "conf", "upl", "drop", "pv", "op", "ro"] as const;
+const filesGroups = ["files", "det", "filter", "search", "sel", "kind", "col", "view", "sort", "row", "menu", "home", "type", "dlg", "conf", "upl", "drop", "pv", "op", "ro", "share"] as const;
 const trashGroups = ["trash", "del", "sel", "conf", "op", "ro"] as const;
 
 // The upload queue reads how many parts may be in flight from the settings at the moment each part starts.
