@@ -1,4 +1,5 @@
-import type { RequestPool, S3Handle } from "@/lib/s3";
+import type { RequestPool } from "@/lib/s3";
+import { LockedError, vault } from "@/lib/storage/vault";
 import type { UploadBody } from "@/lib/s3/upload";
 import type { ConnectionSummary } from "@/lib/types";
 import type { PlannedUpload } from "./plan";
@@ -57,26 +58,36 @@ async function run(id: string, job: Job): Promise<void> {
       import("@/lib/storage/locks"),
     ]);
     const shared = (pool ??= new s3.RequestPool(() => getConcurrency()));
-    const client: S3Handle = s3.clientFor(job.connection);
-    // The lock is taken before the record is written and kept until the upload ends, so another tab never sees a record without it (D-36).
-    await withUploadLock(id, () =>
-      s3.uploadObject({
-        client,
-        bucket: job.connection.bucket ?? "",
-        key: job.key,
-        body: job.file,
-        pool: shared,
-        store: uploadStore,
-        connection: { id: job.connection.id, endpoint: job.connection.endpoint },
-        signal: controller.signal,
-        id,
-        onProgress: (bytesDone) => { useTransfers.getState().patch(id, { bytesDone }); },
-      }),
-    );
+    // The upload runs on a lease: a private copy of the keys and its own client, so a lock lets it finish (C-27) and
+    // "Stop transfers and lock" aborts it. The lock below is taken before the record is written and kept until the upload ends,
+    // so another tab never sees a record without it (D-36).
+    await s3.withLeasedClient(job.connection, (client, lease) => {
+      const stop = () => { controller.abort(); };
+      lease.signal.addEventListener("abort", stop, { once: true });
+      return withUploadLock(id, () =>
+        s3.uploadObject({
+          client,
+          bucket: job.connection.bucket ?? "",
+          key: job.key,
+          body: job.file,
+          pool: shared,
+          store: uploadStore,
+          connection: { id: job.connection.id, endpoint: job.connection.endpoint },
+          signal: controller.signal,
+          id,
+          onProgress: (bytesDone) => { useTransfers.getState().patch(id, { bytesDone }); },
+        }),
+      ).finally(() => { lease.signal.removeEventListener("abort", stop); });
+    });
     useTransfers.getState().patch(id, { status: "done", bytesDone: job.file.size });
     jobs.delete(id);
     finishBatch(job.batch, true);
   } catch (error) {
+    if (error instanceof LockedError) {
+      // Locked between the check and the lease: wait for the unlock like any queued upload.
+      useTransfers.getState().patch(id, { status: "waiting", bytesDone: 0 });
+      return;
+    }
     const code = typeof error === "object" && error !== null && "code" in error ? String(error.code) : "unknown";
     if (controller.signal.aborted || code === "aborted") {
       // A cancelled upload leaves the panel, with nothing left at the provider.
@@ -100,6 +111,11 @@ function pump(): void {
     if (transfer.status !== "queued") continue;
     const job = jobs.get(transfer.id);
     if (!job || job.controller) continue;
+    // No keys while locked: the upload waits for the unlock and holds no lease until then (AC-9.6).
+    if (!vault.has(job.connection.id)) {
+      useTransfers.getState().patch(transfer.id, { status: "waiting" });
+      continue;
+    }
     active += 1;
     // Mark it before the async start so the next loop turn does not pick it again.
     useTransfers.getState().patch(transfer.id, { status: "running" });
@@ -150,3 +166,10 @@ export function retryTransfer(id: string): void {
   }
   pump();
 }
+
+// An unlock lets the waiting uploads go (AC-9.5). They keep their place in the queue.
+vault.onUnlock(() => {
+  const { transfers, patch } = useTransfers.getState();
+  for (const transfer of transfers) if (transfer.status === "waiting") patch(transfer.id, { status: "queued" });
+  pump();
+});

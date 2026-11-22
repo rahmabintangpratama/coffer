@@ -22,7 +22,7 @@ export { decodeS3Key, fileKindOf, isHiddenName, keyByteLength, MAX_KEY_BYTES, na
 export { listPage, PAGE_SIZE, type ListPage, type ListPageOptions } from "./list";
 export type { S3Client as S3Handle } from "@aws-sdk/client-s3";
 export { headObject, type ObjectHead } from "./head";
-export { clientFor } from "./connection-client";
+export { clientFor, withLeasedClient } from "./connection-client";
 export { existingKeys, HEAD_LIMIT, putFolder } from "./conflicts";
 export { folderNameProblem, keepBothKey, keyProblem, type KeyProblem } from "./keys";
 export { RequestPool } from "./pool";

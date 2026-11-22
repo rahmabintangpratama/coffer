@@ -23,12 +23,15 @@ const nameOf = (key: string) => {
   return trimmed.slice(trimmed.lastIndexOf("/") + 1);
 };
 
+const isStop = (error: unknown): boolean => typeof error === "object" && error !== null && ((error as { name?: unknown }).name === "AbortError" || (error as { code?: unknown }).code === "aborted");
+
 // Two operations on one bucket never overlap: they run one after another (technical-spec 8, Concurrency).
 let queue: Promise<unknown> = Promise.resolve();
 
 /** Run `job` after the jobs queued before it; a failure shows the error toast and does not stop the queue. */
 export function enqueue(job: () => Promise<void>, hooks: RunHooks): Promise<void> {
-  const next = queue.then(job).catch(() => { hooks.notify(t("op.error")); });
+  // A transfer stopped by "Stop transfers and lock" or Forget is not an error: the entry stays in the journal as interrupted.
+  const next = queue.then(job).catch((error: unknown) => { if (!isStop(error)) hooks.notify(t("op.error")); });
   queue = next;
   return next;
 }
@@ -145,12 +148,19 @@ async function execute(connection: ConnectionSummary, entry: JournalEntry): Prom
   transfers.setOperation({ id: entry.id, name, title, done: entry.done, total: entry.total });
   let final: JournalEntry;
   try {
-    final = await s3.runOperation({
-      client: s3.clientFor(connection),
-      journal: journalStore,
-      entry,
-      onProgress: (progress) => { useTransfers.getState().setOperation({ id: progress.id, name, title, done: progress.done, total: progress.total }); },
-    });
+    // On a lease, so a lock lets it finish (C-27); it waits for the unlock when it was queued behind a running one.
+    final = await s3.withLeasedClient(
+      connection,
+      (client, lease) =>
+        s3.runOperation({
+          client,
+          journal: journalStore,
+          entry,
+          signal: lease.signal,
+          onProgress: (progress) => { useTransfers.getState().setOperation({ id: progress.id, name, title, done: progress.done, total: progress.total }); },
+        }),
+      { wait: true },
+    );
   } finally {
     useTransfers.getState().removeOperation(entry.id);
   }

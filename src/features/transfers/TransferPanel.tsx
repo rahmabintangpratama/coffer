@@ -32,9 +32,11 @@ function ProgressRow({ transfer }: { transfer: Transfer }) {
   const text =
     transfer.status === "queued"
       ? t("upl.row.queued")
-      : transfer.status === "done"
-        ? t("upl.row.done")
-        : t("upl.progress", { percent, done: formatBytes(transfer.bytesDone), total: formatBytes(transfer.size) });
+      : transfer.status === "waiting"
+        ? t("upl.waitingUnlock")
+        : transfer.status === "done"
+          ? t("upl.row.done")
+          : t("upl.progress", { percent, done: formatBytes(transfer.bytesDone), total: formatBytes(transfer.size) });
   const failed = transfer.status === "failed";
   return (
     <li data-component="TransferRow" data-status={transfer.status} className="flex items-start gap-3 py-2">
@@ -82,7 +84,7 @@ export function TransferPanel() {
   const { transfers, interrupted, operations, collapsed, setCollapsed, clearDone, dismissInterrupted } = useTransfers();
   if (transfers.length === 0 && interrupted.length === 0 && operations.length === 0) return null;
 
-  const busy = transfers.filter((transfer) => transfer.status === "queued" || transfer.status === "running").length;
+  const busy = transfers.filter((transfer) => transfer.status === "queued" || transfer.status === "waiting" || transfer.status === "running").length;
   const failed = transfers.filter((transfer) => transfer.status === "failed").length;
   const done = transfers.filter((transfer) => transfer.status === "done").length;
   const first = operations[0];

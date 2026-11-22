@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type TransferStatus = "queued" | "running" | "done" | "failed";
+export type TransferStatus = "queued" | "waiting" | "running" | "done" | "failed";
 
 export interface Transfer {
   id: string;
