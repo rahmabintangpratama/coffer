@@ -63,8 +63,15 @@ function summaryOf(step: KeyedStep, result: ConnectedResult, bucket: string): Co
  * shows the secret fields empty (decision D-27). It is a lazy chunk: Welcome does not
  * load the provider list, the form or the S3 client (D-40).
  */
-export default function ConnectFlow({ onBack, onConnected }: { onBack: () => void; onConnected: (connection: ConnectionSummary) => void }) {
-  const [step, setStep] = useState<Step>({ name: "provider" });
+/** The form of a connection whose keys were lost: everything but the keys, so only they are typed again. */
+export interface ResumeForm {
+  providerId: string;
+  values: Record<string, string>;
+  bucket: string;
+}
+
+export default function ConnectFlow({ onBack, onConnected, resume }: { onBack: () => void; onConnected: (connection: ConnectionSummary) => void; resume?: ResumeForm | undefined }) {
+  const [step, setStep] = useState<Step>(() => (resume ? { name: "credentials", preset: getPreset(resume.providerId), values: resume.values, bucket: resume.bucket } : { name: "provider" }));
   // The vault entry of an attempt that did not finish is dropped when the flow ends.
   const pendingId = useRef<string | null>(null);
 
@@ -72,6 +79,21 @@ export default function ConnectFlow({ onBack, onConnected }: { onBack: () => voi
     () => () => {
       if (pendingId.current !== null) vault.forget(pendingId.current);
     },
+    [],
+  );
+
+  // Another tab (or a lock here) dropped the keys while a connection was being tested or offered for saving: back to the form,
+  // with everything but the keys kept. The form itself clears its own secret fields when it hears the same lock.
+  useEffect(
+    () =>
+      vault.onLock(() => {
+        pendingId.current = null;
+        setStep((current) => {
+          if (current.name === "connecting" || current.name === "pick") return { name: "credentials", preset: current.preset, values: current.values, bucket: current.typedBucket };
+          if (current.name === "save") return { name: "credentials", preset: getPreset(current.summary.providerId), values: current.summary.fields, bucket: current.summary.bucket ?? "" };
+          return current;
+        });
+      }),
     [],
   );
 

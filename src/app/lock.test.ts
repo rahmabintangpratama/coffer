@@ -9,7 +9,11 @@ const posted: unknown[] = [];
 vi.mock("@/lib/storage/tabsync", () => ({ tabSync: () => ({ post: (message: unknown) => { posted.push(message); }, subscribe: () => () => undefined }) }));
 
 const storage = new Map<string, string>();
-beforeEach(() => {
+const saved1 = { id: "c1", name: "n", providerId: "custom", fields: {}, endpoint: "http://x", region: "r", addressingStyle: "path" as const, access: "readWrite" as const, createdAt: "2026-01-01T00:00:00Z" };
+
+beforeEach(async () => {
+  const { useSession } = await import("./session");
+  useSession.setState({ connection: saved1, saved: [saved1], locked: null, adding: false, resuming: null });
   posted.length = 0;
   storage.clear();
   const local = { getItem: (key: string) => storage.get(key) ?? null, setItem: (key: string, value: string) => { storage.set(key, value); }, removeItem: (key: string) => { storage.delete(key); }, length: 0, key: () => null, clear: () => { storage.clear(); } };
@@ -57,6 +61,62 @@ describe("lockNow", () => {
     useSettings.setState({ autoLockMinutes: 30 });
     lock.lockNow("auto");
     expect(useSession.getState().locked).toEqual({ reason: "auto", minutes: 30 });
+  });
+});
+
+describe("AC-9.8 what the lock shows", () => {
+  const memory = { id: "m1", name: "n", providerId: "custom", fields: {}, endpoint: "http://x", region: "r", addressingStyle: "path" as const, access: "readWrite" as const, createdAt: "2026-01-01T00:00:00Z" };
+
+  it("a connection that was only in memory gets its own screen state, with the connection to enter again", async () => {
+    const { lock, useSession } = await modules();
+    useSession.setState({ locked: null, saved: [], connection: memory });
+    lock.applyTabMessage({ type: "lock", stop: false });
+    expect(useSession.getState().locked).toEqual({ reason: "remote", memoryOnly: memory });
+  });
+
+  it("a saved connection gets the ordinary Unlock", async () => {
+    const { lock, useSession } = await modules();
+    useSession.setState({ locked: null, saved: [memory], connection: memory });
+    lock.applyTabMessage({ type: "lock", stop: false });
+    expect(useSession.getState().locked).toEqual({ reason: "remote" });
+  });
+
+  it("a tab still in onboarding drops its keys and shows no Locked screen; its form clears itself", async () => {
+    const { lock, useSession } = await modules();
+    useSession.setState({ locked: null, saved: [], connection: null });
+    vault.put("pending", { accessKeyId: "AK", secretAccessKey: "SK" });
+    const heard = vi.fn();
+    const off = vault.onLock(heard);
+    lock.applyTabMessage({ type: "lock", stop: false });
+    off();
+    expect(useSession.getState().locked).toBeNull();
+    expect(heard).toHaveBeenCalledTimes(1);
+    await expect(vault.credentialsFor("pending")).rejects.toThrow("locked");
+  });
+
+  it("a tab that is already locked stays as it was", async () => {
+    const { lock, useSession } = await modules();
+    useSession.setState({ locked: { reason: "start" }, saved: [], connection: null });
+    lock.applyTabMessage({ type: "lock", stop: false });
+    expect(useSession.getState().locked).toEqual({ reason: "start" });
+  });
+
+  it("a tab adding a connection keeps its onboarding open under the lock", async () => {
+    const { lock, useSession } = await modules();
+    useSession.setState({ locked: null, saved: [memory], connection: memory, adding: true });
+    lock.applyTabMessage({ type: "lock", stop: false });
+    expect(useSession.getState()).toMatchObject({ adding: true, locked: { reason: "remote" } });
+    useSession.getState().stopAdding();
+    expect(useSession.getState().adding).toBe(false);
+  });
+
+  it("Enter the keys again opens onboarding for that connection, and ending it clears that", async () => {
+    const { useSession } = await modules();
+    useSession.setState({ locked: { reason: "remote", memoryOnly: memory }, connection: memory, adding: false, resuming: null });
+    useSession.getState().startReenter(memory);
+    expect(useSession.getState()).toMatchObject({ adding: true, resuming: { id: "m1" } });
+    useSession.getState().stopAdding();
+    expect(useSession.getState()).toMatchObject({ adding: false, resuming: null, locked: { memoryOnly: { id: "m1" } } });
   });
 });
 

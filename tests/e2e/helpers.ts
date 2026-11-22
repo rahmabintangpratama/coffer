@@ -128,17 +128,23 @@ export async function goToRoute(page: Page, route: string): Promise<void> {
   }, `#${route}`);
 }
 
-/** Contrast is measured on the final colors, so wait for the open animation to end first. */
+/**
+ * Contrast is measured on the final colors, so wait for the open animation to end first. A cancelled animation (a sheet that
+ * was rebuilt under it) rejects `finished`; it is over either way, and the animation that replaced it is waited for in the next round.
+ */
 async function settled(page: Page): Promise<void> {
-  await page.evaluate(() =>
-    Promise.all(
-      document
+  await page.evaluate(async () => {
+    // An animation that a dialog's opening starts begins on the next frame, so look after two of them.
+    await new Promise<void>((resolve) => { requestAnimationFrame(() => { requestAnimationFrame(() => { resolve(); }); }); });
+    for (let round = 0; round < 5; round += 1) {
+      const running = document
         .getAnimations()
         // A spinner repeats forever and never finishes.
-        .filter((animation) => animation.effect?.getComputedTiming().iterations !== Infinity)
-        .map((animation) => animation.finished),
-    ),
-  );
+        .filter((animation) => animation.effect?.getComputedTiming().iterations !== Infinity && animation.playState !== "finished");
+      if (running.length === 0) return;
+      await Promise.all(running.map((animation) => animation.finished.catch(() => undefined)));
+    }
+  });
 }
 
 export async function axeViolations(page: Page) {

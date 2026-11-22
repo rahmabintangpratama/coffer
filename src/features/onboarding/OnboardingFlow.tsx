@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import { CopyBoundary } from "@/components/CopyBoundary";
 import { loadCopyGroups, t } from "@/lib/i18n";
 import type { ConnectionSummary } from "@/lib/types";
+import type { ResumeForm } from "./ConnectFlow";
 import { WelcomeScreen } from "./WelcomeScreen";
 
 // The provider list, the form and the S3 client load when "Connect a bucket" is pressed, and are fetched
@@ -39,7 +40,7 @@ const blank = <div aria-busy="true" className="min-h-dvh" />;
  * Welcome to a tested connection (FR-1 to FR-7). Welcome is all this chunk draws; the steps after it
  * are `ConnectFlow`, a lazy chunk.
  */
-export function OnboardingFlow({ onConnected, adding = false, onCancel }: { onConnected: (connection: ConnectionSummary) => void; adding?: boolean; onCancel?: () => void }) {
+export function OnboardingFlow({ onConnected, adding = false, resume, onCancel }: { onConnected: (connection: ConnectionSummary) => void; adding?: boolean; resume?: ResumeForm; onCancel?: () => void }) {
   // "Add connection" starts at the provider list and goes back to the app, not to Welcome.
   const [connecting, setConnecting] = useState(adding);
   useEffect(() => whenIdle(prefetchConnect), []);
@@ -50,7 +51,7 @@ export function OnboardingFlow({ onConnected, adding = false, onCancel }: { onCo
         {connecting ? (
           <CopyBoundary groups={connectGroups} fallback={blank} errorFallback={<LoadFailed />}>
             <Suspense fallback={blank}>
-              <ConnectFlow onBack={() => { if (adding && onCancel) onCancel(); else setConnecting(false); }} onConnected={onConnected} />
+              <ConnectFlow resume={resume} onBack={() => { if (adding && onCancel) onCancel(); else setConnecting(false); }} onConnected={onConnected} />
             </Suspense>
           </CopyBoundary>
         ) : (

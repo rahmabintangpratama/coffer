@@ -58,6 +58,18 @@ export function CredentialsScreen({ preset, initialValues, initialBucket = "", o
   const [pasteNotes, setPasteNotes] = useState<readonly string[]>([]);
   const [problems, setProblems] = useState<readonly FieldProblem[]>([]);
 
+  // A lock (here, or in another tab) drops the keys: the secret fields and any pasted text are cleared, and everything else
+  // (provider, endpoint, region, bucket, start folder) stays, so only the keys have to be typed again.
+  useEffect(
+    () =>
+      vault.onLock(() => {
+        setValues((current) => withoutSecrets(preset, current));
+        setPasteText("");
+        setDetected([]);
+      }),
+    [preset],
+  );
+
   const set = (id: string, value: string) => {
     setValues((current) => ({ ...current, [id]: value }));
   };

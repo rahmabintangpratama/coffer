@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -20,6 +20,34 @@ const form = () => screen.getByRole("form", { name: "Connection details" });
 
 afterEach(() => {
   vault.lock();
+});
+
+describe("AC-9.8 a lock drops the keys typed in the form", () => {
+  it("clears the secret fields and the pasted text, and keeps provider, endpoint, bucket and start folder", async () => {
+    setup("custom");
+    await userEvent.type(field("Endpoint URL"), "https://s3.example-provider.test");
+    await userEvent.type(field("Access Key ID"), "example-key-id");
+    await userEvent.type(field("Secret Access Key"), "example-secret-value");
+    await userEvent.type(field("Bucket"), "photos");
+    await userEvent.click(screen.getByText("Advanced options"));
+    await userEvent.type(field("Session token"), "example-session-token");
+    await userEvent.type(field("Start in folder"), "team/");
+    act(() => { vault.lock(); });
+    expect(field("Access Key ID")).toHaveValue("");
+    expect(field("Secret Access Key")).toHaveValue("");
+    expect(field("Session token")).toHaveValue("");
+    expect(field("Endpoint URL")).toHaveValue("https://s3.example-provider.test");
+    expect(field("Bucket")).toHaveValue("photos");
+    expect(field("Start in folder")).toHaveValue("team/");
+  });
+
+  it("clears the keys of a provider with a publishable key too", async () => {
+    setup("supabase");
+    await userEvent.click(screen.getByText("Session token", { selector: "label" }));
+    await userEvent.type(screen.getByLabelText("Publishable key"), "example-publishable-key");
+    act(() => { vault.lock(); });
+    expect(screen.getByLabelText("Publishable key")).toHaveValue("");
+  });
 });
 
 describe("CredentialsScreen: the form (O30 to O33)", () => {

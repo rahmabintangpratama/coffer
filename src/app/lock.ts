@@ -16,12 +16,18 @@ import { useToasts } from "./toast";
 /** Drop what the keys opened in this tab: the vault's key and keys, the cached listings, and the screen. */
 function applyLock(reason: "manual" | "auto" | "remote"): void {
   const minutes = useSettings.getState().autoLockMinutes;
+  const { connection, locked, saved } = useSession.getState();
+  // A connection that was never saved cannot be unlocked: say so on its own screen, with a way back to its form.
+  const memoryOnly = connection !== null && !saved.some((entry) => entry.id === connection.id) ? connection : undefined;
   vault.lock();
   queryClient.clear();
   // Names and keys of bucket objects held by the screens go with the keys; the interrupted list is read again from the journal.
   clearInterruptedOperations();
   useToasts.setState({ toasts: [] });
-  useSession.getState().lock({ reason, ...(reason === "auto" ? { minutes } : {}) });
+  // Already locked, or still in onboarding: the keys are gone and that is all. A form clears its own secret fields
+  // (it hears the vault's lock), and keeps provider, endpoint, region, bucket and start folder.
+  if (locked !== null || connection === null) return;
+  useSession.getState().lock({ reason, ...(reason === "auto" ? { minutes } : {}), ...(memoryOnly ? { memoryOnly } : {}) });
 }
 
 /** Lock this tab and tell the others. Running transfers keep their leases and finish (C-27). */

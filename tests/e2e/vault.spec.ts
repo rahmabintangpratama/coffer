@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { CreateBucketCommand, ListMultipartUploadsCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { expect, type Page, test } from "@playwright/test";
 import { createClient } from "../integration/client";
-import { admin } from "../integration/config";
+import { admin, s3Fixture } from "../integration/config";
 import { allowOrigin, E2E_BUCKET } from "./fixture";
 import { axeViolations, connectCustom, enterApp, fillCustomForm, goToRoute } from "./helpers";
 
@@ -279,6 +279,73 @@ test.describe("lock and forget reach every tab (C-27)", () => {
     await context.close();
   });
 
+  test("AC-9.8 a tab with a memory-only connection gets its own screen, and its form comes back with the keys empty", async ({ browser }) => {
+    const context = await browser.newContext();
+    const saved = await context.newPage();
+    await enterApp(saved, "/files", { passphrase: PASS });
+    // The second tab uses another connection that it does not save.
+    const memory = await context.newPage();
+    await memory.goto("/");
+    await expect(unlockHeading(memory)).toBeVisible();
+    await memory.getByRole("button", { name: "Use a different connection" }).click();
+    await memory.getByRole("button", { name: "Other S3-compatible service" }).click();
+    await fillCustomForm(memory);
+    await memory.getByRole("button", { name: "Open bucket" }).click({ timeout: 30_000 });
+    await memory.getByRole("button", { name: "Not now" }).click();
+    await expect(memory.getByRole("navigation", { name: "Main navigation" })).toBeVisible({ timeout: 15_000 });
+
+    await lockFromSettings(saved);
+    await expect(lockedHeading(memory)).toBeVisible({ timeout: 2000 });
+    await expect(memory.getByText("Coffer was locked from another tab. This connection wasn’t saved, so enter its keys again.")).toBeVisible();
+    // Not the passphrase form: there is nothing saved for this connection to unlock.
+    await expect(memory.getByLabel("Passphrase")).toHaveCount(0);
+    expect(serious(await axeViolations(memory))).toEqual([]);
+
+    await memory.getByRole("button", { name: "Enter the keys again" }).click();
+    await expect(memory.getByRole("heading", { level: 1, name: /^Connect Other S3-compatible/ })).toBeVisible();
+    await expect(memory.getByLabel("Endpoint URL")).toHaveValue(s3Fixture.endpoint);
+    await expect(memory.getByLabel("Bucket", { exact: true })).toHaveValue(E2E_BUCKET);
+    await expect(memory.getByLabel("Access Key ID")).toHaveValue("");
+    await expect(memory.getByLabel("Secret Access Key")).toHaveValue("");
+    await memory.getByLabel("Access Key ID").fill(admin.accessKeyId);
+    await memory.getByLabel("Secret Access Key").fill(admin.secretAccessKey);
+    await memory.getByRole("button", { name: "Connect", exact: true }).click();
+    await memory.getByRole("button", { name: "Open bucket" }).click({ timeout: 30_000 });
+    await memory.getByRole("button", { name: "Not now" }).click();
+    await expect(memory.getByRole("navigation", { name: "Main navigation" })).toBeVisible({ timeout: 15_000 });
+    await context.close();
+  });
+
+  test("AC-9.8 a tab in the middle of onboarding loses only its secret fields", async ({ browser }) => {
+    const context = await browser.newContext();
+    const saved = await context.newPage();
+    await enterApp(saved, "/files", { passphrase: PASS });
+    const form = await context.newPage();
+    await form.goto("/");
+    await expect(unlockHeading(form)).toBeVisible();
+    await form.getByRole("button", { name: "Use a different connection" }).click();
+    await form.getByRole("button", { name: "Other S3-compatible service" }).click();
+    await form.getByLabel("Endpoint URL").fill(s3Fixture.endpoint);
+    await form.getByLabel("Access Key ID").fill(admin.accessKeyId);
+    await form.getByLabel("Secret Access Key").fill(admin.secretAccessKey);
+    await form.getByLabel("Bucket", { exact: true }).fill(E2E_BUCKET);
+    await form.getByText("Advanced options").click();
+    await form.getByLabel("Session token").fill("fake-session-token-for-tests");
+    await form.getByLabel("Start in folder").fill("team/");
+
+    await lockFromSettings(saved);
+    // The form stays where it is: no Locked screen, and the keys are gone from its fields.
+    await expect(form.getByLabel("Secret Access Key")).toHaveValue("", { timeout: 2000 });
+    await expect(form.getByLabel("Access Key ID")).toHaveValue("");
+    await expect(form.getByLabel("Session token")).toHaveValue("");
+    await expect(form.getByLabel("Endpoint URL")).toHaveValue(s3Fixture.endpoint);
+    await expect(form.getByLabel("Bucket", { exact: true })).toHaveValue(E2E_BUCKET);
+    await expect(form.getByLabel("Start in folder")).toHaveValue("team/");
+    await expect(lockedHeading(form)).toHaveCount(0);
+    expect(serious(await axeViolations(form))).toEqual([]);
+    await context.close();
+  });
+
   test("Stop transfers and lock in one tab stops the transfers of the other", async ({ browser }) => {
     test.setTimeout(120_000);
     const context = await browser.newContext();
@@ -436,9 +503,17 @@ test.describe("Show secret key (FR-102) and the switcher (FR-11)", () => {
     await enterApp(page, "/files", { passphrase: PASS });
     const compact = (testInfo.project.use.viewport?.width ?? 0) < 768;
     const openSwitcher = async () => {
-      if (compact) await page.getByRole("button", { name: "Open menu" }).click();
       await page.getByRole("button", { name: /^Switch connection:/ }).click();
     };
+    if (compact) {
+      // Below 768 px the switcher is the avatar at the end of the app bar (S37): a 44 px target, named with the connection and its lock state.
+      const avatar = page.getByRole("button", { name: /^Switch connection:/ });
+      await expect(avatar).toBeVisible();
+      const box = await avatar.boundingBox();
+      expect(box?.width).toBeGreaterThanOrEqual(44);
+      expect(box?.height).toBeGreaterThanOrEqual(44);
+      await expect(avatar).toHaveAccessibleName(/Other S3-compatible · coffer-e2e-app, Unlocked$/);
+    }
 
     await openSwitcher();
     const switcher = page.getByRole("dialog", { name: "Connections" });

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ConnectionTestRun } from "@/lib/s3";
@@ -33,6 +33,50 @@ beforeEach(() => {
 });
 afterEach(() => {
   vault.lock();
+});
+
+describe("AC-9.8 a lock while connecting", () => {
+  it("while the test runs, goes back to the form with everything but the keys kept", async () => {
+    mocks.runConnectionTest.mockImplementation(() => new Promise(() => undefined));
+    render(<OnboardingFlow onConnected={vi.fn()} />);
+    await fillCustom("photos");
+    await screen.findByRole("list", { name: "Connection checks" });
+    act(() => { vault.lock(); });
+    expect(await screen.findByRole("heading", { level: 1, name: /^Connect Other S3-compatible/ })).toBeInTheDocument();
+    expect(screen.getByLabelText("Endpoint URL")).toHaveValue("https://s3.example-provider.test");
+    expect(screen.getByLabelText("Bucket", { exact: true })).toHaveValue("photos");
+    expect(screen.getByLabelText("Access Key ID")).toHaveValue("");
+    expect(screen.getByLabelText("Secret Access Key")).toHaveValue("");
+  });
+
+  it("at the Save step, goes back to the form: the keys it would have saved are gone", async () => {
+    mocks.runConnectionTest.mockResolvedValue(passing());
+    render(<OnboardingFlow onConnected={vi.fn()} />);
+    await fillCustom("photos");
+    await userEvent.click(await screen.findByRole("button", { name: "Open bucket" }));
+    await screen.findByRole("heading", { name: "Save on this device?" });
+    act(() => { vault.lock(); });
+    expect(await screen.findByLabelText("Secret Access Key")).toHaveValue("");
+    expect(screen.getByLabelText("Bucket", { exact: true })).toHaveValue("photos");
+  });
+});
+
+describe("OnboardingFlow: entering the keys again for a connection that was not saved", () => {
+  it("opens at its form with the non-secret values kept, and reports the new connection", async () => {
+    mocks.runConnectionTest.mockResolvedValue(passing());
+    const onConnected = vi.fn<(connection: ConnectionSummary) => void>();
+    render(<OnboardingFlow adding onConnected={onConnected} resume={{ providerId: "custom", values: { endpoint: "https://s3.example-provider.test", prefix: "team/" }, bucket: "photos" }} />);
+    expect(screen.getByRole("heading", { level: 1, name: /^Connect Other S3-compatible/ })).toBeInTheDocument();
+    expect(screen.getByLabelText("Endpoint URL")).toHaveValue("https://s3.example-provider.test");
+    expect(screen.getByLabelText("Bucket", { exact: true })).toHaveValue("photos");
+    expect(screen.getByLabelText("Access Key ID")).toHaveValue("");
+    await userEvent.type(screen.getByLabelText("Access Key ID"), "example-key-id");
+    await userEvent.type(screen.getByLabelText("Secret Access Key"), "example-secret-value");
+    await userEvent.click(screen.getByRole("button", { name: "Connect" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Open bucket" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Not now" }));
+    expect(onConnected.mock.calls[0]?.[0]).toMatchObject({ bucket: "photos", endpoint: "https://s3.example-provider.test", fields: { prefix: "team/" } });
+  });
 });
 
 describe("OnboardingFlow", () => {

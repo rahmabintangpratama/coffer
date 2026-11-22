@@ -218,7 +218,14 @@
       "stop": "Stop transfers and lock",
       "transfers": "{count, plural, one {# transfer is still finishing in the background.} other {# transfers are still finishing in the background.}}",
       "manual": "You locked Coffer. Your files are safe. Enter your passphrase to continue.",
-      "elsewhere": "Coffer was locked in another tab. Enter your passphrase to continue."
+      "elsewhere": "Coffer was locked in another tab. Enter your passphrase to continue.",
+      "memory": {
+        "remote": "Coffer was locked from another tab. This connection wasn’t saved, so enter its keys again.",
+        "local": "Coffer was locked. This connection wasn’t saved, so enter its keys again.",
+        "cta": "Enter the keys again",
+        "unlock": "Unlock saved connections",
+        "kept": "The provider, endpoint and bucket are kept. Only the keys need to be typed again."
+      }
     },
     "paste": {
       "expiryIgnored": "Ignored the credential expiration because it isn’t a future time.",

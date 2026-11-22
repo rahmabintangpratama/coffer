@@ -9,6 +9,7 @@ const OnboardingFlow = lazy(() => import("@/features/onboarding").then((module) 
 const onboardingGroups = ["ob"] as const;
 // Unlock is its own small chunk: a device with saved connections opens on it, so it must not wait for the shell.
 const UnlockScreen = lazy(() => import("@/features/onboarding/UnlockScreen").then((module) => ({ default: module.UnlockScreen })));
+const LockedMemoryScreen = lazy(() => import("@/features/onboarding/LockedMemoryScreen").then((module) => ({ default: module.LockedMemoryScreen })));
 const unlockGroups = ["ob", "forget"] as const;
 // The connected app (shell, routes, query client, transfers) loads after the connection exists, not before the first paint.
 const ConnectedApp = lazy(() => import("./ConnectedApp"));
@@ -23,6 +24,7 @@ export function App() {
   const connection = useSession((state) => state.connection);
   const locked = useSession((state) => state.locked);
   const adding = useSession((state) => state.adding);
+  const resuming = useSession((state) => state.resuming);
 
   // Lock and Forget in another tab reach this one (FR-9, FR-10).
   useEffect(() => {
@@ -52,6 +54,7 @@ export function App() {
         <Suspense fallback={blank}>
           <OnboardingFlow
             adding={adding}
+            {...(resuming ? { resume: { providerId: resuming.providerId, values: resuming.fields, bucket: resuming.bucket ?? "" } } : {})}
             onCancel={session.stopAdding}
             onConnected={(summary) => {
               session.connect(summary);
@@ -59,6 +62,23 @@ export function App() {
               // The app lands on Files; a hash route, so nothing about the connection goes in the URL path.
               window.location.hash = `#${routes.files}`;
             }}
+          />
+        </Suspense>
+      </CopyBoundary>
+    );
+  }
+
+  if (locked?.memoryOnly) {
+    const session = useSession.getState();
+    const memory = locked.memoryOnly;
+    return (
+      <CopyBoundary groups={unlockGroups} fallback={blank} errorFallback={<LoadError />}>
+        <Suspense fallback={blank}>
+          <LockedMemoryScreen
+            connection={memory}
+            reason={locked.reason}
+            onReenter={() => { session.startReenter(memory); }}
+            onUnlockSaved={() => { session.lock({ reason: "start" }); }}
           />
         </Suspense>
       </CopyBoundary>
