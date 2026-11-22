@@ -257,6 +257,8 @@ Total: 35 days plus buffer. Every MVP FR in the product spec appears in at least
 
 **Tests:** e2e for `S41` and `S42` (read-only) and every disabled item with its reason; settings persistence across reload; axe and keyboard; an assertion that `Explore with sample files` is not rendered in MVP.
 
+**Status: complete.** Differences from the plan above: see [D-48](open-questions.md#decisions-made-on-the-owners-behalf) (selection bars drop the write actions, Connections and Security are separate pages, the transfer panel no longer covers the page).
+
 **Exit check (demo):** connect a read-only key and tour the disabled actions and their reasons; change theme, density and behavior settings and reload to show they persist.
 
 **AGENTS.md commands landing:** none new.
