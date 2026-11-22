@@ -15,11 +15,19 @@ export interface RestoreDeps {
  * What a Restore does (FR-70): each selected object goes back to its original key. A key that exists now
  * goes through the conflict dialog with FR-43 semantics (AC-70.3). When nothing clashes and the selection is
  * every object of a batch, the batch moves back as one prefix (one journal entry, four objects in flight)
- * instead of one entry per object. A folder placeholder just goes back; it is empty, so overwriting an
- * existing one loses nothing.
+ * instead of one entry per object.
+ *
+ * A selected folder row stands for everything under it, so its objects are checked one by one like any other
+ * selection (M10 audit). Moving the placeholder as a prefix would carry the whole subtree back and overwrite
+ * existing keys without asking. A placeholder with objects under it stays in the trash once they are
+ * restored; only an empty one goes back as itself.
  */
 export async function planRestore(selected: readonly TrashItem[], all: readonly TrashItem[], root: string, deps: RestoreDeps): Promise<Move[]> {
-  const restorable = selected.filter(canRestore);
+  const chosenFolders = selected.filter((item) => item.folder);
+  const under = all.filter((item) => chosenFolders.some((folder) => item.key !== folder.key && item.key.startsWith(folder.key)));
+  const withChildren = new Set(all.filter((item) => item.folder && all.some((other) => other.key !== item.key && other.key.startsWith(item.key))).map((item) => item.key));
+  const covered = [...new Map([...selected, ...under].filter(canRestore).map((item) => [item.key, item])).values()];
+  const restorable = covered.filter((item) => !(item.folder && withChildren.has(item.key)));
   const objects = restorable.filter((item) => !item.folder);
   const found = await deps.existing(objects.map((item) => item.original));
   const checked = new Set(objects.map((item) => item.original));
@@ -34,7 +42,7 @@ export async function planRestore(selected: readonly TrashItem[], all: readonly 
 
   const totals = batchTotals(all);
   const chosen = new Map<string, number>();
-  for (const item of restorable) chosen.set(item.batch, (chosen.get(item.batch) ?? 0) + 1);
+  for (const item of covered) chosen.set(item.batch, (chosen.get(item.batch) ?? 0) + 1);
   const whole = new Set([...chosen].filter(([batch, count]) => count === totals.get(batch) && batch !== "").map(([batch]) => batch));
   if (whole.size === 0) return moves;
   const byKey = new Map(restorable.map((item) => [item.key, item]));
