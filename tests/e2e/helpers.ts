@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, type TestInfo } from "@playwright/test";
-import { admin, s3Fixture } from "../integration/config";
+import { admin, s3Fixture, testUsers } from "../integration/config";
 import { E2E_BUCKET } from "./fixture";
 
 export type Layout = "compact" | "rail" | "sidebar";
@@ -118,6 +118,19 @@ export async function enterApp(page: Page, route = "/files", options: ConnectOpt
   await page.goto("/");
   await connectCustom(page, options);
   await openBucket(page, options.passphrase);
+  await expect(page.getByRole("navigation", { name: "Main navigation" })).toBeVisible();
+  await goToRoute(page, route);
+}
+
+/**
+ * Open the app with the fixture's read-only key (FR-110, FR-111): the test finds list and read pass and write denied, offers
+ * "Connect read-only", and the connection is kept in memory ("Not now").
+ */
+export async function enterReadOnlyApp(page: Page, route = "/files"): Promise<void> {
+  await page.goto("/");
+  await connectCustom(page, { ...testUsers.readOnly });
+  await page.getByRole("button", { name: "Connect read-only" }).click({ timeout: 30_000 });
+  await page.getByRole("button", { name: "Not now" }).click();
   await expect(page.getByRole("navigation", { name: "Main navigation" })).toBeVisible();
   await goToRoute(page, route);
 }
