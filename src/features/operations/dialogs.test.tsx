@@ -96,7 +96,9 @@ describe("FR-32 Rename", () => {
     await userEvent.clear(input);
     await userEvent.click(screen.getByRole("button", { name: "Rename" }));
     expect(await screen.findByText("Enter a name.")).toBeInTheDocument();
-    await userEvent.type(input, "x".repeat(1100));
+    // Pasted, not typed: 1,100 key presses take longer than the test's time when the machine is busy, and leave keys behind for the next test.
+    await userEvent.click(input);
+    await userEvent.paste("x".repeat(1100));
     await userEvent.click(screen.getByRole("button", { name: "Rename" }));
     expect(await screen.findByText(/at most 1,024 bytes/)).toBeInTheDocument();
   });

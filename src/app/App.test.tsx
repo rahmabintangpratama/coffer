@@ -45,9 +45,10 @@ describe("App gate", () => {
   it("shows the shell once a connection exists", async () => {
     useSession.getState().connect(connection);
     render(<App />);
-    expect(await screen.findByRole("heading", { level: 1, name: "Home" })).toBeInTheDocument();
+    // The connected app is a lazy chunk with a large module graph; the first import can take seconds when the machine is busy.
+    expect(await screen.findByRole("heading", { level: 1, name: "Home" }, { timeout: 15_000 })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Connect a bucket" })).toBeNull();
-  });
+  }, 20_000);
 
   it("holds a connection without keys in the session store", () => {
     useSession.getState().connect(connection);
