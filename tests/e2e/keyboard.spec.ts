@@ -42,15 +42,6 @@ async function tabTo(page: Page, target: Locator, steps = 120): Promise<void> {
   throw new Error(`Tab never reached ${target.toString()}`);
 }
 
-/** The same backwards, for something above the focus. */
-async function shiftTabTo(page: Page, target: Locator, steps = 120): Promise<void> {
-  for (let step = 0; step < steps; step += 1) {
-    if (await isFocused(target)) return;
-    await page.keyboard.press(tabKey(page, true));
-  }
-  throw new Error(`Shift+Tab never reached ${target.toString()}`);
-}
-
 /** Focus a row without the pointer: the list is one tab stop, so Tab to it and use the arrows from there. */
 async function focusRow(page: Page, name: string): Promise<void> {
   const target = row(page, name);
@@ -163,6 +154,8 @@ test.describe("keyboard only", () => {
     await expect(dialog).toBeVisible();
     // Focus is in the dialog, on its field.
     await expect(dialog.getByLabel("Name")).toBeFocused();
+    // The dialog selects the name without its extension one frame after it opens; typing before that frame would be cut short.
+    await expect.poll(() => dialog.getByLabel("Name").evaluate((field: HTMLInputElement) => field.selectionEnd)).toBe("old-name".length);
     await page.keyboard.press("ControlOrMeta+A");
     await page.keyboard.type("new-name.txt");
     // Focus cannot leave the dialog: Tab around more times than it has controls.
@@ -198,7 +191,8 @@ test.describe("keyboard only", () => {
     } else {
       await page.keyboard.press("Escape");
     }
-    await expect(details).toHaveCount(0);
+    // A sheet stays in the page, closed; the in-layout panel is removed. Hidden covers both.
+    await expect(details).toBeHidden();
     // Focus is not dropped on the page: it goes back to the control that opened the panel.
     await expect(page.getByRole("button", { name: "More actions for focus-me.txt" }).first()).toBeFocused();
   });
@@ -355,8 +349,8 @@ test.describe("keyboard only", () => {
     await tabTo(page, dialog.getByLabel("Type 1 to confirm"));
     await page.keyboard.type("1");
     await expect(confirm).toBeEnabled();
-    // Shift+Tab goes back to Cancel, Escape leaves without forgetting.
-    await shiftTabTo(page, dialog.getByRole("button", { name: "Cancel" }));
+    // Tab goes on to Cancel, and Escape leaves without forgetting.
+    await tabTo(page, dialog.getByRole("button", { name: "Cancel" }));
     await page.keyboard.press("Escape");
     await expect(dialog).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Forget", exact: true })).toBeFocused();

@@ -1,8 +1,7 @@
-import AxeBuilder from "@axe-core/playwright";
 import { type Page } from "@playwright/test";
 import { expect, test } from "./test";
 import { BIG_BUCKET } from "./fixture";
-import { collectErrors, enterApp, layoutFor, type Layout } from "./helpers";
+import { axeFor, collectErrors, enterApp, layoutFor, type Layout } from "./helpers";
 
 // M3 exit check: browse a bucket of 12,000 objects (FR-20, FR-21, FR-23, FR-30,
 // FR-37, FR-27). The e2e build lowers the Load all cap to 3,000.
@@ -119,11 +118,11 @@ test.describe("browse a big bucket", () => {
   });
 
   test("a list and grid pass axe", async ({ page }) => {
-    const list = await new AxeBuilder({ page }).analyze();
+    const list = await axeFor(page).analyze();
     expect(list.violations.filter((v) => v.impact === "serious" || v.impact === "critical")).toEqual([]);
     await page.getByRole("button", { name: "Grid layout" }).click();
     await expect(page.locator('[data-component="FileTile"]').first()).toBeVisible();
-    const grid = await new AxeBuilder({ page }).analyze();
+    const grid = await axeFor(page).analyze();
     expect(grid.violations.filter((v) => v.impact === "serious" || v.impact === "critical")).toEqual([]);
   });
 });

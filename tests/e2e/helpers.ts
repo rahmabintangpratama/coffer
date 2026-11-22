@@ -179,9 +179,19 @@ async function settled(page: Page): Promise<void> {
   });
 }
 
+/**
+ * axe for this page. In Firefox the colour-contrast rule crashed the content process on some screens in CI (Settings in dark,
+ * the Move dialog, the Security page), so it is left out there; contrast is measured in all three engines, Firefox included,
+ * from the real computed colours by contrast.spec.ts, and axe's own contrast check still runs in Chromium and WebKit (D-50).
+ */
+export function axeFor(page: Page): AxeBuilder {
+  const builder = new AxeBuilder({ page });
+  return page.context().browser()?.browserType().name() === "firefox" ? builder.disableRules(["color-contrast"]) : builder;
+}
+
 export async function axeViolations(page: Page) {
   await settled(page);
-  const result = await new AxeBuilder({ page }).analyze();
+  const result = await axeFor(page).analyze();
   return result.violations.map((violation) => ({
     rule: violation.id,
     impact: violation.impact,

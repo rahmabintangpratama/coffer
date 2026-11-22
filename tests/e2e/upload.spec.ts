@@ -1,14 +1,13 @@
 import { mkdirSync, mkdtempSync, truncateSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import AxeBuilder from "@axe-core/playwright";
 import { GetObjectCommand, HeadObjectCommand, ListMultipartUploadsCommand, ListObjectsV2Command, PutObjectCommand } from "@aws-sdk/client-s3";
 import { type Page } from "@playwright/test";
-import { expect, test } from "./test";
+import { expect, expectConsole, PROVOKED_NETWORK_FAILURE, test } from "./test";
 import { createClient } from "../integration/client";
 import { admin } from "../integration/config";
 import { E2E_BUCKET } from "./fixture";
-import { connectCustom, enterApp, layoutFor, type Layout, openBucket } from "./helpers";
+import { axeFor, connectCustom, enterApp, layoutFor, openBucket, type Layout } from "./helpers";
 
 // M4: New menu, folder and file upload, conflicts, the transfer panel and abort on reload
 // (FR-35, FR-40, FR-41, FR-43, FR-44).
@@ -129,7 +128,7 @@ test.describe("upload", () => {
     const bar = page.getByRole("progressbar", { name: "big.bin" });
     await expect(bar).toBeVisible();
     await expect(bar).toHaveAttribute("aria-valuetext", /./);
-    const result = await new AxeBuilder({ page }).include('[data-component="TransferPanel"]').analyze();
+    const result = await axeFor(page).include('[data-component="TransferPanel"]').analyze();
     expect(result.violations.filter((v) => v.impact === "serious" || v.impact === "critical")).toEqual([]);
     await page.getByRole("button", { name: "Cancel upload: big.bin" }).click();
     await expect(bar).toHaveCount(0);
@@ -146,6 +145,8 @@ test.describe("upload", () => {
   });
 
   test("AC-41.5 and AC-44.5 a reload mid-upload leaves nothing open and the panel says it was interrupted", async ({ page }) => {
+    // The reload cancels the request that was in flight; WebKit reports that as an uncaught rejection.
+    expectConsole(PROVOKED_NETWORK_FAILURE);
     await holdParts(page);
     await filesInput(page).setInputFiles(bigFile("interrupted.bin", 60));
     await expect.poll(() => incompleteIn(folder), { timeout: 20_000 }).toBeGreaterThan(0);

@@ -33,7 +33,7 @@ const BENIGN = /^ResizeObserver loop (completed with undelivered notifications|l
  * or a port the browser refuses. The wording differs per engine; the meaning does not.
  */
 export const PROVOKED_NETWORK_FAILURE =
-  /blocked by CORS policy|is not allowed by Access-Control-Allow-Origin|due to access control checks|Cross-Origin Request Blocked|restricted network port|^Failed to load resource: (net::ERR_|Origin )/;
+  /blocked by CORS policy|is not allowed by Access-Control-Allow-Origin|due to access control checks|Cross-Origin Request Blocked|restricted network port|Load failed|NetworkError when attempting to fetch resource|^Failed to load resource: (net::ERR_|Origin )/;
 
 /**
  * Say, inside one test, that it causes this console message (or CSP report, written `<directive> <blocked uri>`) on purpose.

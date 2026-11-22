@@ -1,7 +1,6 @@
-import AxeBuilder from "@axe-core/playwright";
 import { type Page } from "@playwright/test";
 import { expect, expectConsole, test } from "./test";
-import { cspViolations, enterApp, recordCspViolations } from "./helpers";
+import { axeFor, cspViolations, enterApp, recordCspViolations } from "./helpers";
 
 // M5a and M5b: the preview viewer for images, video, audio, text and code, SVG, PDF,
 // Markdown, HTML as source and the no-preview fallback (FR-50 to FR-58). Fixtures are
@@ -165,14 +164,14 @@ test.describe("preview", () => {
   test("the text viewer passes axe", async ({ page }) => {
     await openFile(page, "code.ts");
     await expect(dialog(page).getByText(/Code or text/)).toBeVisible();
-    const result = await new AxeBuilder({ page }).include("dialog[data-component='Preview']").analyze();
+    const result = await axeFor(page).include("dialog[data-component='Preview']").analyze();
     expect(result.violations.filter((v) => v.impact === "serious" || v.impact === "critical")).toEqual([]);
   });
 
   test("the image viewer passes axe", async ({ page }) => {
     await openFile(page, "sample.png");
     await expect(dialog(page).getByRole("img", { name: "Preview of sample.png" })).toBeVisible();
-    const result = await new AxeBuilder({ page }).include("dialog[data-component='Preview']").analyze();
+    const result = await axeFor(page).include("dialog[data-component='Preview']").analyze();
     expect(result.violations.filter((v) => v.impact === "serious" || v.impact === "critical")).toEqual([]);
   });
 
@@ -338,7 +337,7 @@ test.describe("PDF, Markdown and HTML (M5b)", () => {
       await openFile(page, name);
       if (name === "sample.pdf") await expect(dialog(page).getByRole("status").filter({ hasText: /^Page / })).toHaveText("Page 1 of 2", { timeout: 20_000 });
       else await expect(dialog(page).locator("[data-component='MarkdownBody'], [role='region']").first()).toBeVisible();
-      const result = await new AxeBuilder({ page }).include("dialog[data-component='Preview']").analyze();
+      const result = await axeFor(page).include("dialog[data-component='Preview']").analyze();
       expect(result.violations.filter((v) => v.impact === "serious" || v.impact === "critical"), name).toEqual([]);
       await closeViewer(page, name);
     }
