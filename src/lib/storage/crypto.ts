@@ -104,25 +104,43 @@ export async function deriveKey(passphrase: string, params: KdfParams): Promise<
   );
 }
 
-/** Additional authenticated data: a record cannot be moved to another profile id and still open. */
-const aadFor = (profileId: string): Uint8Array => encoder.encode(`coffer-v1|${profileId}`);
+/** The profile fields that decide where signed requests go. They are stored in the clear, so the sealed record is bound to them. */
+export interface Binding {
+  id: string;
+  endpoint: string;
+  region: string;
+  addressingStyle: string;
+  bucket?: string | undefined;
+  prefix?: string | undefined;
+}
 
-/** Encrypt the keys for one profile with a fresh IV. */
-export async function seal(key: CryptoKey, profileId: string, credentials: Credentials, params: KdfParams): Promise<SealedCredentials> {
+/**
+ * What a sealed record is bound to: the profile id and the destination. Without the destination, whoever can write the
+ * IndexedDB store could change `endpoint` to their own host and receive the signed requests (and a session token) after
+ * the next unlock. JSON keeps the fields from running into each other.
+ */
+export const bindingOf = (profile: Binding): string =>
+  JSON.stringify([profile.id, profile.endpoint, profile.region, profile.addressingStyle, profile.bucket ?? "", profile.prefix ?? ""]);
+
+/** Additional authenticated data: a record cannot be moved to another profile or pointed at another destination and still open. */
+const aadFor = (binding: string): Uint8Array => encoder.encode(`coffer-v1|${binding}`);
+
+/** Encrypt the keys for one profile with a fresh IV. `binding` comes from `bindingOf`. */
+export async function seal(key: CryptoKey, binding: string, credentials: Credentials, params: KdfParams): Promise<SealedCredentials> {
   const iv = crypto.getRandomValues(new Uint8Array(IV_BYTES));
   const plain = encoder.encode(
     JSON.stringify({ accessKeyId: credentials.accessKeyId, secretAccessKey: credentials.secretAccessKey, ...(credentials.sessionToken === undefined ? {} : { sessionToken: credentials.sessionToken }) }),
   );
-  const cipher = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv as BufferSource, additionalData: aadFor(profileId) as BufferSource }, key, plain);
+  const cipher = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv as BufferSource, additionalData: aadFor(binding) as BufferSource }, key, plain);
   return { v: 1, cipher: "AES-GCM", kdf: "PBKDF2", iterations: params.iterations, salt: toBase64Url(params.salt), iv: toBase64Url(iv), data: toBase64Url(new Uint8Array(cipher)) };
 }
 
-/** Decrypt one record. Throws WrongPassphraseError when the key, the profile id or the bytes do not match. */
-export async function open(key: CryptoKey, profileId: string, sealed: SealedCredentials): Promise<Credentials> {
+/** Decrypt one record. Throws WrongPassphraseError when the key, the binding or the bytes do not match. */
+export async function open(key: CryptoKey, binding: string, sealed: SealedCredentials): Promise<Credentials> {
   assertSealed(sealed);
   let plain: ArrayBuffer;
   try {
-    plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: fromBase64Url(sealed.iv) as BufferSource, additionalData: aadFor(profileId) as BufferSource }, key, fromBase64Url(sealed.data) as BufferSource);
+    plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: fromBase64Url(sealed.iv) as BufferSource, additionalData: aadFor(binding) as BufferSource }, key, fromBase64Url(sealed.data) as BufferSource);
   } catch {
     throw new WrongPassphraseError();
   }

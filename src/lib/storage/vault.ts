@@ -1,6 +1,6 @@
 import type { ConnectionProfile, ConnectionSummary, Credentials } from "@/lib/types";
 import { connectionStore } from "./connection-store";
-import { assertSealed, deriveKey, type KdfParams, needsRehash, newKdfParams, open, paramsOf, passphraseProblem, type SealedCredentials, seal } from "./crypto";
+import { assertSealed, bindingOf, deriveKey, type KdfParams, needsRehash, newKdfParams, open, paramsOf, passphraseProblem, type SealedCredentials, seal } from "./crypto";
 import { setSavedHint } from "./hint";
 
 /**
@@ -34,6 +34,15 @@ export class WeakPassphraseError extends Error {
 const secrets = new Map<string, Credentials>();
 let cachedKey: CryptoKey | null = null;
 let cachedParams: KdfParams | null = null;
+
+/**
+ * Counts locks. Unlock and save wait on key derivation for about half a second; a lock or Forget that lands in that
+ * window must win, so each of them checks that no lock happened since it began before it keeps a key (M10 audit).
+ */
+let lockEpoch = 0;
+const assertNotLocked = (started: number): void => {
+  if (lockEpoch !== started) throw new LockedError();
+};
 
 const lockListeners = new Set<() => void>();
 const unlockListeners = new Set<() => void>();
@@ -112,17 +121,18 @@ function serveWaiters(): void {
 }
 
 /** Adopt a key that opened the first record: open every record with it, keep the keys and the key. */
-async function adopt(key: CryptoKey, params: KdfParams, profiles: readonly ConnectionProfile[]): Promise<ConnectionSummary[]> {
+async function adopt(key: CryptoKey, params: KdfParams, profiles: readonly ConnectionProfile[], started: number): Promise<ConnectionSummary[]> {
   const opened = new Map<string, Credentials>();
   const readable: ConnectionProfile[] = [];
   for (const profile of profiles) {
     try {
-      opened.set(profile.id, await open(key, profile.id, sealedOf(profile)));
+      opened.set(profile.id, await open(key, bindingOf(profile), sealedOf(profile)));
       readable.push(profile);
     } catch {
       // A record made under another salt cannot be opened with this key; it stays in the store, locked.
     }
   }
+  assertNotLocked(started);
   for (const [id, credentials] of opened) secrets.set(id, credentials);
   cachedKey = key;
   cachedParams = params;
@@ -178,6 +188,7 @@ export const vault = {
   async save(summary: ConnectionSummary, passphrase?: string): Promise<void> {
     const credentials = secrets.get(summary.id);
     if (!credentials) throw new LockedError();
+    const started = lockEpoch;
     let key = cachedKey;
     let params = cachedParams;
     if (!key || !params) {
@@ -188,18 +199,20 @@ export const vault = {
         params = paramsOf(sealedOf(first));
         key = await deriveKey(passphrase, params);
         // Throws WrongPassphraseError when it is not the passphrase of the saved connections.
-        await open(key, first.id, sealedOf(first));
-        await adopt(key, params, existing);
+        await open(key, bindingOf(first), sealedOf(first));
+        await adopt(key, params, existing, started);
       } else {
         if (passphraseProblem(passphrase) !== null) throw new WeakPassphraseError();
         params = newKdfParams();
         key = await deriveKey(passphrase, params);
+        assertNotLocked(started);
         cachedKey = key;
         cachedParams = params;
         emit(unlockListeners);
       }
     }
-    const sealed = await seal(key, summary.id, credentials, params);
+    const sealed = await seal(key, bindingOf(summary), credentials, params);
+    assertNotLocked(started);
     const profile: ConnectionProfile = { ...summary, lastUsedAt: new Date().toISOString(), credentials: { storage: "encrypted", ...sealed } };
     await connectionStore.put(profile);
     setSavedHint(true);
@@ -210,14 +223,15 @@ export const vault = {
    * record made below the current work factor is sealed again under a fresh salt (ADR-005).
    */
   async unlock(passphrase: string): Promise<ConnectionSummary[]> {
+    const started = lockEpoch;
     const profiles = await connectionStore.list();
     const first = profiles[0];
     if (!first) return [];
     const sealed = sealedOf(first);
     const params = paramsOf(sealed);
     const key = await deriveKey(passphrase, params);
-    await open(key, first.id, sealed);
-    if (!needsRehash(sealed)) return adopt(key, params, profiles);
+    await open(key, bindingOf(first), sealed);
+    if (!needsRehash(sealed)) return adopt(key, params, profiles, started);
     // Sealed below the current work factor: open every record with the old key, seal each again under a fresh salt.
     const freshParams = newKdfParams();
     const freshKey = await deriveKey(passphrase, freshParams);
@@ -225,17 +239,18 @@ export const vault = {
     for (const profile of profiles) {
       let credentials;
       try {
-        credentials = await open(key, profile.id, sealedOf(profile));
+        credentials = await open(key, bindingOf(profile), sealedOf(profile));
       } catch {
         // A record under another salt cannot be opened with this key; it is left as it is.
         rewritten.push(profile);
         continue;
       }
-      rewritten.push({ ...profile, credentials: { storage: "encrypted", ...(await seal(freshKey, profile.id, credentials, freshParams)) } });
+      rewritten.push({ ...profile, credentials: { storage: "encrypted", ...(await seal(freshKey, bindingOf(profile), credentials, freshParams)) } });
     }
+    assertNotLocked(started);
     // One transaction: all records move to the new salt together or none does.
     await connectionStore.putAll(rewritten);
-    return adopt(freshKey, freshParams, rewritten);
+    return adopt(freshKey, freshParams, rewritten, started);
   },
 
   /** Note which saved connection was used last, so Unlock opens the same one next time. */
@@ -252,7 +267,7 @@ export const vault = {
     const profile = await connectionStore.get(connectionId);
     if (!profile) throw new LockedError();
     const sealed = sealedOf(profile);
-    const credentials = await open(await deriveKey(passphrase, paramsOf(sealed)), connectionId, sealed);
+    const credentials = await open(await deriveKey(passphrase, paramsOf(sealed)), bindingOf(profile), sealed);
     return credentials.secretAccessKey;
   },
 
@@ -269,6 +284,7 @@ export const vault = {
 
   /** Drop the key and every key held here, then tell listeners. Running leases are left alone (C-27). */
   lock(): void {
+    lockEpoch += 1;
     secrets.clear();
     cachedKey = null;
     cachedParams = null;

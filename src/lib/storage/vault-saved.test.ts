@@ -3,9 +3,9 @@ import "fake-indexeddb/auto";
 import { deleteDB } from "idb";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { connectionStore } from "./connection-store";
-import { deriveKey, fromBase64Url, KDF_ITERATIONS, newKdfParams, seal, toBase64Url, WrongPassphraseError } from "./crypto";
+import { bindingOf, deriveKey, fromBase64Url, KDF_ITERATIONS, newKdfParams, seal, toBase64Url, WrongPassphraseError } from "./crypto";
 import { closeSharedDb, DB_NAME } from "./db";
-import { vault } from "./vault";
+import { LockedError, vault } from "./vault";
 
 // FR-8, FR-9, FR-102, C-27, ADR-005: the saved mode of the vault, against fake IndexedDB and real Web Crypto.
 const PASS = "correct horse battery staple";
@@ -103,6 +103,40 @@ describe("AC-9.1 to AC-9.4 unlock and lock", () => {
     await expect(vault.credentialsFor("c1")).resolves.toEqual(keys);
   });
 
+  it("M10 audit: a saved connection whose stored endpoint was changed does not open, so the keys never go to the new host", async () => {
+    await saveFirst();
+    vault.lock();
+    const [stored] = await connectionStore.list();
+    if (stored === undefined) throw new Error("nothing was saved");
+    // Someone who can write the IndexedDB store points the connection at their own host.
+    await connectionStore.put({ ...stored, endpoint: "https://attacker.example" });
+    await expect(vault.unlock(PASS)).rejects.toBeInstanceOf(WrongPassphraseError);
+    expect(vault.isUnlocked()).toBe(false);
+    await expect(vault.credentialsFor("c1")).rejects.toBeDefined();
+    // The destination fields are what is bound; the display name and last-used time are free to change.
+    await connectionStore.put({ ...stored, name: "Renamed", lastUsedAt: "2027-01-01T00:00:00.000Z" });
+    await expect(vault.unlock(PASS)).resolves.toHaveLength(1);
+  });
+
+  it("M10 audit: a lock that lands while an unlock is deriving its key wins, and no key is kept", async () => {
+    await saveFirst();
+    vault.lock();
+    const unlocking = vault.unlock(PASS);
+    vault.lock();
+    await expect(unlocking).rejects.toBeInstanceOf(LockedError);
+    expect(vault.isUnlocked()).toBe(false);
+    expect(vault.has("c1")).toBe(false);
+  });
+
+  it("M10 audit: a lock during a first save keeps the connection out of storage", async () => {
+    vault.put("c1", keys);
+    const saving = vault.save(summary("c1"), PASS);
+    vault.lock();
+    await expect(saving).rejects.toBeInstanceOf(LockedError);
+    expect(await connectionStore.list()).toEqual([]);
+    expect(vault.isUnlocked()).toBe(false);
+  });
+
   it("AC-9.2 a wrong passphrase leaves it locked", async () => {
     await saveFirst();
     vault.lock();
@@ -144,7 +178,7 @@ describe("AC-9.1 to AC-9.4 unlock and lock", () => {
   it("re-encryption writes every record in one transaction, and a failed write leaves the old records readable", async () => {
     const weak = newKdfParams(1000);
     const key = await deriveKey(PASS, weak);
-    for (const id of ["c1", "c2"]) await connectionStore.put({ ...summary(id), credentials: { storage: "encrypted", ...(await seal(key, id, keys, weak)) } });
+    for (const id of ["c1", "c2"]) await connectionStore.put({ ...summary(id), credentials: { storage: "encrypted", ...(await seal(key, bindingOf(summary(id)), keys, weak)) } });
     const failing = vi.spyOn(connectionStore, "putAll").mockRejectedValue(new Error("quota"));
     await expect(vault.unlock(PASS)).rejects.toThrow("quota");
     failing.mockRestore();
@@ -158,7 +192,7 @@ describe("AC-9.1 to AC-9.4 unlock and lock", () => {
 
   it("a record sealed under a lower work factor is sealed again, under a fresh salt, when it is unlocked", async () => {
     const weak = newKdfParams(1000);
-    const sealed = await seal(await deriveKey(PASS, weak), "c1", keys, weak);
+    const sealed = await seal(await deriveKey(PASS, weak), bindingOf(summary("c1")), keys, weak);
     await connectionStore.put({ ...summary("c1"), credentials: { storage: "encrypted", ...sealed } });
     await vault.unlock(PASS);
     const [after] = await connectionStore.list();

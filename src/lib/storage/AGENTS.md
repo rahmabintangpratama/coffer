@@ -4,7 +4,7 @@ Vault, operation journal, upload state and IndexedDB. No React imports; must not
 
 ## Vault
 
-- PBKDF2-HMAC-SHA-256, **at least 600,000 iterations**, 16-byte random salt, non-extractable AES-GCM-256 key, fresh 12-byte IV per record, AAD `coffer-v1|<profile id>`.
+- PBKDF2-HMAC-SHA-256, **at least 600,000 iterations**, 16-byte random salt, non-extractable AES-GCM-256 key, fresh 12-byte IV per record, AAD `coffer-v1|` plus `bindingOf(profile)`: the profile id and the destination (endpoint, region, addressing style, bucket, prefix), so a record does not open if the stored destination was changed (M10 audit).
 - Normalize the passphrase (NFKC). Never store the passphrase or the raw derived key.
 - One salt for all profiles; cache the `CryptoKey` in memory while unlocked.
 - Decrypted credentials live in a closure-scoped map here and nowhere else.
