@@ -97,7 +97,7 @@ export interface ConnectionProfile {
   sessionTokenExpiresAt?: string; // ISO 8601; caps share-link expiry (see ShareLimits)
   credentials:
     | { storage: "memory"; accessKeyId: string; secretAccessKey: string; sessionToken?: string }
-    | { storage: "encrypted"; cipher: "AES-GCM"; kdf: "PBKDF2"; iterations: number; salt: string; iv: string; data: string };
+    | { storage: "encrypted"; v: 1; cipher: "AES-GCM"; kdf: "PBKDF2"; iterations: number; salt: string; iv: string; data: string };
   createdAt: string;
   lastUsedAt?: string;
 }

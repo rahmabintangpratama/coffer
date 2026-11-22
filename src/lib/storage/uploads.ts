@@ -1,8 +1,6 @@
-import { type CofferDb, openCoffer, type UploadRecord } from "./db";
-import type { IDBPDatabase } from "idb";
+import { closeSharedDb, sharedDb, type UploadRecord } from "./db";
 
-let opened: Promise<IDBPDatabase<CofferDb>> | null = null;
-const db = () => (opened ??= openCoffer());
+const db = sharedDb;
 
 /**
  * The `uploads` store. It matches the UploadStateStore shape that lib/s3 defines
@@ -37,7 +35,5 @@ export const uploadStore = {
 
 /** Close the shared handle (Forget this device closes handles before deleting the database; tests use it too). */
 export async function closeUploadStore(): Promise<void> {
-  if (!opened) return;
-  (await opened).close();
-  opened = null;
+  await closeSharedDb();
 }

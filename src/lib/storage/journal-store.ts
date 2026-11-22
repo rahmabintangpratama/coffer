@@ -1,10 +1,8 @@
-import type { IDBPDatabase } from "idb";
 import type { JournalEntry } from "@/lib/types";
-import { type CofferDb, openCoffer } from "./db";
+import { closeSharedDb, sharedDb } from "./db";
 import { isExpired, type JournalStore } from "./journal";
 
-let opened: Promise<IDBPDatabase<CofferDb>> | null = null;
-const db = () => (opened ??= openCoffer());
+const db = sharedDb;
 
 /** The `journal` store in IndexedDB. Entries hold keys of objects and counts, never credentials. */
 export const journalStore: JournalStore & { prune(now?: Date): Promise<void> } = {
@@ -28,7 +26,5 @@ export const journalStore: JournalStore & { prune(now?: Date): Promise<void> } =
 };
 
 export async function closeJournalStore(): Promise<void> {
-  if (!opened) return;
-  (await opened).close();
-  opened = null;
+  await closeSharedDb();
 }

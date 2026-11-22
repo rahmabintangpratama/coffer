@@ -1,5 +1,5 @@
 import { type DBSchema, type IDBPDatabase, openDB } from "idb";
-import type { JournalEntry } from "@/lib/types";
+import type { ConnectionProfile, JournalEntry } from "@/lib/types";
 
 export const DB_NAME = "coffer";
 
@@ -20,7 +20,8 @@ export interface UploadRecord {
 }
 
 export interface CofferDb extends DBSchema {
-  connections: { key: string; value: { id: string } };
+  /** Saved connections: the profile with its keys sealed by the vault (ADR-005). Never a `memory` profile. */
+  connections: { key: string; value: ConnectionProfile };
   journal: { key: string; value: JournalEntry };
   uploads: { key: string; value: UploadRecord };
   starred: { key: [string, string, string]; value: { connectionId: string; bucket: string; key: string } };
@@ -55,4 +56,51 @@ export function openCoffer(name: string = DB_NAME, version: number = LATEST_VERS
       for (let step = oldVersion; step < version; step += 1) migrations[step]?.(db);
     },
   });
+}
+
+let shared: Promise<IDBPDatabase<CofferDb>> | null = null;
+let sealed = false;
+
+/**
+ * The one open handle every store in this module shares, so "Forget this device" can close it before deleting the
+ * database. It closes itself when another tab deletes or upgrades the database, which would otherwise block that
+ * (the other tab's Forget). After `sealDb` it refuses to open again: a tab that is going away must not recreate
+ * what was just removed.
+ */
+export function sharedDb(): Promise<IDBPDatabase<CofferDb>> {
+  if (sealed) return Promise.reject(new Error("storage was removed"));
+  if (!shared) {
+    const opening = openCoffer();
+    shared = opening;
+    void opening.then(
+      (handle) => {
+        handle.addEventListener("versionchange", () => {
+          handle.close();
+          if (shared === opening) shared = null;
+        });
+      },
+      () => {
+        if (shared === opening) shared = null;
+      },
+    );
+  }
+  return shared;
+}
+
+/** Close the shared handle. A later `sharedDb()` opens a new one unless the database was sealed. */
+export async function closeSharedDb(): Promise<void> {
+  const opening = shared;
+  shared = null;
+  if (opening) (await opening.catch(() => null))?.close();
+}
+
+/** After Forget: close the handle and refuse to open the database again in this page. */
+export async function sealDb(): Promise<void> {
+  sealed = true;
+  await closeSharedDb();
+}
+
+/** Tests only: allow opening again after `sealDb`. */
+export function unsealDbForTests(): void {
+  sealed = false;
 }
