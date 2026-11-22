@@ -134,8 +134,7 @@ test.describe("rename, copy and move", () => {
   test("the Move dialog passes axe", async ({ page }, testInfo) => {
     await chooseFromMenu(page, layoutFor(testInfo), "a.txt", /^Move…/);
     const dialog = page.getByRole("dialog", { name: "Move 1 item" });
-    // The tree lists each folder on the way to the current one, one request per level, so it gets the 15 s the folder lists get.
-    await expect(dialog.getByRole("treeitem", { name: /Current location/ })).toBeVisible({ timeout: 15_000 });
+    await expect(dialog.getByRole("treeitem", { name: /Current location/ })).toBeVisible();
     // Contrast is measured on final colours, after the dialog's open animation (as in the other axe checks).
     const violations = await axeViolations(page);
     expect(violations.filter((v) => v.impact === "serious" || v.impact === "critical")).toEqual([]);

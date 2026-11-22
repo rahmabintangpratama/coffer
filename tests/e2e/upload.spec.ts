@@ -37,6 +37,14 @@ async function slowParts(page: Page, ms = 1500): Promise<void> {
   });
 }
 
+/**
+ * Hold every part request until the page goes away, so the upload cannot finish whatever the runner's speed. A delay is not
+ * enough for a reload test: on a slow runner the delayed parts all land before the reload and nothing is left to interrupt.
+ */
+async function holdParts(page: Page): Promise<void> {
+  await page.route(/partNumber=/, () => new Promise<void>(() => undefined));
+}
+
 /** A sparse file on disk: setInputFiles refuses buffers over 50 MB, and the bytes themselves do not matter. */
 function bigFile(name: string, mib: number): string {
   const path = join(mkdtempSync(join(tmpdir(), "coffer-big-")), name);
@@ -137,7 +145,7 @@ test.describe("upload", () => {
   });
 
   test("AC-41.5 and AC-44.5 a reload mid-upload leaves nothing open and the panel says it was interrupted", async ({ page }) => {
-    await slowParts(page, 4000);
+    await holdParts(page);
     await filesInput(page).setInputFiles(bigFile("interrupted.bin", 60));
     await expect.poll(() => incompleteIn(folder), { timeout: 20_000 }).toBeGreaterThan(0);
     // The record is stored before the first part; wait until it is in IndexedDB.
@@ -158,7 +166,6 @@ test.describe("upload", () => {
         { timeout: 20_000 },
       )
       .toBe(1);
-    await page.unroute(/partNumber=/);
     await page.reload();
     await connectCustom(page);
     await page.getByRole("button", { name: "Open bucket" }).click({ timeout: 30_000 });
