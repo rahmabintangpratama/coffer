@@ -139,7 +139,8 @@ test.describe("navigation shell", () => {
     test("the drawer is at most 320 px wide and lists every destination", async ({ page }) => {
       await page.getByRole("button", { name: "Open menu" }).click();
       const drawer = page.getByRole("dialog", { name: "Main navigation" });
-      const box = await drawer.locator(".cf-panel").boundingBox();
+      // The switcher's own dialogs sit inside the drawer too; the drawer's panel is the first.
+      const box = await drawer.locator(".cf-panel").first().boundingBox();
       expect(Math.round(box?.width ?? 0)).toBeLessThanOrEqual(320);
       for (const name of destinations) {
         await expect(drawer.getByRole("link", { name })).toBeVisible();

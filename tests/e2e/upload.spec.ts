@@ -7,7 +7,7 @@ import { expect, type Page, test } from "@playwright/test";
 import { createClient } from "../integration/client";
 import { admin } from "../integration/config";
 import { E2E_BUCKET } from "./fixture";
-import { connectCustom, enterApp, layoutFor, type Layout } from "./helpers";
+import { connectCustom, enterApp, layoutFor, type Layout, openBucket } from "./helpers";
 
 // M4: New menu, folder and file upload, conflicts, the transfer panel and abort on reload
 // (FR-35, FR-40, FR-41, FR-43, FR-44).
@@ -168,7 +168,7 @@ test.describe("upload", () => {
       .toBe(1);
     await page.reload();
     await connectCustom(page);
-    await page.getByRole("button", { name: "Open bucket" }).click({ timeout: 30_000 });
+    await openBucket(page);
     await expect(page.getByText("interrupted.bin was interrupted when the page closed. Start it again.")).toBeVisible({ timeout: 30_000 });
     await expect(page.getByRole("heading", { level: 2, name: "Upload interrupted" })).toBeVisible();
     await expect.poll(() => incompleteIn(folder), { timeout: 20_000 }).toBe(0);

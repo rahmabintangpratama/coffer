@@ -75,6 +75,8 @@ export interface ConnectOptions {
   accessKeyId?: string;
   secretAccessKey?: string;
   endpoint?: string;
+  /** Save the connection on this device with this passphrase (O51). Without it the person chooses "Not now". */
+  passphrase?: string;
 }
 
 /** Fill the open "Other S3-compatible service" form against the fixture and press Connect. */
@@ -98,10 +100,24 @@ export async function connectCustom(page: Page, options: ConnectOptions = {}): P
  * every test starts at Welcome and connects to the fixture first. The route is
  * set through the hash, never with a reload, which would drop the keys.
  */
+/**
+ * From the passed connection test to the app: "Open bucket", then O51. By default "Not now" (the keys stay in memory); with
+ * a passphrase the connection is saved on this device, encrypted (FR-8).
+ */
+export async function openBucket(page: Page, passphrase?: string): Promise<void> {
+  await page.getByRole("button", { name: "Open bucket" }).click({ timeout: 30_000 });
+  if (passphrase === undefined) {
+    await page.getByRole("button", { name: "Not now" }).click();
+    return;
+  }
+  await page.getByLabel("Passphrase").fill(passphrase);
+  await page.getByRole("button", { name: "Save with a passphrase" }).click();
+}
+
 export async function enterApp(page: Page, route = "/files", options: ConnectOptions = {}): Promise<void> {
   await page.goto("/");
   await connectCustom(page, options);
-  await page.getByRole("button", { name: "Open bucket" }).click({ timeout: 30_000 });
+  await openBucket(page, options.passphrase);
   await expect(page.getByRole("navigation", { name: "Main navigation" })).toBeVisible();
   await goToRoute(page, route);
 }

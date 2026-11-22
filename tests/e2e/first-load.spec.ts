@@ -1,5 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
 import { gzipSync } from "node:zlib";
+import { enterApp } from "./helpers";
 
 // D-40: the 120 KiB budget is the JavaScript transferred to render the first screen, on a cold load.
 // Scripts are measured as gzip of what the server sent, for every script requested before the screen showed.
@@ -41,6 +42,21 @@ test.describe("D-40 first-screen JavaScript", () => {
     const result = await firstScreenScripts(page, () => expect(page.getByRole("heading", { level: 1 })).toBeVisible(), false);
     test.info().annotations.push({ type: "welcome-gzip-kib", description: (result.gzip / KIB).toFixed(1) });
     expect(result.gzip, `Welcome loaded ${result.files.join(", ")}`).toBeLessThanOrEqual(FIRST_SCREEN_BUDGET);
+  });
+
+  // D-43: a device with saved connections opens on Unlock, so the same budget holds for it. The saved connection is made
+  // through the real screens in one context, and its storage (IndexedDB included) starts a second, cold one.
+  test("Unlock transfers at most 120 KiB of JavaScript, gzip", async ({ browser }) => {
+    const seed = await browser.newContext();
+    await enterApp(await seed.newPage(), "/files", { passphrase: "correct horse battery staple" });
+    const state = await seed.storageState({ indexedDB: true });
+    await seed.close();
+    const context = await browser.newContext({ storageState: state });
+    const page = await context.newPage();
+    const result = await firstScreenScripts(page, () => expect(page.getByRole("heading", { level: 1, name: "Unlock your connections" })).toBeVisible(), false);
+    await context.close();
+    test.info().annotations.push({ type: "unlock-gzip-kib", description: (result.gzip / KIB).toFixed(1) });
+    expect(result.gzip, `Unlock loaded ${result.files.join(", ")}`).toBeLessThanOrEqual(FIRST_SCREEN_BUDGET);
   });
 
   test("the connect step is fetched while idle, so Connect a bucket still feels instant", async ({ page }) => {

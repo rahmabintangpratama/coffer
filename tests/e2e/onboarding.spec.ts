@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { createClient } from "../integration/client";
 import { admin, s3Fixture, testUsers } from "../integration/config";
 import { allowOrigin, APP_ORIGIN, bareBucket, E2E_BUCKET } from "./fixture";
-import { axeViolations, collectErrors, connectCustom, fillCustomForm, layoutFor } from "./helpers";
+import { axeViolations, collectErrors, connectCustom, fillCustomForm, layoutFor, openBucket } from "./helpers";
 
 // FR-1 to FR-7, FR-110 end to end, against the S3 fixture and the production build under its real CSP.
 const sdk = createClient(admin);
@@ -44,7 +44,7 @@ test.describe("connecting a bucket", () => {
     await expect(checks.getByText(/^Passed/)).toHaveCount(6);
     expect(await noOverflow(page)).toBeLessThanOrEqual(0);
 
-    await page.getByRole("button", { name: "Open bucket" }).click();
+    await openBucket(page);
     await expect(page).toHaveURL(/#\/files$/);
     await expect(page.getByRole("heading", { level: 1, name: "Files" })).toBeVisible();
     await expect(page.getByRole("navigation", { name: "Main navigation" })).toBeVisible();
@@ -68,7 +68,7 @@ test.describe("connecting a bucket", () => {
     await allowOrigin(sdk, bucket);
     await page.getByRole("button", { name: "I’ve added it · Check again" }).click();
     await expect(page.getByText("Connected", { exact: true })).toBeVisible({ timeout: 30_000 });
-    await page.getByRole("button", { name: "Open bucket" }).click();
+    await openBucket(page);
     await expect(page.getByRole("heading", { level: 1, name: "Files" })).toBeVisible();
   });
 
@@ -78,6 +78,7 @@ test.describe("connecting a bucket", () => {
     await expect(page.getByText("This key can read but not write")).toBeVisible({ timeout: 30_000 });
     await expect(page.getByRole("button", { name: "Edit keys" })).toBeVisible();
     await page.getByRole("button", { name: "Connect read-only" }).click();
+    await page.getByRole("button", { name: "Not now" }).click();
     await expect(page.getByRole("heading", { level: 1, name: "Files" })).toBeVisible();
   });
 
@@ -105,7 +106,7 @@ test.describe("connecting a bucket", () => {
     await expect(page.getByText(/This key can access \d+ buckets?\./)).toBeVisible();
     await page.getByRole("searchbox", { name: "Search buckets" }).fill(E2E_BUCKET);
     await page.getByRole("button", { name: E2E_BUCKET, exact: true }).click();
-    await page.getByRole("button", { name: "Open bucket" }).click({ timeout: 30_000 });
+    await openBucket(page);
     await expect(page.getByRole("heading", { level: 1, name: "Files" })).toBeVisible();
   });
 
@@ -116,7 +117,7 @@ test.describe("connecting a bucket", () => {
     await expect(page.getByRole("searchbox", { name: "Search buckets" })).toHaveCount(0);
     await page.getByRole("textbox", { name: "Bucket name" }).fill(E2E_BUCKET);
     await page.getByRole("button", { name: "Open bucket" }).click();
-    await page.getByRole("button", { name: "Open bucket" }).click({ timeout: 30_000 });
+    await openBucket(page);
     await expect(page.getByRole("heading", { level: 1, name: "Files" })).toBeVisible();
   });
 });
@@ -142,7 +143,7 @@ test.describe("secrets stay in the browser's memory", () => {
     await page.getByLabel("Endpoint URL").fill("http://127.0.0.1:9000");
     await page.getByLabel("Bucket", { exact: true }).fill(E2E_BUCKET);
     await page.getByRole("button", { name: "Connect", exact: true }).click();
-    await page.getByRole("button", { name: "Open bucket" }).click({ timeout: 30_000 });
+    await openBucket(page);
     await expect(page.getByRole("heading", { level: 1, name: "Files" })).toBeVisible();
 
     const where = await page.evaluate(async () => ({
@@ -199,6 +200,8 @@ test.describe("keyboard", () => {
     await page.keyboard.press("Enter");
     await expect(page.getByRole("button", { name: "Open bucket" })).toBeVisible({ timeout: 30_000 });
     await tabTo("Open bucket");
+    await page.keyboard.press("Enter");
+    await tabTo("Not now");
     await page.keyboard.press("Enter");
     await expect(page.getByRole("heading", { level: 1, name: "Files" })).toBeVisible();
   });
