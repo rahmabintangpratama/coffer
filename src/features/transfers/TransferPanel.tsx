@@ -1,4 +1,5 @@
 import { ChevronDown, ChevronUp, X } from "lucide-react";
+import { useLayoutEffect, useRef } from "react";
 import { Button } from "@/components/Button";
 import { formatBytes } from "@/lib/format";
 import { t, type CopyKey } from "@/lib/i18n";
@@ -82,7 +83,26 @@ function ProgressRow({ transfer }: { transfer: Transfer }) {
  */
 export function TransferPanel() {
   const { transfers, interrupted, operations, collapsed, setCollapsed, clearDone, dismissInterrupted } = useTransfers();
-  if (transfers.length === 0 && interrupted.length === 0 && operations.length === 0) return null;
+  const panel = useRef<HTMLElement>(null);
+  const visible = transfers.length > 0 || interrupted.length > 0 || operations.length > 0;
+
+  // Below 768 px the panel is fixed over the bottom of the page. Its height goes to `--cf-tray-height`, which the page keeps as
+  // bottom padding, so the last row or button can always be scrolled above it (a button under the panel could not be reached).
+  useLayoutEffect(() => {
+    const element = panel.current;
+    if (!element) return;
+    const root = document.documentElement;
+    const publish = () => { root.style.setProperty("--cf-tray-height", `${Math.ceil(element.getBoundingClientRect().height).toString()}px`); };
+    publish();
+    const observer = new ResizeObserver(publish);
+    observer.observe(element);
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty("--cf-tray-height");
+    };
+  }, [visible]);
+
+  if (!visible) return null;
 
   const busy = transfers.filter((transfer) => transfer.status === "queued" || transfer.status === "waiting" || transfer.status === "running").length;
   const failed = transfers.filter((transfer) => transfer.status === "failed").length;
@@ -102,6 +122,7 @@ export function TransferPanel() {
 
   return (
     <section
+      ref={panel}
       aria-label={t("upl.label")}
       data-component="TransferPanel"
       data-surface="elevated"

@@ -10,8 +10,32 @@ vi.mock("./queue", () => ({ cancelTransfer: vi.fn(), retryTransfer: vi.fn() }));
 
 const transfer = (over: Partial<Transfer>): Transfer => ({ id: "t1", name: "movie.mp4", folder: "videos", size: 1024 * 1024 * 100, bytesDone: 0, status: "running", ...over });
 
-beforeEach(() => { useTransfers.getState().reset(); });
-afterEach(() => { vi.clearAllMocks(); });
+const resizeObservers: { callback: () => void }[] = [];
+beforeEach(() => {
+  useTransfers.getState().reset();
+  vi.stubGlobal("ResizeObserver", class { constructor(callback: () => void) { resizeObservers.push({ callback }); } observe = vi.fn(); unobserve = vi.fn(); disconnect = vi.fn(); });
+});
+afterEach(() => {
+  vi.clearAllMocks();
+  vi.unstubAllGlobals();
+  resizeObservers.length = 0;
+  document.documentElement.style.removeProperty("--cf-tray-height");
+});
+
+describe("the page keeps clear of the panel", () => {
+  it("publishes the panel's height for the page's bottom padding while it shows, and takes it back when it goes", () => {
+    useTransfers.getState().add([transfer({})]);
+    const { unmount } = render(<TransferPanel />);
+    expect(document.documentElement.style.getPropertyValue("--cf-tray-height")).toMatch(/^\d+px$/);
+    unmount();
+    expect(document.documentElement.style.getPropertyValue("--cf-tray-height")).toBe("");
+  });
+
+  it("publishes nothing when there is nothing to show", () => {
+    render(<TransferPanel />);
+    expect(document.documentElement.style.getPropertyValue("--cf-tray-height")).toBe("");
+  });
+});
 
 describe("FR-44 transfer panel", () => {
   it("renders nothing without transfers", () => {

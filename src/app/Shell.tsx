@@ -95,7 +95,8 @@ export function Shell({ children }: { children: ReactNode }) {
             id="main"
             tabIndex={-1}
             aria-label={t("main.label")}
-            className="flex-1 p-4 outline-none @md:p-6"
+            // Below 768 px the transfer panel is fixed over the bottom; its height is kept as padding so nothing hides under it.
+            className="flex-1 p-4 pb-[calc(var(--cf-space-4)+var(--cf-tray-height,0px))] outline-none @md:p-6"
           >
             {children}
           </main>
