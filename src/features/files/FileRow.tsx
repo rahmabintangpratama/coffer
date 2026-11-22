@@ -37,6 +37,8 @@ export function FileRow({ item, index, selected, layout, menu, top, height, rowP
   const compact = layout === "compact";
   const modified = item.kind === "file" ? formatModified(item.lastModified) : "";
   const size = item.kind === "file" ? formatBytes(item.size) : "";
+  // Muted text is 3.87:1 (light) and 2.99:1 (dark) on a hovered selected row, under 4.5:1; a selected row uses the default text colour (M10 axe pass).
+  const metaColor = selected ? "text-fg" : "text-fg-muted";
   const meta = item.kind === "file" ? t("files.row.meta", { date: modified, size }) : t("type.folder");
 
   return (
@@ -67,12 +69,12 @@ export function FileRow({ item, index, selected, layout, menu, top, height, rowP
       </div>
       <div role="gridcell" className="min-w-0">
         <Name name={item.name} />
-        {compact && <p className="truncate text-sm text-fg-muted">{meta}</p>}
+        {compact && <p className={cn("truncate text-sm", metaColor)}>{meta}</p>}
       </div>
       {!compact && (
         <>
-          <div role="gridcell" className="truncate text-sm text-fg-muted">{modified}</div>
-          <div role="gridcell" className="truncate text-sm text-fg-muted">{size}</div>
+          <div role="gridcell" className={cn("truncate text-sm", metaColor)}>{modified}</div>
+          <div role="gridcell" className={cn("truncate text-sm", metaColor)}>{size}</div>
         </>
       )}
       <div role="gridcell" {...stopRowEvents} className="flex size-(--cf-size-touch-min) items-center justify-center @md:size-auto">

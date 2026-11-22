@@ -89,6 +89,9 @@ export function TextInput({ className, mono, ...rest }: ComponentProps<"input"> 
   return (
     <input
       {...rest}
+      // React's autoFocus runs before a native <dialog> is open, so the dialog moves focus to its first control instead;
+      // ModalSurface looks for this marker after showModal().
+      data-autofocus={rest.autoFocus === true ? "" : undefined}
       id={id}
       aria-describedby={describedBy}
       aria-invalid={invalid || undefined}
@@ -102,6 +105,7 @@ export function TextArea({ className, mono, ...rest }: ComponentProps<"textarea"
   return (
     <textarea
       {...rest}
+      data-autofocus={rest.autoFocus === true ? "" : undefined}
       id={id}
       aria-describedby={describedBy}
       aria-invalid={invalid || undefined}

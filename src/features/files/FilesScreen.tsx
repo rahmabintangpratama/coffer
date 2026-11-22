@@ -363,7 +363,17 @@ function Folder({ connection, relative, root, settings, onSettings, notify, onUs
         connection={connection}
         file={detailsFile}
         folder={relative === "" ? "/" : relative}
-        onClose={() => { setDetailsKey(null); }}
+        onClose={() => {
+          const closing = detailsFile;
+          setDetailsKey(null);
+          // From 1024 px the panel is part of the page, not a dialog, so nothing hands focus back: without this it would drop to the page.
+          if (layout === "sidebar" && closing) {
+            const label = t("row.more", { name: closing.name });
+            requestAnimationFrame(() => {
+              [...document.querySelectorAll<HTMLElement>("button[aria-haspopup='menu']")].find((button) => button.getAttribute("aria-label") === label)?.focus();
+            });
+          }
+        }}
         onCopyKey={() => { if (detailsFile) handlers.copyKey(detailsFile); }}
       />
     </section>

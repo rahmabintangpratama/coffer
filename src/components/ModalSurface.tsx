@@ -56,7 +56,11 @@ export function ModalSurface(props: ModalSurfaceProps) {
     openRef.current = open;
     const element = dialog.current;
     if (!element) return;
-    if (open && !element.open) element.showModal();
+    if (open && !element.open) {
+      element.showModal();
+      // showModal() focuses the first control (the Close button). A field that asked for focus gets it, so the person can type at once.
+      element.querySelector<HTMLElement>("[data-autofocus]:not(:disabled)")?.focus();
+    }
     if (!open && element.open) {
       element.close();
       returnFocusRef?.current?.focus();
