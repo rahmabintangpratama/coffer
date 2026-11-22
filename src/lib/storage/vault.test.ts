@@ -15,6 +15,14 @@ describe("vault (memory only)", () => {
     await expect(vault.credentialsFor("c1")).resolves.toEqual(keys);
   });
 
+  it("says whether a session token is held, without giving it out", () => {
+    vault.put("c1", keys);
+    vault.put("c2", { accessKeyId: "AK", secretAccessKey: "SK" });
+    expect(vault.hasSessionToken("c1")).toBe(true);
+    expect(vault.hasSessionToken("c2")).toBe(false);
+    expect(vault.hasSessionToken("nope")).toBe(false);
+  });
+
   it("keeps its own copy, so changing what it returned or was given changes nothing", async () => {
     const given = { ...keys };
     vault.put("c1", given);

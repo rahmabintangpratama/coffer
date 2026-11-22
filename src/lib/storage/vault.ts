@@ -35,6 +35,11 @@ export const vault = {
     return secrets.has(connectionId);
   },
 
+  /** Whether the connection signs with a session token. Tells the Share dialog about the cap without handing out the token. */
+  hasSessionToken(connectionId: string): boolean {
+    return secrets.get(connectionId)?.sessionToken !== undefined;
+  },
+
   /** The keys for one request. Rejects with LockedError when they are not there. */
   credentialsFor(connectionId: string): Promise<Credentials> {
     const credentials = secrets.get(connectionId);

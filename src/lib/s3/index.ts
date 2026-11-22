@@ -39,6 +39,22 @@ export {
   type UploadRecord,
   type UploadStateStore,
 } from "./upload";
+export {
+  allowedChoices,
+  clockOffsetOf,
+  defaultChoice,
+  MIN_SHARE_SECONDS,
+  presignShare,
+  providerNow,
+  secondsOf,
+  SHARE_CHOICES,
+  signShareUrl,
+  shareLimits,
+  type ShareLimitsInput,
+  type ShareLimitsResult,
+  type ShareLink,
+  type ShareLinkRequest,
+} from "./share";
 export { PREVIEW_SECONDS, presignView, readObject } from "./preview";
 export { looksBinary, mimeOf, sniffKind } from "./keys";
 export { COPY_SINGLE_LIMIT, copyObject, copyPartSizeFor, copySourceOf, type CopyOptions } from "./copy";
