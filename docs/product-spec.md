@@ -155,6 +155,7 @@ The UI never hides these. Each one is surfaced where it affects the person.
 - AC-9.5 Given unlock succeeds after an auto-lock, Then queued transfers start and the person returns to their previous folder.
 - AC-9.7 Given transfers are running when the app locks, Then the Locked screen shows a `Banner` with the number of transfers still finishing and a secondary `Button` `Stop transfers and lock`; choosing it cancels them (multipart uploads are aborted), releases their credentials and completes the lock. "Forget this device" always cancels them.
 - AC-9.6 Given the app is locked, When a transfer is queued but not yet started, Then it waits (status "waiting for unlock") and starts only after unlock.
+- AC-9.8 Given more than one tab of Coffer is open, When any of them locks (manually or by auto-lock) or stops transfers and locks, Then every tab drops its keys and shows the Locked screen within about a second; "Stop transfers and lock" stops the running transfers of every tab. Unlocking in one tab does not unlock the others.
 
 **States:** locked, unlocking (derivation in progress), wrong passphrase, unlocked.
 **Edge cases:** the lock timer counts pointer, key and touch input, and does not count running transfers as activity (see [C-27](open-questions.md#owner-confirmed-decisions)). Running transfers keep a private credential lease until they finish; see tech spec section 9. Auto-lock "never" (0) shows a warning.
@@ -167,6 +168,7 @@ The UI never hides these. Each one is surfaced where it affects the person.
 - AC-10.2 Given saved connections exist, When the person types the saved-connection count, Then the filled danger button enables; before that it is disabled.
 - AC-10.3 Given the person confirms, Then every item in the local data inventory is removed, in-memory keys are cleared and the app returns to Welcome.
 - AC-10.4 Given the action runs, Then a reload shows an empty inventory in `What's stored on this device`.
+- AC-10.5 Given more than one tab is open, When the device is forgotten in one of them, Then every tab stops its transfers, lets go of the database and returns to Welcome.
 
 **States:** confirm (disabled), confirm (enabled), done.
 **Edge cases:** open IndexedDB connections are closed first. Share links already created keep working until they expire (the dialog does not claim otherwise).

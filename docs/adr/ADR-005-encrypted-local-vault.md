@@ -21,7 +21,10 @@ Offer two modes. **Memory only**: keys live in a module-scoped map and disappear
 - PBKDF2 is chosen because it is in Web Crypto everywhere; memory-hard KDFs would need a library or WASM and are a possible later upgrade (the record stores `kdf` and `v`).
 - Iteration count can rise over time; records store their own count and are re-encrypted when raised.
 - Unlock takes a perceptible moment on slow phones; the UI shows progress.
+- A lock in one tab also drops the memory-only keys of every other tab (they are not recoverable, because they have no passphrase). A device with only memory-only connections has no lock at all.
 - Lock is not an instant wipe while transfers run: leased credentials stay in memory until those transfers end. The window is bounded by the transfers' duration, closing the tab ends it, and "Forget this device" always cancels transfers. The Locked screen shows a banner with the number of running transfers and a secondary button "Stop transfers and lock" that cancels them and releases the leases at once (C-38).
+
+**Tabs and key handling (D-47).** Lock, auto-lock and Forget in any tab reach every tab of the origin through a message that carries no key; unlocking one tab does not unlock another. The derived key is a non-extractable `CryptoKey` that exists only in memory.
 
 ## Alternatives considered
 

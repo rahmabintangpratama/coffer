@@ -12,6 +12,10 @@ Vault, operation journal, upload state and IndexedDB. No React imports; must not
 - Passphrase: at least 12 characters (block saving below it); advisory hint at 16 or more; no estimator library.
 - Running transfers keep a private credential lease and a dedicated client until they end; queued ones acquire a lease only at start, which throws `LockedError` while locked. Release leases on finish, failure, cancel and Forget.
 - Never persist a `credentials: { storage: "memory" }` profile.
+- The derived key is a non-extractable `CryptoKey` in a module variable. Never export it, store it, log it or post it. `lock()` drops every reference. A test dumps all storage after save, lock and unlock and finds no plaintext key and no key material.
+- Leases: `vault.lease(id)` (throws `LockedError` while locked) and `vault.leaseWhenUnlocked(id, signal)` (waits). `vault.stopLeases()` aborts them for "Stop transfers and lock" and Forget. Transfers use `withLeasedClient` in `lib/s3`.
+- `tabsync.ts`: lock and forget reach every tab through `BroadcastChannel`, or a short-lived `coffer:signal` write and the `storage` event. A message is a type and a flag, never a secret; unlocking posts nothing.
+- `coffer:saved` is the first-paint hint (one saved connection or more); `connections` is the truth.
 
 ## Journal and uploads
 
@@ -31,4 +35,4 @@ Vault, operation journal, upload state and IndexedDB. No React imports; must not
 ## Forget this device
 
 - Removes: running transfers and their leases, pending timers and clients, database `coffer` (close handles first), every `localStorage` key prefixed `coffer:`, `sessionStorage`, Cache Storage and service workers if present, in-memory vault and query cache.
-- Keep a single inventory list of storage locations; a test fails when a location exists that Forget does not clear.
+- `inventory.ts` is the single list of storage locations. Add a location there, to What's stored and to `forgetDevice` in the same change; `inventory.test.ts` fails when source touches browser storage in a file the list does not name.
