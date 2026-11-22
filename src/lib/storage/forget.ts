@@ -43,9 +43,7 @@ function deleteDatabase(factory: IDBFactory, blockedMs: number): Promise<void> {
  * Buckets and files are not touched.
  */
 export async function forgetDevice(deps: ForgetDeps = {}): Promise<void> {
-  vault.stopLeases();
-  // Let aborted tasks reach their finally blocks before the stores under them go away.
-  await new Promise((resolve) => setTimeout(resolve, 0));
+  await stopEverything();
   await safe(sealDb);
   await safe(() => deleteDatabase(deps.indexedDB ?? indexedDB, deps.blockedMs ?? 3000));
   await safe(() => {
@@ -69,12 +67,25 @@ export async function forgetDevice(deps: ForgetDeps = {}): Promise<void> {
   vault.lock();
 }
 
+/** How long Forget waits for aborted transfers to finish cleaning up at the provider (AbortMultipartUpload) before it goes on. */
+const SETTLE_MS = 5000;
+
+/**
+ * The keys go first. Then every running and every waiting transfer is stopped, and Forget waits for the stopped ones to
+ * release their lease, which is after they aborted their multipart uploads: the upload records are about to be deleted,
+ * so nothing could clean them up later.
+ */
+async function stopEverything(): Promise<void> {
+  vault.lock();
+  vault.stopLeases({ includeWaiting: true });
+  await vault.leasesSettled(SETTLE_MS);
+}
+
 /** The same for a tab that was told by another tab: close the handle and refuse to reopen, without deleting twice. */
 export async function releaseStorage(): Promise<void> {
-  vault.stopLeases();
+  await stopEverything();
   await safe(closeSharedDb);
   await safe(sealDb);
-  vault.lock();
 }
 
 export interface StoredReport {

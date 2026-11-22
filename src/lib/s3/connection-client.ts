@@ -1,6 +1,6 @@
 import { getPreset, resolveAddressing } from "@/lib/providers";
 import { type Lease, vault } from "@/lib/storage/vault";
-import type { ConnectionSummary } from "@/lib/types";
+import type { ConnectionSummary, Credentials } from "@/lib/types";
 import { createClient } from "./client";
 import type { S3Client } from "@aws-sdk/client-s3";
 
@@ -11,10 +11,20 @@ const clients = new Map<string, S3Client>();
 export function clientFor(connection: ConnectionSummary): S3Client {
   const existing = clients.get(connection.id);
   if (existing) return existing;
-  const created = createClient({ ...settingsOf(connection), credentials: () => vault.credentialsFor(connection.id) });
+  const created = createClient({ ...settingsOf(connection), credentials: () => currentKeys(connection.id) });
   clients.set(connection.id, created);
   return created;
 }
+
+/**
+ * The keys for one request, read from the vault each time. The SDK remembers a credentials function's answer unless it carries
+ * an expiration, and a client that remembered the keys would go on signing after a lock. An expiration inside the SDK's refresh
+ * window makes it ask again for every request, so a lock stops the client at once.
+ */
+const currentKeys = async (connectionId: string): Promise<Credentials & { expiration: Date }> => ({
+  ...(await vault.credentialsFor(connectionId)),
+  expiration: new Date(Date.now() + 1000),
+});
 
 const settingsOf = (connection: ConnectionSummary) => ({
   endpoint: connection.endpoint,

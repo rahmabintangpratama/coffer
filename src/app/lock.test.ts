@@ -42,6 +42,16 @@ describe("lockNow", () => {
     lease.release();
   });
 
+  it("also drops what the screens hold about bucket objects: toasts and the interrupted list", async () => {
+    const { lock } = await modules();
+    const [{ useToasts }, { useOperations }] = await Promise.all([import("./toast"), import("@/features/operations/state")]);
+    useToasts.getState().push({ message: "Moved secret-name.txt" });
+    useOperations.getState().setInterrupted([{ id: "j1" } as never]);
+    lock.lockNow("manual");
+    expect(useToasts.getState().toasts).toEqual([]);
+    expect(useOperations.getState().interrupted).toEqual([]);
+  });
+
   it("an auto-lock records the setting that fired", async () => {
     const { lock, useSession, useSettings } = await modules();
     useSettings.setState({ autoLockMinutes: 30 });
@@ -73,6 +83,15 @@ describe("a message from another tab", () => {
     expect(posted).toEqual([]);
   });
 
+  it("activity changes nothing here (it only keeps the auto-lock clocks together)", async () => {
+    const { lock, useSession } = await modules();
+    useSession.setState({ locked: null });
+    vault.put("c1", { accessKeyId: "AK", secretAccessKey: "SK" });
+    lock.applyTabMessage({ type: "activity" });
+    expect(useSession.getState().locked).toBeNull();
+    await expect(vault.credentialsFor("c1")).resolves.toMatchObject({ accessKeyId: "AK" });
+  });
+
   it("lock with stop also aborts the transfers of this tab", async () => {
     const { lock } = await modules();
     vault.put("c1", { accessKeyId: "AK", secretAccessKey: "SK" });
@@ -87,7 +106,12 @@ describe("a message from another tab", () => {
     const release = vi.spyOn(forget, "releaseStorage").mockResolvedValue();
     const reload = vi.fn();
     vi.stubGlobal("window", { localStorage: window.localStorage, location: { hash: "#/files/a", reload } });
+    vault.put("c1", { accessKeyId: "AK", secretAccessKey: "SK" });
+    const { useSession } = await modules();
     lock.applyTabMessage({ type: "forget" });
+    // The keys are gone and Locked shows before anything else happens.
+    expect(useSession.getState().locked).toEqual({ reason: "remote" });
+    await expect(vault.credentialsFor("c1")).rejects.toThrow("locked");
     await vi.waitFor(() => { expect(reload).toHaveBeenCalled(); });
     expect(release).toHaveBeenCalled();
     expect(window.location.hash).toBe("");

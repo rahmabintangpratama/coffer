@@ -105,6 +105,37 @@ describe("AC-11.4 and AC-102.1 Connections", () => {
     expect(p.notify).toHaveBeenCalledWith(`Removed ${two.name}`);
   });
 
+  it("a removal that fails says so and keeps the connection in the list", async () => {
+    vi.spyOn(vault, "remove").mockRejectedValue(new Error("blocked"));
+    const p = props();
+    render(<SecuritySettings {...p} />);
+    await userEvent.click(screen.getByRole("button", { name: `Remove: ${two.name}` }));
+    const dialog = await screen.findByRole("dialog", { name: `Remove ${two.name}?` });
+    await userEvent.click(within(dialog).getByRole("button", { name: "Remove" }));
+    await vi.waitFor(() => { expect(p.notify).toHaveBeenCalledWith(`Couldn’t remove ${two.name}. Try again.`); });
+    expect(p.onRemoved).not.toHaveBeenCalled();
+  });
+
+  it("What's stored lists the upload state as well", async () => {
+    render(<SecuritySettings {...props()} />);
+    expect(await screen.findByText("Upload state")).toBeInTheDocument();
+    expect(screen.getByText("0 unfinished uploads · no file contents")).toBeInTheDocument();
+  });
+
+  it("Forget that fails says so and Cancel is off while it works", async () => {
+    let fail: (error: Error) => void = () => undefined;
+    const onForget = vi.fn(() => new Promise<void>((_resolve, reject) => { fail = reject; }));
+    render(<SecuritySettings {...props({ onForget })} />);
+    await userEvent.click(screen.getByRole("button", { name: /^Forget$/ }));
+    const dialog = await screen.findByRole("dialog", { name: "Forget this device?" });
+    await userEvent.type(await within(dialog).findByLabelText("Type 2 to confirm"), "2");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Forget this device" }));
+    expect(within(dialog).getByRole("button", { name: "Cancel" })).toBeDisabled();
+    fail(new Error("storage"));
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent("Couldn’t finish forgetting this device");
+    expect(within(dialog).getByRole("button", { name: "Cancel" })).toBeEnabled();
+  });
+
   it("Show secret key opens the passphrase dialog for that connection", async () => {
     render(<SecuritySettings {...props()} />);
     await userEvent.click(screen.getByRole("button", { name: `Show secret key: ${two.name}` }));

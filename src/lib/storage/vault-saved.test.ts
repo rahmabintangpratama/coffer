@@ -1,7 +1,7 @@
 // @vitest-environment node
 import "fake-indexeddb/auto";
 import { deleteDB } from "idb";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { connectionStore } from "./connection-store";
 import { deriveKey, fromBase64Url, KDF_ITERATIONS, newKdfParams, seal, toBase64Url, WrongPassphraseError } from "./crypto";
 import { closeSharedDb, DB_NAME } from "./db";
@@ -51,6 +51,14 @@ describe("AC-8.3 save on this device", () => {
     expect(JSON.stringify(profile)).not.toContain(keys.secretAccessKey);
     expect(JSON.stringify(profile)).not.toContain(keys.accessKeyId);
     expect(store.get("coffer:saved")).toBe("1");
+  });
+
+  it("C-34 refuses a first passphrase under 12 characters even when the form did not", async () => {
+    vault.put("c1", keys);
+    await expect(vault.save(summary("c1"), "eleven char")).rejects.toMatchObject({ name: "WeakPassphraseError" });
+    expect(await vault.savedCount()).toBe(0);
+    await vault.save(summary("c1"), "twelve chars!");
+    expect(await vault.savedCount()).toBe(1);
   });
 
   it("needs a passphrase for the first save, and only for a connection whose keys are in memory", async () => {
@@ -118,6 +126,34 @@ describe("AC-9.1 to AC-9.4 unlock and lock", () => {
     offLock();
     offUnlock();
     expect(seen).toEqual(["unlock", "lock", "unlock"]);
+  });
+
+  it("a record that is not one of ours is refused before any key is derived from it", async () => {
+    await saveFirst();
+    const [profile] = await connectionStore.list();
+    if (profile?.credentials.storage !== "encrypted") throw new Error("no sealed record");
+    vault.lock();
+    for (const bad of [{ iterations: 0 }, { iterations: 5e12 }, { iterations: 1.5 }, { cipher: "AES-CBC" }, { v: 2 }, { salt: "not base64 !" }]) {
+      await connectionStore.put({ ...profile, credentials: { ...profile.credentials, ...bad } as never });
+      await expect(vault.unlock(PASS), JSON.stringify(bad)).rejects.toMatchObject({ name: "InvalidRecordError" });
+    }
+    await connectionStore.put(profile);
+    await expect(vault.unlock(PASS)).resolves.toHaveLength(1);
+  });
+
+  it("re-encryption writes every record in one transaction, and a failed write leaves the old records readable", async () => {
+    const weak = newKdfParams(1000);
+    const key = await deriveKey(PASS, weak);
+    for (const id of ["c1", "c2"]) await connectionStore.put({ ...summary(id), credentials: { storage: "encrypted", ...(await seal(key, id, keys, weak)) } });
+    const failing = vi.spyOn(connectionStore, "putAll").mockRejectedValue(new Error("quota"));
+    await expect(vault.unlock(PASS)).rejects.toThrow("quota");
+    failing.mockRestore();
+    const salts = new Set((await connectionStore.list()).map((profile) => (profile.credentials.storage === "encrypted" ? profile.credentials.salt : "")));
+    expect(salts.size).toBe(1);
+    await expect(vault.unlock(PASS)).resolves.toHaveLength(2);
+    const after = new Set((await connectionStore.list()).map((profile) => (profile.credentials.storage === "encrypted" ? profile.credentials.salt : "")));
+    expect(after.size).toBe(1);
+    expect(after.has(toBase64Url(weak.salt))).toBe(false);
   });
 
   it("a record sealed under a lower work factor is sealed again, under a fresh salt, when it is unlocked", async () => {
@@ -193,16 +229,43 @@ describe("C-27 and C-38 leases", () => {
     lease.release();
   });
 
-  it("stopping the leases aborts the running ones and rejects the waiting ones", async () => {
+  it("C-38 stopping the leases aborts the running ones and leaves the waiting ones queued (AC-9.6)", async () => {
     await saveFirst();
     const running = vault.lease("c1");
     vault.lock();
-    const waiting = vault.leaseWhenUnlocked("c1");
+    let settled = false;
+    const waiting = vault.leaseWhenUnlocked("c1").then((lease) => { settled = true; return lease; }, () => { settled = true; });
     vault.stopLeases();
     expect(running.signal.aborted).toBe(true);
-    await expect(waiting).rejects.toMatchObject({ name: "AbortError" });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(settled).toBe(false);
     running.release();
+    await vault.unlock(PASS);
+    const lease = await waiting;
+    expect(lease?.credentials.accessKeyId).toBe(keys.accessKeyId);
+    lease?.release();
+  });
+
+  it("Forget stops the waiting ones as well, since nothing will be there to start them", async () => {
+    await saveFirst();
+    vault.lock();
+    const waiting = vault.leaseWhenUnlocked("c1");
+    vault.stopLeases({ includeWaiting: true });
+    await expect(waiting).rejects.toMatchObject({ name: "AbortError" });
+  });
+
+  it("leasesSettled resolves when the last lease is released, or after the timeout", async () => {
+    await saveFirst();
+    const lease = vault.lease("c1");
+    const settled = vault.leasesSettled(5000);
+    setTimeout(() => { lease.release(); }, 30);
+    await settled;
     expect(vault.leaseCount()).toBe(0);
+    const stuck = vault.lease("c1");
+    const started = Date.now();
+    await vault.leasesSettled(80);
+    expect(Date.now() - started).toBeGreaterThanOrEqual(70);
+    stuck.release();
   });
 
   it("a waiter can be abandoned with its own signal", async () => {

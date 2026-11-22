@@ -47,6 +47,26 @@ export interface SealedCredentials {
   data: string;
 }
 
+/** A stored record that cannot be a record of ours: wrong version or algorithm, or a work factor that would hang or do nothing. */
+export class InvalidRecordError extends Error {
+  constructor() {
+    super("invalid record");
+    this.name = "InvalidRecordError";
+  }
+}
+
+/** Upper bound on a stored work factor: a tampered value must not hang the tab. */
+const MAX_ITERATIONS = 10_000_000;
+
+/** Check a record read from storage before any key is derived from it. */
+export function assertSealed(sealed: SealedCredentials): void {
+  const field = sealed as unknown as Record<string, unknown>;
+  const text = (value: unknown) => typeof value === "string" && /^[A-Za-z0-9_-]+$/.test(value);
+  if (field.v !== 1 || field.cipher !== "AES-GCM" || field.kdf !== "PBKDF2") throw new InvalidRecordError();
+  if (typeof field.iterations !== "number" || !Number.isInteger(field.iterations) || field.iterations < 1 || field.iterations > MAX_ITERATIONS) throw new InvalidRecordError();
+  if (!text(field.salt) || !text(field.iv) || !text(field.data)) throw new InvalidRecordError();
+}
+
 /** The passphrase did not open the record (AES-GCM authentication failed), or the record was changed. */
 export class WrongPassphraseError extends Error {
   constructor() {
@@ -99,18 +119,27 @@ export async function seal(key: CryptoKey, profileId: string, credentials: Crede
 
 /** Decrypt one record. Throws WrongPassphraseError when the key, the profile id or the bytes do not match. */
 export async function open(key: CryptoKey, profileId: string, sealed: SealedCredentials): Promise<Credentials> {
+  assertSealed(sealed);
   let plain: ArrayBuffer;
   try {
     plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: fromBase64Url(sealed.iv) as BufferSource, additionalData: aadFor(profileId) as BufferSource }, key, fromBase64Url(sealed.data) as BufferSource);
   } catch {
     throw new WrongPassphraseError();
   }
-  const value = JSON.parse(new TextDecoder().decode(plain)) as Partial<Credentials>;
+  let value: Partial<Credentials>;
+  try {
+    value = JSON.parse(new TextDecoder().decode(plain)) as Partial<Credentials>;
+  } catch {
+    throw new WrongPassphraseError();
+  }
   if (typeof value.accessKeyId !== "string" || typeof value.secretAccessKey !== "string") throw new WrongPassphraseError();
   return { accessKeyId: value.accessKeyId, secretAccessKey: value.secretAccessKey, ...(typeof value.sessionToken === "string" ? { sessionToken: value.sessionToken } : {}) };
 }
 
-export const paramsOf = (sealed: SealedCredentials): KdfParams => ({ salt: fromBase64Url(sealed.salt), iterations: sealed.iterations });
+export function paramsOf(sealed: SealedCredentials): KdfParams {
+  assertSealed(sealed);
+  return { salt: fromBase64Url(sealed.salt), iterations: sealed.iterations };
+}
 
 /** A record made below the current work factor is re-encrypted the next time the vault is unlocked. */
 export const needsRehash = (sealed: SealedCredentials): boolean => sealed.iterations < KDF_ITERATIONS;

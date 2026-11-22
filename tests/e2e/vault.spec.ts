@@ -303,6 +303,30 @@ test.describe("lock and forget reach every tab (C-27)", () => {
     await context.close();
   });
 
+  test("AC-9.8 an idle tab does not lock a tab that is in use: activity in one resets the auto-lock of both", async ({ browser }) => {
+    test.setTimeout(90_000);
+    const context = await browser.newContext();
+    // The e2e build shortens only the 5-minute choice, to 4 seconds.
+    await context.addInitScript(() => { window.localStorage.setItem("coffer:settings", JSON.stringify({ autoLockMinutes: 5 })); });
+    const busy = await context.newPage();
+    await enterApp(busy, "/files", { passphrase: PASS });
+    const idle = await context.newPage();
+    await idle.goto("/");
+    await unlock(idle);
+    await expect(idle.getByRole("navigation", { name: "Main navigation" })).toBeVisible({ timeout: 15_000 });
+    // About three times the idle time, with the pointer moving only in one tab.
+    for (let second = 0; second < 12; second += 1) {
+      await busy.mouse.move(100 + second * 10, 200);
+      await busy.waitForTimeout(1000);
+    }
+    await expect(busy.getByRole("navigation", { name: "Main navigation" })).toBeVisible();
+    await expect(idle.getByRole("navigation", { name: "Main navigation" })).toBeVisible();
+    // Once nobody touches either, both lock (the first to fire tells the other).
+    await expect(lockedHeading(busy)).toBeVisible({ timeout: 15_000 });
+    await expect(lockedHeading(idle)).toBeVisible({ timeout: 3000 });
+    await context.close();
+  });
+
   test("AC-10.1 to AC-10.4 Forget this device lists what goes, asks for the count, empties storage and sends every tab to Welcome", async ({ browser }) => {
     const context = await browser.newContext();
     const first = await context.newPage();
@@ -337,6 +361,27 @@ test.describe("lock and forget reach every tab (C-27)", () => {
     await first.reload();
     await expect(unlockHeading(first)).toHaveCount(0);
     await context.close();
+  });
+});
+
+test.describe("Forget this device with a transfer running (C-38)", () => {
+  test("AC-9.7 it aborts the upload at the provider before the records go, so nothing is left open", async ({ page }) => {
+    test.setTimeout(120_000);
+    const folder = unique();
+    await enterApp(page, "/files", { passphrase: PASS });
+    await openFolder(page, folder);
+    await slowParts(page, 2000);
+    await filesInput(page).setInputFiles(bigFile("forgotten.bin", 40));
+    await expect.poll(() => incompleteIn(folder), { timeout: 20_000 }).toBeGreaterThan(0);
+    await goToRoute(page, "/settings");
+    await page.getByRole("button", { name: "Forget", exact: true }).click();
+    const dialog = page.getByRole("dialog", { name: "Forget this device?" });
+    await dialog.getByLabel("Type 1 to confirm").fill("1");
+    await dialog.getByRole("button", { name: "Forget this device" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: /Connect|Welcome|your/i })).toBeVisible({ timeout: 30_000 });
+    // The multipart upload is gone at the provider: the upload record was deleted with the device, so no later load could clean it up.
+    expect(await incompleteIn(folder)).toBe(0);
+    expect(await keysUnder(`${folder}/`)).toEqual([]);
   });
 });
 

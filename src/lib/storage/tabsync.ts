@@ -1,12 +1,13 @@
 /**
  * Tells the other tabs of this origin that the vault was locked or the device was forgotten, so they follow within
- * a moment (FR-9, FR-10). BroadcastChannel is used where it exists; elsewhere a short-lived `localStorage` write
+ * a moment (FR-9, FR-10), and that the person is active, so the auto-lock timers of all tabs run on one clock (AC-9.8). BroadcastChannel is used where it exists; elsewhere a short-lived `localStorage` write
  * raises a `storage` event in the other tabs (the writing tab never gets its own).
  *
+ * An `activity` message only says "someone is using Coffer", so an idle tab does not lock a tab that is in use.
  * A message is only a type and a flag. It never carries a key, a credential, a passphrase or the derived key:
  * each tab holds its own, and unlocking in one tab does not unlock another.
  */
-export type TabMessage = { type: "lock"; stop: boolean } | { type: "forget" };
+export type TabMessage = { type: "lock"; stop: boolean } | { type: "forget" } | { type: "activity" };
 
 /** Not storage: the name of the channel. */
 export const CHANNEL_NAME = "coffer:vault";
@@ -39,7 +40,7 @@ export interface TabSync {
 const isMessage = (value: unknown): value is TabMessage => {
   if (typeof value !== "object" || value === null) return false;
   const message = value as { type?: unknown; stop?: unknown };
-  if (message.type === "forget") return true;
+  if (message.type === "forget" || message.type === "activity") return true;
   return message.type === "lock" && typeof message.stop === "boolean";
 };
 

@@ -7,10 +7,21 @@ import { autoLockDelayMs, useAutoLock } from "./useAutoLock";
 // FR-9, AC-9.3: auto-lock after N minutes with no input; running transfers are not input.
 const lockNow = vi.fn();
 vi.mock("./lock", () => ({ lockNow: (reason: string) => { lockNow(reason); } }));
+// One fake tab-sync: what this tab posts, and the handler that other tabs' messages reach.
+const posted: unknown[] = [];
+let remote: ((message: { type: string }) => void) | null = null;
+vi.mock("@/lib/storage/tabsync", () => ({
+  tabSync: () => ({
+    post: (message: unknown) => { posted.push(message); },
+    subscribe: (handler: (message: { type: string }) => void) => { remote = handler; return () => { remote = null; }; },
+  }),
+}));
 
 beforeEach(() => {
   vi.useFakeTimers();
   lockNow.mockClear();
+  posted.length = 0;
+  remote = null;
   vi.spyOn(vault, "isUnlocked").mockReturnValue(true);
   useSettings.setState({ autoLockMinutes: 15 });
 });
@@ -37,6 +48,25 @@ describe("useAutoLock", () => {
     expect(lockNow).not.toHaveBeenCalled();
     await idle(6);
     expect(lockNow).toHaveBeenCalledTimes(1);
+  });
+
+  it("AC-9.8 activity in another tab restarts the wait, so an idle tab does not lock one in use", async () => {
+    renderHook(() => { useAutoLock(); });
+    await idle(10);
+    act(() => { remote?.({ type: "activity" }); });
+    await idle(10);
+    expect(lockNow).not.toHaveBeenCalled();
+    await idle(6);
+    expect(lockNow).toHaveBeenCalledTimes(1);
+  });
+
+  it("tells the other tabs about activity, at most every five seconds", async () => {
+    renderHook(() => { useAutoLock(); });
+    for (let n = 0; n < 6; n += 1) {
+      act(() => { document.dispatchEvent(new Event("pointerdown")); });
+      await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+    }
+    expect(posted).toEqual([{ type: "activity" }, { type: "activity" }]);
   });
 
   it("Never (0) does not lock, and nor does a device with nothing saved", async () => {

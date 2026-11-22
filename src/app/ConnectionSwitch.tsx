@@ -2,6 +2,7 @@ import { useState, useSyncExternalStore } from "react";
 import { CopyBoundary } from "@/components/CopyBoundary";
 import { ConnectionSwitcher, LockDialog } from "@/features/vault";
 import { vault } from "@/lib/storage/vault";
+import { lockNow } from "./lock";
 import { useSession } from "./session";
 
 const copyGroups = ["conn", "sec"] as const;
@@ -44,7 +45,7 @@ export function ConnectionSwitch({ variant, className }: { variant: "icon" | "bl
       <LockDialog
         open={asking}
         onClose={() => { setAsking(false); }}
-        onConfirm={() => { void import("./lock").then((module) => { module.lockNow("manual"); }); }}
+        onConfirm={() => { lockNow("manual"); }}
       />
     </CopyBoundary>
   );

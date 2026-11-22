@@ -11,6 +11,12 @@ export const connectionStore = {
     if (profile.credentials.storage !== "encrypted") throw new Error("only encrypted connections are stored");
     await (await sharedDb()).put("connections", profile);
   },
+  /** Write several profiles in one transaction: all of them or none (re-encryption must not leave two salts behind). */
+  async putAll(profiles: readonly ConnectionProfile[]): Promise<void> {
+    if (profiles.some((profile) => profile.credentials.storage !== "encrypted")) throw new Error("only encrypted connections are stored");
+    const transaction = (await sharedDb()).transaction("connections", "readwrite");
+    await Promise.all([...profiles.map((profile) => transaction.store.put(profile)), transaction.done]);
+  },
   async get(id: string): Promise<ConnectionProfile | undefined> {
     return (await sharedDb()).get("connections", id);
   },

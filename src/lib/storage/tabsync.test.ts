@@ -55,6 +55,15 @@ describe("BroadcastChannel", () => {
     expect(fromThree).toEqual([{ type: "lock", stop: false }, { type: "lock", stop: true }]);
   });
 
+  it("an activity message reaches the other tabs and carries nothing", () => {
+    const [a, b] = channelPair();
+    const one = createTabSync({ channel: a, storage: null, events: null });
+    const two = createTabSync({ channel: b, storage: null, events: null });
+    const got = collect(two);
+    one.post({ type: "activity" });
+    expect(got).toEqual([{ type: "activity" }]);
+  });
+
   it("ignores a message it does not understand", () => {
     const [a, b] = channelPair();
     const one = createTabSync({ channel: a, storage: null, events: null });

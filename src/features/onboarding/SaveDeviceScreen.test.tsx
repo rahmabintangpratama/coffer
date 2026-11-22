@@ -72,6 +72,30 @@ describe("AC-8.1 to AC-8.4 Save on this device", () => {
     expect(save).toHaveBeenCalledWith(summary, undefined);
   });
 
+  it("with saved connections and a locked vault it asks for the existing passphrase, with no length rule or hint", async () => {
+    vi.spyOn(vault, "savedCount").mockResolvedValue(2);
+    const save = vi.spyOn(vault, "save").mockResolvedValue();
+    const { container } = render(<SaveDeviceScreen summary={summary} onSaved={vi.fn()} onSkip={vi.fn()} />);
+    expect(await screen.findByText("Enter the passphrase of your saved connections. They all share one passphrase.")).toBeInTheDocument();
+    expect(screen.queryByText(/We can’t recover/)).toBeNull();
+    await userEvent.type(screen.getByLabelText("Passphrase"), "short");
+    expect(screen.queryByText(/Use at least 12/)).toBeNull();
+    expect(screen.getByRole("button", { name: "Save with a passphrase" })).toBeEnabled();
+    expect(await axe(container)).toHaveNoViolations();
+    await userEvent.click(screen.getByRole("button", { name: "Save with a passphrase" }));
+    await vi.waitFor(() => { expect(save).toHaveBeenCalledWith(summary, "short"); });
+  });
+
+  it("a save that fails says so, in a group that is loaded at this step", async () => {
+    vi.spyOn(vault, "save").mockRejectedValue(new Error("quota"));
+    const onSaved = vi.fn();
+    render(<SaveDeviceScreen summary={summary} onSaved={onSaved} onSkip={vi.fn()} />);
+    await userEvent.type(screen.getByLabelText("Passphrase"), "correct horse battery");
+    await userEvent.click(screen.getByRole("button", { name: "Save with a passphrase" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Couldn’t save the connection");
+    expect(onSaved).not.toHaveBeenCalled();
+  });
+
   it("a passphrase that is not the saved connections' one is refused and nothing moves on", async () => {
     vi.spyOn(vault, "save").mockRejectedValue(new WrongPassphraseError());
     const onSaved = vi.fn();

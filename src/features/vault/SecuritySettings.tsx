@@ -90,6 +90,10 @@ export function SecuritySettings({ autoLockMinutes, onAutoLock, active, saved, o
               <dd className="text-sm text-fg-muted">{t("stored.starred.sub", { count: report.starred })}</dd>
             </div>
             <div>
+              <dt className="text-base">{t("stored.uploadsLabel")}</dt>
+              <dd className="text-sm text-fg-muted">{t("stored.uploads.sub", { count: report.uploads })}</dd>
+            </div>
+            <div>
               <dt className="text-base">{t("stored.recentLabel")}</dt>
               <dd className="text-sm text-fg-muted">{t("stored.recent.sub", { count: report.recent })}</dd>
             </div>
@@ -149,11 +153,14 @@ export function SecuritySettings({ autoLockMinutes, onAutoLock, active, saved, o
               const target = removing;
               setRemoving(null);
               if (!target) return;
-              void vault.remove(target.id).then(() => {
-                notify(t("conn.removed", { name: target.name }));
-                onRemoved(target);
-                load();
-              });
+              void vault.remove(target.id).then(
+                () => {
+                  notify(t("conn.removed", { name: target.name }));
+                  onRemoved(target);
+                  load();
+                },
+                () => { notify(t("conn.removeFailed", { name: target.name })); },
+              );
             }}
           >
             {t("conn.remove")}

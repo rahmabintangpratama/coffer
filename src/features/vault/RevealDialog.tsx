@@ -29,6 +29,7 @@ function RevealBody({ connection, onClose, notify }: { connection: ConnectionSum
   const [secret, setSecret] = useState<string | null>(null);
   const [wrong, setWrong] = useState(false);
   const [working, setWorking] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     if (secret === null) return;
@@ -40,12 +41,13 @@ function RevealBody({ connection, onClose, notify }: { connection: ConnectionSum
     if (working || passphrase === "") return;
     setWorking(true);
     setWrong(false);
+    setFailed(false);
     try {
       setSecret(await vault.reveal(connection.id, passphrase));
       setPassphrase("");
     } catch (error) {
       if (error instanceof WrongPassphraseError) setWrong(true);
-      else throw error;
+      else setFailed(true);
     } finally {
       setWorking(false);
     }
@@ -75,6 +77,7 @@ function RevealBody({ connection, onClose, notify }: { connection: ConnectionSum
           <Field label={t("ob.unlock.label")} error={wrong ? t("reveal.wrong") : undefined}>
             <TextInput type="password" value={passphrase} autoComplete="current-password" autoCapitalize="none" spellCheck={false} onChange={(event) => { setPassphrase(event.target.value); }} />
           </Field>
+          {failed && <p role="alert" className="text-sm text-danger-fg">{t("reveal.failed")}</p>}
           <div className="flex flex-col-reverse gap-2 @md:flex-row @md:justify-end">
             <Button variant="secondary" onClick={onClose}>{t("act.cancel")}</Button>
             <Button type="submit" variant="primary" loading={working} disabled={passphrase === ""}>{t("reveal.cta")}</Button>

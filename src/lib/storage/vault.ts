@@ -1,6 +1,6 @@
 import type { ConnectionProfile, ConnectionSummary, Credentials } from "@/lib/types";
 import { connectionStore } from "./connection-store";
-import { deriveKey, type KdfParams, needsRehash, newKdfParams, open, paramsOf, type SealedCredentials, seal } from "./crypto";
+import { assertSealed, deriveKey, type KdfParams, needsRehash, newKdfParams, open, paramsOf, passphraseProblem, type SealedCredentials, seal } from "./crypto";
 import { setSavedHint } from "./hint";
 
 /**
@@ -20,8 +20,16 @@ export class LockedError extends Error {
   }
 }
 
-/** The passphrase did not open the saved connections. */
-export { WrongPassphraseError } from "./crypto";
+/** The passphrase did not open the saved connections; a record in storage that is not one of ours. */
+export { InvalidRecordError, WrongPassphraseError } from "./crypto";
+
+/** A first passphrase under the minimum (C-34): saving is blocked here as well as in the form. */
+export class WeakPassphraseError extends Error {
+  constructor() {
+    super("passphrase too short");
+    this.name = "WeakPassphraseError";
+  }
+}
 
 const secrets = new Map<string, Credentials>();
 let cachedKey: CryptoKey | null = null;
@@ -44,7 +52,9 @@ const copy = (credentials: Credentials): Credentials => ({
 const sealedOf = (profile: ConnectionProfile): SealedCredentials => {
   const { credentials } = profile;
   if (credentials.storage !== "encrypted") throw new Error("not an encrypted profile");
-  return { v: credentials.v, cipher: credentials.cipher, kdf: credentials.kdf, iterations: credentials.iterations, salt: credentials.salt, iv: credentials.iv, data: credentials.data };
+  const sealed: SealedCredentials = { v: credentials.v, cipher: credentials.cipher, kdf: credentials.kdf, iterations: credentials.iterations, salt: credentials.salt, iv: credentials.iv, data: credentials.data };
+  assertSealed(sealed);
+  return sealed;
 };
 
 /** The profile without its sealed record: what the rest of the app may hold. */
@@ -181,6 +191,7 @@ export const vault = {
         await open(key, first.id, sealedOf(first));
         await adopt(key, params, existing);
       } else {
+        if (passphraseProblem(passphrase) !== null) throw new WeakPassphraseError();
         params = newKdfParams();
         key = await deriveKey(passphrase, params);
         cachedKey = key;
@@ -212,15 +223,18 @@ export const vault = {
     const freshKey = await deriveKey(passphrase, freshParams);
     const rewritten: ConnectionProfile[] = [];
     for (const profile of profiles) {
+      let credentials;
       try {
-        const credentials = await open(key, profile.id, sealedOf(profile));
-        const next: ConnectionProfile = { ...profile, credentials: { storage: "encrypted", ...(await seal(freshKey, profile.id, credentials, freshParams)) } };
-        await connectionStore.put(next);
-        rewritten.push(next);
+        credentials = await open(key, profile.id, sealedOf(profile));
       } catch {
+        // A record under another salt cannot be opened with this key; it is left as it is.
         rewritten.push(profile);
+        continue;
       }
+      rewritten.push({ ...profile, credentials: { storage: "encrypted", ...(await seal(freshKey, profile.id, credentials, freshParams)) } });
     }
+    // One transaction: all records move to the new salt together or none does.
+    await connectionStore.putAll(rewritten);
     return adopt(freshKey, freshParams, rewritten);
   },
 
@@ -309,13 +323,32 @@ export const vault = {
     return () => leaseListeners.delete(listener);
   },
 
-  /** Cancel every running transfer and every waiting one: "Stop transfers and lock" and Forget (C-38). */
-  stopLeases(): void {
-    for (const waiter of [...waiters]) {
-      waiters.delete(waiter);
-      waiter.signal?.removeEventListener("abort", waiter.onAbort);
-      waiter.reject(abortError());
+  /**
+   * Cancel every running transfer: "Stop transfers and lock" (C-38). Transfers still waiting for the unlock stay queued
+   * (AC-9.6); Forget passes `includeWaiting` because nothing will be there to start them.
+   */
+  stopLeases(options: { includeWaiting?: boolean } = {}): void {
+    if (options.includeWaiting === true) {
+      for (const waiter of [...waiters]) {
+        waiters.delete(waiter);
+        waiter.signal?.removeEventListener("abort", waiter.onAbort);
+        waiter.reject(abortError());
+      }
     }
     for (const { controller } of [...leases]) controller.abort();
+  },
+
+  /** Resolves when no lease is held, or after `timeoutMs`: the aborted transfers have then cleaned up at the provider. */
+  leasesSettled(timeoutMs: number): Promise<void> {
+    if (leases.size === 0) return Promise.resolve();
+    return new Promise((resolve) => {
+      const timer = setTimeout(done, timeoutMs);
+      const off = vault.onLeaseChange(() => { if (leases.size === 0) done(); });
+      function done() {
+        clearTimeout(timer);
+        off();
+        resolve();
+      }
+    });
   },
 };

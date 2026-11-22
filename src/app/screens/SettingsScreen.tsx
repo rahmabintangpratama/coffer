@@ -2,6 +2,7 @@ import { SecuritySettings } from "@/features/vault";
 import { t } from "@/lib/i18n";
 import { vault } from "@/lib/storage/vault";
 import type { ConnectionSummary, Theme } from "@/lib/types";
+import { forgetThisDevice, lockNow } from "../lock";
 import { useSession } from "../session";
 import { useSettings } from "../settings";
 import { useTheme } from "../theme";
@@ -51,8 +52,8 @@ export function SettingsScreen({ connection, notify }: { connection: ConnectionS
         onAutoLock={(minutes) => { update({ autoLockMinutes: minutes }); }}
         active={connection}
         saved={saved}
-        onLock={() => { void import("../lock").then((module) => { module.lockNow("manual"); }); }}
-        onForget={() => import("../lock").then((module) => module.forgetThisDevice())}
+        onLock={() => { lockNow("manual"); }}
+        onForget={forgetThisDevice}
         notify={notify}
         onRemoved={(removed) => {
           session.setSaved(saved.filter((entry) => entry.id !== removed.id));

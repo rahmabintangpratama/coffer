@@ -7,8 +7,7 @@
     "restore": "Restore",
     "unstar": "Remove from starred",
     "retry": "Try again",
-    "lock": "Lock",
-    "copySecret": "Copy"
+    "lock": "Lock"
   },
   "app": {
     "loadError": {
@@ -38,7 +37,8 @@
     "removeBody": "Its saved keys are deleted from this device. Your bucket and files are not changed.",
     "active": "Current",
     "notSaved": "Not saved on this device",
-    "removed": "Removed {name}"
+    "removed": "Removed {name}",
+    "removeFailed": "Couldn’t remove {name}. Try again."
   },
   "dlg": {
     "zip": {
@@ -246,7 +246,8 @@
       "reuse": "Your saved connections share one passphrase, so you won’t be asked for a new one.",
       "ctaSame": "Save on this device",
       "working": "Saving…",
-      "strengthLabel": "Passphrase strength"
+      "failed": "Couldn’t save the connection. Check that this browser allows site storage, then try again.",
+      "existing": "Enter the passphrase of your saved connections. They all share one passphrase."
     },
     "status": {
       "fail": "Failed",
@@ -261,7 +262,8 @@
     },
     "unlock": {
       "working": "Unlocking…",
-      "wait": "Too many tries. Wait {seconds, plural, one {# second} other {# seconds}} before trying again."
+      "wait": "Too many tries. Wait {seconds, plural, one {# second} other {# seconds}} before trying again.",
+      "failed": "Couldn’t open the saved connections. Reload the page and try again. If it keeps happening, forget this device and add the connection again."
     }
   },
   "search": {
@@ -443,14 +445,12 @@
     },
     "autolockNever": "Never",
     "autolockNeverWarn": "Without auto-lock, anyone who opens this browser can use your saved connections.",
-    "noSaved": "No connections are saved on this device. Keys stay in memory and are gone when you close the tab.",
-    "forgetLabel": "Forget this device",
-    "autolockGroup": "Auto-lock after",
-    "unsaved": "Not saved"
+    "noSaved": "No connections are saved on this device. Keys stay in memory and are gone when you close the tab."
   },
   "forget": {
     "typeLabel": "Type {count} to confirm",
-    "working": "Forgetting…"
+    "working": "Forgetting…",
+    "failed": "Couldn’t finish forgetting this device. Reload the page and try again."
   },
   "reveal": {
     "cta": "Show secret key",
@@ -458,9 +458,14 @@
     "hide": "Hide now",
     "copy": "Copy secret key",
     "memoryOnly": "This connection isn’t saved, so its secret key can’t be shown again.",
-    "wrong": "That passphrase doesn’t match. Check for caps lock and try again."
+    "wrong": "That passphrase doesn’t match. Check for caps lock and try again.",
+    "failed": "Couldn’t read the saved key. Try again."
   },
   "stored": {
-    "recentLabel": "Recent files"
+    "recentLabel": "Recent files",
+    "uploadsLabel": "Upload state",
+    "uploads": {
+      "sub": "{count, plural, one {# unfinished upload} other {# unfinished uploads}} · no file contents"
+    }
   }
 }

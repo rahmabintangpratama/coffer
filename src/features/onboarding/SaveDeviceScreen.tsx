@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/Button";
 import { Field, TextInput } from "@/components/Field";
 import { t } from "@/lib/i18n";
 import { isStrongPassphrase, passphraseProblem } from "@/lib/storage/crypto";
-import { LockedError, vault, WrongPassphraseError } from "@/lib/storage/vault";
+import { vault, WeakPassphraseError, WrongPassphraseError } from "@/lib/storage/vault";
 import type { ConnectionSummary } from "@/lib/types";
 import { StepFrame } from "./StepFrame";
 
@@ -20,13 +20,21 @@ export function SaveDeviceScreen({ summary, onSaved, onSkip }: { summary: Connec
   const [working, setWorking] = useState(false);
   const [wrong, setWrong] = useState(false);
   const [failed, setFailed] = useState(false);
+  // Connections are saved but the vault is locked (Add connection from Unlock): the passphrase to give is the existing one.
+  const [existing, setExisting] = useState(0);
+  useEffect(() => {
+    let current = true;
+    void vault.savedCount().then((count) => { if (current) setExisting(count); }, () => undefined);
+    return () => { current = false; };
+  }, []);
+  const verifying = !reuse && existing > 0;
 
-  const problem = passphraseProblem(passphrase);
-  const showTooShort = !reuse && problem !== null && (touched || passphrase !== "");
+  const problem = verifying ? null : passphraseProblem(passphrase);
+  const showTooShort = !reuse && !verifying && problem !== null && (touched || passphrase !== "");
 
   const save = async () => {
     setTouched(true);
-    if (working || (!reuse && problem !== null)) return;
+    if (working || (!reuse && problem !== null) || (verifying && passphrase === "")) return;
     setWorking(true);
     setWrong(false);
     setFailed(false);
@@ -36,7 +44,7 @@ export function SaveDeviceScreen({ summary, onSaved, onSkip }: { summary: Connec
       onSaved(summary);
     } catch (error) {
       if (error instanceof WrongPassphraseError) setWrong(true);
-      else if (error instanceof LockedError) setFailed(true);
+      else if (error instanceof WeakPassphraseError) setTouched(true);
       else setFailed(true);
     } finally {
       setWorking(false);
@@ -57,26 +65,27 @@ export function SaveDeviceScreen({ summary, onSaved, onSkip }: { summary: Connec
           <p className="text-base">{t("ob.save.reuse")}</p>
         ) : (
           <>
+            {verifying && <p className="text-base">{t("ob.save.existing")}</p>}
             <Field
               label={t("ob.save.label")}
               error={wrong ? t("ob.unlock.wrong") : showTooShort ? t("ob.save.tooShort") : undefined}
-              hint={!showTooShort && isStrongPassphrase(passphrase) ? t("ob.save.strong") : undefined}
+              hint={!verifying && !showTooShort && isStrongPassphrase(passphrase) ? t("ob.save.strong") : undefined}
             >
               <TextInput
                 type="password"
                 value={passphrase}
-                autoComplete="new-password"
+                autoComplete={verifying ? "current-password" : "new-password"}
                 autoCapitalize="none"
                 spellCheck={false}
                 onBlur={() => { setTouched(true); }}
                 onChange={(event) => { setPassphrase(event.target.value); setWrong(false); }}
               />
             </Field>
-            <p className="text-sm text-fg-muted">{t("ob.save.nofix")}</p>
+            {!verifying && <p className="text-sm text-fg-muted">{t("ob.save.nofix")}</p>}
           </>
         )}
-        {failed && <p role="alert" className="text-sm text-danger-fg">{t("op.error")}</p>}
-        <Button type="submit" variant="primary" size="lg" block loading={working} disabled={!reuse && problem !== null}>
+        {failed && <p role="alert" className="text-sm text-danger-fg">{t("ob.save.failed")}</p>}
+        <Button type="submit" variant="primary" size="lg" block loading={working} disabled={!reuse && (problem !== null || (verifying && passphrase === ""))}>
           {working ? t("ob.save.working") : reuse ? t("ob.save.ctaSame") : t("ob.save.cta")}
         </Button>
         <Button variant="secondary" size="lg" block onClick={() => { onSkip(summary); }}>

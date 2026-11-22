@@ -51,6 +51,8 @@ export function UnlockScreen({ reason, minutes, previousId, onUnlocked, onUseOth
   const [wrong, setWrong] = useState(false);
   const [failures, setFailures] = useState(0);
   const [waitLeft, setWaitLeft] = useState(0);
+  const [waitTotal, setWaitTotal] = useState(0);
+  const [failed, setFailed] = useState(false);
   const [forgetting, setForgetting] = useState(false);
   const transfers = useSyncExternalStore(subscribeLeases, leaseCount);
   const forgetButton = useRef<HTMLButtonElement>(null);
@@ -81,6 +83,7 @@ export function UnlockScreen({ reason, minutes, previousId, onUnlocked, onUseOth
     if (working || waitLeft > 0 || passphrase === "") return;
     setWorking(true);
     setWrong(false);
+    setFailed(false);
     try {
       const saved = await vault.unlock(passphrase);
       const open = pickConnection(saved, previousId);
@@ -92,11 +95,16 @@ export function UnlockScreen({ reason, minutes, previousId, onUnlocked, onUseOth
       void vault.touch(open.id).catch(() => undefined);
       onUnlocked(open, saved);
     } catch (error) {
-      if (!(error instanceof WrongPassphraseError)) throw error;
+      if (!(error instanceof WrongPassphraseError)) {
+        // Storage unavailable or a record that is not ours: say so instead of leaving the spinner and no message.
+        setFailed(true);
+        return;
+      }
       const next = failures + 1;
       setFailures(next);
       setWrong(true);
       setWaitLeft(waitAfter(next));
+      setWaitTotal(waitAfter(next));
     } finally {
       setWorking(false);
     }
@@ -129,7 +137,9 @@ export function UnlockScreen({ reason, minutes, previousId, onUnlocked, onUseOth
                 onChange={(event) => { setPassphrase(event.target.value); }}
               />
             </Field>
-            {waitLeft > 0 && <p role="status" className="text-sm text-fg-muted">{t("ob.unlock.wait", { seconds: waitLeft })}</p>}
+            {/* Said once, with the full wait: a message that changes every second would be read out every second. */}
+            {waitLeft > 0 && <p role="status" className="text-sm text-fg-muted">{t("ob.unlock.wait", { seconds: waitTotal })}</p>}
+            {failed && <p role="alert" className="text-sm text-danger-fg">{t("ob.unlock.failed")}</p>}
             <Button type="submit" variant="primary" size="lg" block loading={working} disabled={waitLeft > 0 || passphrase === ""}>
               {working ? t("ob.unlock.working") : t("ob.unlock.cta")}
             </Button>

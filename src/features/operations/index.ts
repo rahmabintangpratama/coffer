@@ -5,3 +5,4 @@ export { loadInterrupted, startRestore, startTrash, type RunHooks } from "./run"
 export { startDelete, type DeleteHooks } from "./delete";
 export { decideTargets, type Move } from "./targets";
 export { useTrashAction } from "./useTrashAction";
+export { clearInterruptedOperations } from "./state";

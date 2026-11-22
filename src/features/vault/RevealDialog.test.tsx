@@ -59,6 +59,14 @@ describe("AC-102.1 to AC-102.4", () => {
     expect(screen.getByLabelText("Passphrase")).toHaveValue("");
   });
 
+  it("a failure that is not a wrong passphrase says so and shows no secret", async () => {
+    vi.spyOn(vault, "reveal").mockRejectedValue(new Error("IndexedDB is unavailable"));
+    render(<RevealDialog connection={connection} onClose={vi.fn()} notify={vi.fn()} />);
+    await reveal("right passphrase");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Couldn’t read the saved key");
+    expect(screen.queryByTestId("revealed-secret")).toBeNull();
+  });
+
   it("AC-102.3 Copy puts the secret on the clipboard and says to clear it", async () => {
     const writeText = vi.fn(() => Promise.resolve());
     Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });

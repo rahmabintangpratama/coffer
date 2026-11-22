@@ -93,6 +93,31 @@ describe("AC-9.1 and AC-9.2 Unlock", () => {
     expect(screen.getByRole("button", { name: "Unlock" })).toBeDisabled();
   });
 
+  it("a failure that is not a wrong passphrase (storage gone, a record that is not ours) says so instead of spinning", async () => {
+    vi.spyOn(vault, "unlock").mockRejectedValue(new Error("IndexedDB is unavailable"));
+    render(<UnlockScreen {...props()} />);
+    await userEvent.type(screen.getByLabelText("Passphrase"), "correct horse");
+    await userEvent.click(screen.getByRole("button", { name: "Unlock" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Couldn’t open the saved connections");
+    expect(screen.getByRole("button", { name: "Unlock" })).toBeEnabled();
+    expect(screen.queryByText(/doesn’t match/)).toBeNull();
+  });
+
+  it("the wait is said once with its full length, not counted down aloud", async () => {
+    vi.spyOn(vault, "unlock").mockRejectedValue(new WrongPassphraseError());
+    render(<UnlockScreen {...props()} />);
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      await userEvent.clear(screen.getByLabelText("Passphrase"));
+      await userEvent.type(screen.getByLabelText("Passphrase"), `wrong ${attempt.toString()}`);
+      await userEvent.click(screen.getByRole("button", { name: "Unlock" }));
+      await screen.findByText(/doesn’t match/);
+    }
+    const status = await screen.findByText(/Too many tries/);
+    expect(status).toHaveAttribute("role", "status");
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    expect(status).toHaveTextContent("Wait 2 seconds");
+  });
+
   it("a stale hint (nothing saved) goes to Welcome", async () => {
     vi.spyOn(vault, "savedCount").mockResolvedValue(0);
     const p = props();

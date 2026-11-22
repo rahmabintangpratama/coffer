@@ -15,3 +15,6 @@ export const useOperations = create<OperationsState>((set) => ({
   upsertInterrupted: (entry) => { set((state) => ({ interrupted: state.interrupted.some((existing) => existing.id === entry.id) ? state.interrupted.map((existing) => (existing.id === entry.id ? entry : existing)) : [...state.interrupted, entry] })); },
   removeInterrupted: (id) => { set((state) => ({ interrupted: state.interrupted.filter((entry) => entry.id !== id) })); },
 }));
+
+/** A lock drops the list; it is read again from the journal when the app opens again. */
+export const clearInterruptedOperations = (): void => { useOperations.getState().setInterrupted([]); };

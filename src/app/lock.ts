@@ -1,9 +1,11 @@
 import { forgetDevice, releaseStorage } from "@/lib/storage/forget";
 import { tabSync, type TabMessage } from "@/lib/storage/tabsync";
 import { vault } from "@/lib/storage/vault";
+import { clearInterruptedOperations } from "@/features/operations";
 import { queryClient } from "./query";
 import { useSession } from "./session";
 import { useSettings } from "./settings";
+import { useToasts } from "./toast";
 
 /**
  * Lock, auto-lock and Forget, as the app applies them (FR-9, FR-10). Each one that happens here is told to the
@@ -16,6 +18,9 @@ function applyLock(reason: "manual" | "auto" | "remote"): void {
   const minutes = useSettings.getState().autoLockMinutes;
   vault.lock();
   queryClient.clear();
+  // Names and keys of bucket objects held by the screens go with the keys; the interrupted list is read again from the journal.
+  clearInterruptedOperations();
+  useToasts.setState({ toasts: [] });
   useSession.getState().lock({ reason, ...(reason === "auto" ? { minutes } : {}) });
 }
 
@@ -53,12 +58,16 @@ function returnToWelcome(): void {
  * message arrives, so Unlock's first screen does not carry the lock, forget and query code.
  */
 export function applyTabMessage(message: TabMessage): void {
+  // Activity only keeps the auto-lock timers of every tab on one clock (useAutoLock).
+  if (message.type === "activity") return;
   if (message.type === "lock") {
     if (message.stop) vault.stopLeases();
     applyLock("remote");
     return;
   }
-  // Another tab forgot the device: let go of the database so its delete can finish, then start over at Welcome.
+  // Another tab forgot the device: the keys go and the Locked screen shows at once, then this tab lets go of the
+  // database so the delete can finish, and starts over at Welcome.
+  applyLock("remote");
   void releaseStorage().finally(() => {
     queryClient.clear();
     returnToWelcome();

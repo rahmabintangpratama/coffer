@@ -1,8 +1,13 @@
 import { useEffect, useSyncExternalStore } from "react";
+import { tabSync } from "@/lib/storage/tabsync";
 import { vault } from "@/lib/storage/vault";
+import { lockNow } from "./lock";
 import { useSettings } from "./settings";
 
 const ACTIVITY = ["pointerdown", "pointermove", "keydown", "touchstart", "wheel"] as const;
+
+/** At most one "someone is active" message this often: enough for the other tabs' timers, little traffic. */
+const ACTIVITY_POST_MS = 5000;
 
 /**
  * The e2e build shortens the 5-minute choice (and only that one) to this many milliseconds, so a test can watch an
@@ -31,22 +36,35 @@ export function useAutoLock(): void {
   useEffect(() => {
     if (minutes === 0 || !unlocked) return;
     const delay = autoLockDelayMs(minutes);
+    // Often enough that another tab's timer is restarted well before it runs out, however short the idle time is.
+    const postEvery = Math.min(ACTIVITY_POST_MS, Math.max(250, delay / 4));
     const fire = () => {
-      if (vault.isUnlocked()) void import("./lock").then((module) => { module.lockNow("auto"); });
+      if (vault.isUnlocked()) lockNow("auto");
     };
     let timer = setTimeout(fire, delay);
     let last = 0;
+    let lastPosted = 0;
+    const restart = () => {
+      clearTimeout(timer);
+      timer = setTimeout(fire, delay);
+    };
     const reset = () => {
       const now = Date.now();
       // Moving the pointer fires many events; one reset per quarter second is enough.
       if (now - last < 250) return;
       last = now;
-      clearTimeout(timer);
-      timer = setTimeout(fire, delay);
+      restart();
+      // The other tabs' timers run on this tab's activity too, so an idle tab never locks the one in use (AC-9.8).
+      if (now - lastPosted >= postEvery) {
+        lastPosted = now;
+        tabSync().post({ type: "activity" });
+      }
     };
     for (const name of ACTIVITY) document.addEventListener(name, reset, { passive: true });
+    const stopListening = tabSync().subscribe((message) => { if (message.type === "activity") restart(); });
     return () => {
       clearTimeout(timer);
+      stopListening();
       for (const name of ACTIVITY) document.removeEventListener(name, reset);
     };
   }, [minutes, unlocked]);

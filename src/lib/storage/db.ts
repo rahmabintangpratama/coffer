@@ -74,9 +74,12 @@ export function sharedDb(): Promise<IDBPDatabase<CofferDb>> {
     shared = opening;
     void opening.then(
       (handle) => {
-        handle.addEventListener("versionchange", () => {
+        handle.addEventListener("versionchange", (event) => {
           handle.close();
           if (shared === opening) shared = null;
+          // newVersion is null when the database is being deleted (Forget this device in another tab): this page must not
+          // recreate it with whatever it writes next.
+          if (event.newVersion === null) sealed = true;
         });
       },
       () => {

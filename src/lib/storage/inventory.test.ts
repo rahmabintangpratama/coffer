@@ -116,10 +116,20 @@ describe("AC-10.3 and AC-10.4 Forget this device", () => {
     (globalThis as { window?: unknown }).window = { localStorage: fakeStorage({}), sessionStorage: fakeStorage({}) };
     vault.put("c1", { accessKeyId: "AK", secretAccessKey: "SK" });
     const lease = vault.lease("c1");
+    // A transfer cleans up when it is aborted (AbortMultipartUpload) and only then lets go of its lease; Forget waits for that.
+    let cleaned = false;
+    lease.signal.addEventListener("abort", () => { setTimeout(() => { cleaned = true; lease.release(); }, 50); });
     await forgetDevice({ localStorage: fakeStorage({}), sessionStorage: fakeStorage({}) });
     expect(lease.signal.aborted).toBe(true);
-    lease.release();
+    expect(cleaned).toBe(true);
+    expect(vault.leaseCount()).toBe(0);
     delete (globalThis as { window?: unknown }).window;
+  });
+
+  it("when another tab deletes the database this page closes its handle and refuses to reopen it", async () => {
+    await sharedDb();
+    await new Promise<void>((resolve) => { const request = indexedDB.deleteDatabase(DB_NAME); request.onsuccess = () => { resolve(); }; });
+    await expect(sharedDb()).rejects.toThrow("storage was removed");
   });
 
   it("after Forget this page cannot reopen the database; the others are told to let go the same way", async () => {

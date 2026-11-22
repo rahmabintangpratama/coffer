@@ -21,6 +21,7 @@ function ForgetBody({ onClose, onForget }: { onClose: () => void; onForget: () =
   const [count, setCount] = useState<number | null>(null);
   const [typed, setTyped] = useState("");
   const [working, setWorking] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     let current = true;
@@ -32,8 +33,11 @@ function ForgetBody({ onClose, onForget }: { onClose: () => void; onForget: () =
   const confirmed = count !== null && (!needsCount || typed.trim() === String(count));
   const run = async () => {
     setWorking(true);
+    setFailed(false);
     try {
       await onForget();
+    } catch {
+      setFailed(true);
     } finally {
       setWorking(false);
     }
@@ -53,8 +57,9 @@ function ForgetBody({ onClose, onForget }: { onClose: () => void; onForget: () =
           <TextInput inputMode="numeric" autoComplete="off" value={typed} onChange={(event) => { setTyped(event.target.value); }} />
         </Field>
       )}
+      {failed && <p role="alert" className="mt-3 text-sm text-danger-fg">{t("forget.failed")}</p>}
       <div className="mt-6 flex flex-col-reverse gap-2 @md:flex-row @md:justify-end">
-        <Button variant="secondary" onClick={onClose}>{t("act.cancel")}</Button>
+        <Button variant="secondary" disabled={working} onClick={onClose}>{t("act.cancel")}</Button>
         <Button variant="danger" disabled={!confirmed} loading={working} onClick={() => void run()}>
           {working ? t("forget.working") : t("ob.unlock.forgetLabel")}
         </Button>

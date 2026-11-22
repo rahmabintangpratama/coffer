@@ -30,7 +30,17 @@ export function App() {
     let cancelled = false;
     void import("@/lib/storage/tabsync").then(({ tabSync }) => {
       if (cancelled) return;
-      stop = tabSync().subscribe((message) => { void import("./lock").then((module) => { module.applyTabMessage(message); }); });
+      stop = tabSync().subscribe((message) => {
+        void import("./lock").then(
+          (module) => { module.applyTabMessage(message); },
+          // The lock code could not load (offline, or a new deploy removed the old chunk): the keys still go.
+          () => {
+            if (message.type === "activity") return;
+            void import("@/lib/storage/vault").then(({ vault }) => { vault.lock(); });
+            useSession.getState().lock({ reason: "remote" });
+          },
+        );
+      });
     });
     return () => { cancelled = true; stop?.(); };
   }, []);
