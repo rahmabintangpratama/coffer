@@ -575,6 +575,7 @@ Manual, with a throwaway bucket and a scoped key per provider, run before each r
 | `DeleteObjects` with 1,000 keys and the single-delete fallback | Checksum or MD5 behavior |
 | Presigned download, preview (image, video, PDF) and 15-min and 7-day links | Presign limits |
 | Session token (where applicable) | Token signing and expiry cap |
+| Share link with real temporary credentials: AWS STS (`AssumeRole`) and Cloudflare R2 temporary credentials. Create links at the longest allowed choice, with an unknown expiry and with under 15 minutes left; download each; confirm it stops at the token's expiry (D-46) | Real session-token signing; the fixture rejects made-up tokens, so M7 proves the cap only in component tests |
 | Read-only key detection | `AccessDenied` shape on write |
 | Wrong region and wrong bucket errors | Error mapping |
 | Chrome stable: deployed HTTPS origin to `http://localhost:9000` and to a LAN address; check the pre-prompt, Allow, Block and a later change in site settings; confirm that a LAN `http` endpoint is rejected by the form | Local network access permission, `localNetworkDenied`, D-29 |
