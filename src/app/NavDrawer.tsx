@@ -1,7 +1,6 @@
 import { type PointerEvent, type RefObject, useRef } from "react";
 import { Sheet } from "@/components/Sheet";
 import { t } from "@/lib/i18n";
-import { ConnectionSwitch } from "./ConnectionSwitch";
 import { mainDestinations } from "./nav-items";
 import { NavLink } from "./NavLink";
 
@@ -56,9 +55,6 @@ export function NavDrawer({
           />
         ))}
       </nav>
-      <div className="mt-4 border-t border-line pt-4">
-        <ConnectionSwitch variant="block" className="w-full" />
-      </div>
     </Sheet>
   );
 }

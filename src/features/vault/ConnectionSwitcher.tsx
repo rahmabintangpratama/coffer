@@ -13,9 +13,17 @@ export interface ConnectionSwitcherProps {
   onAdd: () => void;
   /** Absent while nothing is saved: there is no passphrase to lock with. */
   onLock?: () => void;
-  /** "icon" for the rail, "block" for the sidebar and the drawer. */
-  variant: "icon" | "block";
+  /** "avatar" ends the app bar below 768 px, "icon" is the rail, "block" is the sidebar. */
+  variant: "avatar" | "icon" | "block";
   className?: string;
+  /** Controlled by the shell, which keeps it across a remount of the app bar (the Files bar replaces the plain one when it loads). */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  /**
+   * "button" or "dialog" draws only that half. The shell draws the avatar's button in the app bar (which is rebuilt when the
+   * Files bar loads) and its dialog once, outside it, so an open dialog is not rebuilt and replayed under the person.
+   */
+  part?: "all" | "button" | "dialog";
 }
 
 const stateLabel = (connection: ConnectionSummary): string => (vault.has(connection.id) ? t("conn.state.unlocked") : t("conn.state.locked"));
@@ -26,10 +34,14 @@ const providerOf = (connection: ConnectionSummary): string => connection.name.sp
  * connections with their state, and offers Add connection and, when something is saved, Lock. Choosing a connection
  * whose keys are not open sends the person to Unlock.
  */
-export function ConnectionSwitcher({ active, onSwitch, onAdd, onLock, variant, className }: ConnectionSwitcherProps) {
-  const [open, setOpen] = useState(false);
+export function ConnectionSwitcher({ active, onSwitch, onAdd, onLock, variant, className, open: controlledOpen, onOpenChange, part = "all" }: ConnectionSwitcherProps) {
+  const [ownOpen, setOwnOpen] = useState(false);
+  const open = controlledOpen ?? ownOpen;
+  const setOpen = onOpenChange ?? setOwnOpen;
   const [saved, setSaved] = useState<readonly ConnectionSummary[]>([]);
-  const trigger = useRef<HTMLButtonElement>(null);
+  const ownTrigger = useRef<HTMLButtonElement>(null);
+  // With the dialog drawn apart from its button, focus goes back to whichever button is on screen.
+  const trigger = part === "dialog" ? ({ get current() { return document.querySelector<HTMLElement>(`[data-switcher="${variant}"]`); } } as { current: HTMLElement | null }) : ownTrigger;
   // The list is read when the dialog opens, so it is right after a save, a removal or a lock in another tab.
   useEffect(() => {
     if (!open) return;
@@ -43,14 +55,17 @@ export function ConnectionSwitcher({ active, onSwitch, onAdd, onLock, variant, c
 
   return (
     <>
-      {variant === "icon" ? (
-        <Button ref={trigger} variant="ghost" iconOnly aria-label={label} aria-haspopup="dialog" icon={<Database aria-hidden="true" className="size-5" />} onClick={() => { setOpen(true); }} className={className} />
+      {part === "dialog" ? null : variant === "avatar" ? (
+        // The design's avatar: a round button at the end of the app bar, a 44 px target, opening a sheet.
+        <Button ref={ownTrigger} data-switcher="avatar" variant="tonal" iconOnly aria-label={label} aria-haspopup="dialog" icon={<Database aria-hidden="true" className="size-5" />} onClick={() => { setOpen(true); }} className={cn("shrink-0 rounded-full", className)} />
+      ) : variant === "icon" ? (
+        <Button ref={ownTrigger} data-switcher="icon" variant="ghost" iconOnly aria-label={label} aria-haspopup="dialog" icon={<Database aria-hidden="true" className="size-5" />} onClick={() => { setOpen(true); }} className={className} />
       ) : (
-        <Button ref={trigger} variant="ghost" aria-label={label} aria-haspopup="dialog" icon={<Database aria-hidden="true" className="size-5 shrink-0" />} onClick={() => { setOpen(true); }} className={cn("min-w-0 justify-start", className)}>
+        <Button ref={ownTrigger} data-switcher="block" variant="ghost" aria-label={label} aria-haspopup="dialog" icon={<Database aria-hidden="true" className="size-5 shrink-0" />} onClick={() => { setOpen(true); }} className={cn("min-w-0 justify-start", className)}>
           <span className="min-w-0 truncate">{active.name}</span>
         </Button>
       )}
-      <Dialog open={open} onClose={close} title={t("conn.switcherTitle")} closeLabel={t("act.close")} returnFocusRef={trigger}>
+      {part === "button" ? null : <Dialog open={open} onClose={close} title={t("conn.switcherTitle")} closeLabel={t("act.close")} returnFocusRef={trigger}>
         <ul aria-label={t("conn.listLabel")} className="flex flex-col gap-1">
           {connections.map((connection) => {
             const current = connection.id === active.id;
@@ -77,7 +92,7 @@ export function ConnectionSwitcher({ active, onSwitch, onAdd, onLock, variant, c
           <Button variant="secondary" icon={<Plus aria-hidden="true" className="size-5" />} onClick={() => { close(); onAdd(); }}>{t("act.addConn")}</Button>
           {onLock && <Button variant="secondary" icon={<Lock aria-hidden="true" className="size-5" />} onClick={() => { close(); onLock(); }}>{t("act.lock")}</Button>}
         </div>
-      </Dialog>
+      </Dialog>}
     </>
   );
 }

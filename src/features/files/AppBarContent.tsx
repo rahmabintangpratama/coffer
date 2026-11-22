@@ -30,7 +30,7 @@ const modifiedLabel: Record<ModifiedFilter, CopyKey> = {
  * comes first. Filter chips sit under it. While items are selected the selection
  * bar takes the whole bar; the chips row keeps its height so the list does not move.
  */
-export default function FilesAppBar({ menuButton, brand }: { menuButton: ReactNode; brand: ReactNode }) {
+export default function FilesAppBar({ menuButton, brand, trailing }: { menuButton: ReactNode; brand: ReactNode; trailing?: ReactNode }) {
   const layout = useLayout();
   const { folderLabel, filters, setFilters, selectedCount, selectionActions } = useFilesChrome();
   const clear = useSelection((state) => state.clear);
@@ -74,6 +74,7 @@ export default function FilesAppBar({ menuButton, brand }: { menuButton: ReactNo
             {menuButton}
             {layout !== "compact" && brand}
             <SearchPill value={filters.query} onChange={(query) => { setFilters({ ...filters, query }); }} placeholder={t("search.placeholderFolder", { folder: folderLabel })} clearLabel={t("search.clear")} />
+            {trailing}
           </>
         )}
       </div>

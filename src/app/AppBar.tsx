@@ -5,6 +5,7 @@ import { Button } from "@/components/Button";
 import { CofferMark } from "@/components/CofferMark";
 import { useFilesChrome } from "@/features/files/chrome";
 import { t } from "@/lib/i18n";
+import { ConnectionSwitch } from "./ConnectionSwitch";
 import { isActiveRoute, routes } from "./routes";
 
 // The Files route's search, chips and selection bar. It is part of the Files chunk; the shell only asks for it while Files is showing.
@@ -49,10 +50,14 @@ export function AppBar({
       <span className="text-lg font-semibold">{t("app.name")}</span>
     </span>
   );
+  // Below 768 px the switcher is the avatar at the end of the bar, next to the search pill (components.md, S37); from 768 px it
+  // lives in the rail and the sidebar.
+  const avatar = <ConnectionSwitch variant="avatar" part="button" className="@md:hidden" />;
   const plain = (
     <div className="flex h-(--cf-size-appbar-height) items-center gap-2 px-3 @md:px-6">
       {menuButton}
       {brand}
+      <span className="ms-auto flex @md:hidden">{avatar}</span>
     </div>
   );
   // The bar of the Files route is a lazy chunk, and the screen only says it is mounted after its first render. Until both are
@@ -68,10 +73,12 @@ export function AppBar({
   );
   return (
     <header data-component="AppBar" className="sticky top-0 z-(--cf-z-sticky) shrink-0 border-b border-line bg-surface">
+      {/* The avatar's dialog is drawn here, once: the button beside the search pill is rebuilt when the Files bar loads. */}
+      <ConnectionSwitch variant="avatar" part="dialog" />
       {onFiles ? (
         screenMounted ? (
           <Suspense fallback={filesFallback}>
-            <FilesAppBar menuButton={menuButton} brand={brand} />
+            <FilesAppBar menuButton={menuButton} brand={brand} trailing={avatar} />
           </Suspense>
         ) : (
           filesFallback
