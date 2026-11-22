@@ -59,6 +59,9 @@ Package manager: **pnpm** 12 with Node 22 only (`engines` is `>=22 <23` and `eng
 | Check the bundle budgets and that the lazy libraries (pdf.js, Markdown, DOMPurify) are outside the initial bundle, and the entry limit of 90 KiB (after `pnpm build`; the first-screen total is in `tests/e2e/first-load.spec.ts`) | `pnpm size:check` |
 | Break the initial bundle down by package and folder (writes `bundle-stats.json`, which is ignored) | `pnpm size:analyze` |
 | Check that `dist/` holds only the C-22 allowlist, `index.html` and hashed `assets/` (after `pnpm build`) | `pnpm dist:check` |
+| Check `public/_headers` against a live deployment | `pnpm headers:check --url <deployed-url>` |
+| Lighthouse (mobile profile) on Welcome, Unlock and Files against the budgets in `scripts/lighthouse/budgets.ts`; builds and serves `dist/` itself on port 4173 with gzip; needs the S3 fixture and Chromium | `pnpm lighthouse` |
+| Write `docs/contrast-report.md` from the real-browser contrast run (run `tests/e2e/contrast.spec.ts` in each engine first) | `pnpm contrast:report` |
 
 ## Conventions
 
@@ -132,3 +135,4 @@ Package manager: **pnpm** 12 with Node 22 only (`engines` is `>=22 <23` and `eng
 - Run the antislop rules for UI and copy work (`antislop`, `antislop-ui`, `antislop-copywriting`, `antislop-human`).
 - Run the Cloudflare `security-audit` skill on the codebase (full audit mode) and resolve or record every finding.
 - Run the real-browser contrast pass and the provider compatibility matrix ([technical-spec](docs/technical-spec.md) sections 15.5 and 15.7).
+- Run `pnpm headers:check --url <deployed-url>` against the live deployment ([deploy-cloudflare-pages](docs/deploy-cloudflare-pages.md)).

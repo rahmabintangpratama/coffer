@@ -1,7 +1,7 @@
 # Coffer MVP implementation plan
 
 - **Purpose:** Split the MVP into milestones of one to three days. Each milestone lists its requirements, deliverables, tests and an exit check that can be demoed.
-- **Status:** Approved. M0, M1, M2a, M2b, M3, M4, M5a, M5b, M6a and M6b are complete (2026-11-22).
+- **Status:** Approved. M0 to M9 are complete (2026-11-22). M10 phase A (everything that needs no accounts or devices) is complete (2026-11-22); phase B (provider matrix, real devices, screen readers, deploy, sign-off) is the owner's, in [manual-test-plan.md](manual-test-plan.md) and [release-checklist.md](release-checklist.md).
 - **Last updated:** 2026-11-21
 - **Source files in `design/`:** [`HANDOFF.md`](../design/HANDOFF.md), [`screens.md`](../design/screens.md), [`components.md`](../design/components.md), [`tokens.json`](../design/tokens.json)
 - **Related:** [product-spec.md](product-spec.md) (FR, AC, release plan), [technical-spec.md](technical-spec.md), [open-questions.md](open-questions.md)
@@ -264,6 +264,8 @@ Total: 35 days plus buffer. Every MVP FR in the product spec appears in at least
 **AGENTS.md commands landing:** none new.
 
 ## M10: Hardening and release gate (3 days, plus fix buffer)
+
+**Status:** Phase A done (2026-11-22): e2e guard for CSP and console errors, Firefox in the matrix, axe on every state, keyboard-only pass, real-browser contrast ([contrast-report.md](contrast-report.md)), Lighthouse in CI (`pnpm lighthouse`), antislop pass, security audit ([security-audit-0.1.0.md](security-audit-0.1.0.md)), owner documents. Phase B is the owner's.
 
 **Requirements:** verifies NFR-1 to NFR-12 and the release gate in technical-spec 16.
 
