@@ -4,6 +4,7 @@ import type { Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { connect } from "node:net";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { parseHeaders } from "../headers/check.ts";
 import { headersFor, startServer } from "./dist-server.ts";
@@ -52,5 +53,20 @@ describe("dist server", () => {
     expect((await fetch(`${base}/missing`)).status).toBe(404);
     const escape = await fetch(`${base}/..%2F..%2Fetc%2Fpasswd`);
     expect(escape.status).toBe(404);
+  });
+
+  it("answers a malformed escape with 404 and keeps serving", async () => {
+    // fetch() normalizes the URL, so send the raw request line.
+    const status = await new Promise<number>((resolve, reject) => {
+      const socket = connect(Number(new URL(base).port), "127.0.0.1", () => {
+        socket.write("GET /%E0%A4%A HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n");
+      });
+      let data = "";
+      socket.on("data", (chunk) => { data += String(chunk); });
+      socket.on("end", () => { resolve(Number(/^HTTP\/1\.1 (\d{3})/.exec(data)?.[1])); });
+      socket.on("error", reject);
+    });
+    expect(status).toBe(404);
+    expect((await fetch(`${base}/`)).status).toBe(200);
   });
 });

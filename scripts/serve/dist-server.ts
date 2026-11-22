@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { createServer, type Server } from "node:http";
+import { gzipSync } from "node:zlib";
 import { dirname, extname, join, normalize, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseHeaders, type ParsedHeaders } from "../headers/check.ts";
@@ -33,20 +34,35 @@ export function headersFor(rules: ParsedHeaders, pathname: string): Record<strin
   return result;
 }
 
-export function startServer(dir: string, port: number): Promise<Server> {
+/** What Cloudflare Pages compresses on the way out: text. Fonts are already compressed. */
+const COMPRESSIBLE = new Set([".html", ".js", ".mjs", ".css", ".json", ".webmanifest", ".svg", ".txt"]);
+
+/**
+ * `gzip` answers like the host does: text is sent gzip-compressed to a browser that accepts it. The Lighthouse run turns it on so
+ * its transfer sizes are what a visitor downloads; the e2e run leaves it off.
+ */
+export function startServer(dir: string, port: number, options: { gzip?: boolean } = {}): Promise<Server> {
   const root = resolve(dir);
   const rules = parseHeaders(readFileSync(join(root, "_headers"), "utf8"));
 
   const server = createServer((request, response) => {
     void (async () => {
-      const pathname = decodeURIComponent(new URL(request.url ?? "/", "http://localhost").pathname);
-      const relative = pathname === "/" ? "index.html" : normalize(pathname).replace(/^[/\\]+/, "");
-      const file = resolve(root, relative);
-      const headers = headersFor(rules, pathname);
+      let headers: Record<string, string> = {};
       try {
+        // A malformed escape such as "/%" throws here; it must answer 404, not crash the server.
+        const pathname = decodeURIComponent(new URL(request.url ?? "/", "http://localhost").pathname);
+        headers = headersFor(rules, pathname);
+        const relative = pathname === "/" ? "index.html" : normalize(pathname).replace(/^[/\\]+/, "");
+        const file = resolve(root, relative);
         if (file !== root && !file.startsWith(root + sep)) throw new Error("outside root");
         const body = await readFile(file);
-        response.writeHead(200, { ...headers, "content-type": MIME[extname(file)] ?? "application/octet-stream" });
+        const type = MIME[extname(file)] ?? "application/octet-stream";
+        if (options.gzip === true && COMPRESSIBLE.has(extname(file)) && /\bgzip\b/.test(request.headers["accept-encoding"] ?? "")) {
+          response.writeHead(200, { ...headers, "content-type": type, "content-encoding": "gzip", vary: "Accept-Encoding" });
+          response.end(gzipSync(body));
+          return;
+        }
+        response.writeHead(200, { ...headers, "content-type": type });
         response.end(body);
       } catch {
         response.writeHead(404, { ...headers, "content-type": "text/plain; charset=utf-8" });
@@ -76,7 +92,7 @@ function main(): void {
   const repo = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
   const dir = option("--dir", join(repo, "dist"));
   const port = Number(option("--port", "4173"));
-  void startServer(dir, port).then(() => {
+  void startServer(dir, port, { gzip: args.includes("--gzip") }).then(() => {
     console.log(`Serving ${dir} with its _headers on http://127.0.0.1:${port}`);
   });
 }
