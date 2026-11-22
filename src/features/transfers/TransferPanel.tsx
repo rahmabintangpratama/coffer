@@ -86,7 +86,7 @@ export function TransferPanel() {
   const panel = useRef<HTMLElement>(null);
   const visible = transfers.length > 0 || interrupted.length > 0 || operations.length > 0;
 
-  // Below 768 px the panel is fixed over the bottom of the page. Its height goes to `--cf-tray-height`, which the page keeps as
+  // The panel is fixed over the bottom of the page (full width on a phone, a card at the right from 768 px). Its height goes to `--cf-tray-height`, which the page keeps as
   // bottom padding, so the last row or button can always be scrolled above it (a button under the panel could not be reached).
   useLayoutEffect(() => {
     const element = panel.current;

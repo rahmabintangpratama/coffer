@@ -95,8 +95,8 @@ export function Shell({ children }: { children: ReactNode }) {
             id="main"
             tabIndex={-1}
             aria-label={t("main.label")}
-            // Below 768 px the transfer panel is fixed over the bottom; its height is kept as padding so nothing hides under it.
-            className="flex-1 p-4 pb-[calc(var(--cf-space-4)+var(--cf-tray-height,0px))] outline-none @md:p-6"
+            // The transfer panel is fixed over the bottom (full width on a phone, a card at the right from 768 px); its height is kept as padding so nothing hides under it.
+            className="flex-1 p-4 pb-[calc(var(--cf-space-4)+var(--cf-tray-height,0px))] outline-none @md:p-6 @md:pb-[calc(var(--cf-space-6)+var(--cf-tray-height,0px))]"
           >
             {children}
           </main>
