@@ -62,7 +62,7 @@ test.describe("Brand assets", () => {
 
   test("the app mark shows beside the name in both themes without a CSP violation", async ({ page }) => {
     const violations = collectErrors(page);
-    await enterApp(page, "/settings");
+    await enterApp(page, "/settings/appearance");
     const mark = page.locator('[data-component="AppBar"] [data-component="CofferMark"]');
     await expect(mark).toBeVisible();
     await page.getByRole("radio", { name: "Dark" }).check();

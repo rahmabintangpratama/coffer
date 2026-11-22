@@ -1,3 +1,4 @@
+export { ConnectionsSettings, type ConnectionsSettingsProps } from "./ConnectionsSettings";
 export { ConnectionSwitcher, type ConnectionSwitcherProps } from "./ConnectionSwitcher";
 export { ForgetDialog } from "./ForgetDialog";
 export { LockDialog } from "./LockDialog";

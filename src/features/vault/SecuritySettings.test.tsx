@@ -6,6 +6,7 @@ import * as forget from "@/lib/storage/forget";
 import { vault } from "@/lib/storage/vault";
 import type { ConnectionSummary } from "@/lib/types";
 import { ConnectionSwitcher } from "./ConnectionSwitcher";
+import { ConnectionsSettings, type ConnectionsSettingsProps } from "./ConnectionsSettings";
 import { SecuritySettings, type SecuritySettingsProps } from "./SecuritySettings";
 
 // FR-101, FR-102, FR-11: Security and Connections settings, and the switcher.
@@ -17,7 +18,10 @@ const one = connection("photos");
 const two = connection("docs");
 
 function props(over: Partial<SecuritySettingsProps> = {}): SecuritySettingsProps {
-  return { autoLockMinutes: 15, onAutoLock: vi.fn(), active: one, saved: [one, two], onLock: vi.fn(), onForget: vi.fn(() => Promise.resolve()), onRemoved: vi.fn(), notify: vi.fn(), ...over };
+  return { autoLockMinutes: 15, onAutoLock: vi.fn(), savedCount: 2, onLock: vi.fn(), onForget: vi.fn(() => Promise.resolve()), ...over };
+}
+function connectionProps(over: Partial<ConnectionsSettingsProps> = {}): ConnectionsSettingsProps {
+  return { active: one, saved: [one, two], onRemoved: vi.fn(), notify: vi.fn(), ...over };
 }
 
 beforeEach(() => {
@@ -84,7 +88,7 @@ describe("AC-101.1 and AC-101.2 Security", () => {
 
 describe("AC-11.4 and AC-102.1 Connections", () => {
   it("a connection that is not saved cannot be revealed or removed, and says why", () => {
-    render(<SecuritySettings {...props({ saved: [two] })} />);
+    render(<ConnectionsSettings {...connectionProps({ saved: [two] })} />);
     expect(screen.getByRole("button", { name: `Show secret key: ${one.name}` })).toBeDisabled();
     expect(screen.queryByRole("button", { name: `Remove: ${one.name}` })).toBeNull();
     expect(screen.getByText("This connection isn’t saved, so its secret key can’t be shown again.")).toBeInTheDocument();
@@ -93,8 +97,8 @@ describe("AC-11.4 and AC-102.1 Connections", () => {
 
   it("removing one deletes only its keys and reports it", async () => {
     const remove = vi.spyOn(vault, "remove").mockResolvedValue();
-    const p = props();
-    render(<SecuritySettings {...p} />);
+    const p = connectionProps();
+    render(<ConnectionsSettings {...p} />);
     await userEvent.click(screen.getByRole("button", { name: `Remove: ${two.name}` }));
     const dialog = await screen.findByRole("dialog", { name: `Remove ${two.name}?` });
     expect(within(dialog).getByText(/Its saved keys are deleted from this device/)).toBeInTheDocument();
@@ -107,8 +111,8 @@ describe("AC-11.4 and AC-102.1 Connections", () => {
 
   it("a removal that fails says so and keeps the connection in the list", async () => {
     vi.spyOn(vault, "remove").mockRejectedValue(new Error("blocked"));
-    const p = props();
-    render(<SecuritySettings {...p} />);
+    const p = connectionProps();
+    render(<ConnectionsSettings {...p} />);
     await userEvent.click(screen.getByRole("button", { name: `Remove: ${two.name}` }));
     const dialog = await screen.findByRole("dialog", { name: `Remove ${two.name}?` });
     await userEvent.click(within(dialog).getByRole("button", { name: "Remove" }));
@@ -137,7 +141,7 @@ describe("AC-11.4 and AC-102.1 Connections", () => {
   });
 
   it("Show secret key opens the passphrase dialog for that connection", async () => {
-    render(<SecuritySettings {...props()} />);
+    render(<ConnectionsSettings {...connectionProps()} />);
     await userEvent.click(screen.getByRole("button", { name: `Show secret key: ${two.name}` }));
     expect(await screen.findByText(`Enter your passphrase to show the secret key for ${two.name}.`)).toBeInTheDocument();
   });

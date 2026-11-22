@@ -14,4 +14,13 @@ describe("AC-20.3 settings persistence", () => {
     expect(parsed.sort).toEqual({ by: "size", dir: defaultSettings.sort.dir });
     expect(parsed.showHiddenFiles).toBe(true);
   });
+  it("AC-100.1 every behavior and security setting round-trips, so a reload keeps it", () => {
+    const chosen = { density: "compact", confirmTrash: true, showHiddenFiles: true, uploadConcurrency: 8, autoLockMinutes: 30, coachTipsSeen: 2, view: "grid", sort: { by: "modified", dir: "desc" } };
+    expect(parseSettings(JSON.stringify(chosen))).toMatchObject(chosen);
+    expect(parseSettings(JSON.stringify({ autoLockMinutes: 0 })).autoLockMinutes).toBe(0);
+  });
+  it("replaces values that are not one of the choices", () => {
+    const parsed = parseSettings(JSON.stringify({ confirmTrash: "yes", uploadConcurrency: 5, autoLockMinutes: 7, coachTipsSeen: 9 }));
+    expect(parsed).toMatchObject({ confirmTrash: false, uploadConcurrency: defaultSettings.uploadConcurrency, autoLockMinutes: defaultSettings.autoLockMinutes, coachTipsSeen: defaultSettings.coachTipsSeen });
+  });
 });

@@ -56,7 +56,7 @@ async function dumpStorage(page: Page): Promise<string> {
 }
 
 async function lockFromSettings(page: Page): Promise<void> {
-  await goToRoute(page, "/settings");
+  await goToRoute(page, "/settings/security");
   await page.getByRole("button", { name: "Lock now" }).click();
   await page.getByRole("dialog", { name: "Lock Coffer now?" }).getByRole("button", { name: "Lock now" }).click();
   await expect(lockedHeading(page)).toBeVisible();
@@ -403,7 +403,7 @@ test.describe("lock and forget reach every tab (C-27)", () => {
     await unlock(second);
     await expect(second.getByRole("navigation", { name: "Main navigation" })).toBeVisible({ timeout: 15_000 });
 
-    await goToRoute(first, "/settings");
+    await goToRoute(first, "/settings/security");
     await first.getByRole("button", { name: "Forget", exact: true }).click();
     const dialog = first.getByRole("dialog", { name: "Forget this device?" });
     await expect(dialog.getByText("1 saved connection and its key")).toBeVisible();
@@ -440,7 +440,9 @@ test.describe("Forget this device with a transfer running (C-38)", () => {
     await slowParts(page, 2000);
     await filesInput(page).setInputFiles(bigFile("forgotten.bin", 40));
     await expect.poll(() => incompleteIn(folder), { timeout: 20_000 }).toBeGreaterThan(0);
-    await goToRoute(page, "/settings");
+    await goToRoute(page, "/settings/security");
+    // The transfer panel is fixed over the bottom of a phone-sized page; fold it away to reach the button under it.
+    await page.getByRole("button", { name: "Collapse", exact: true }).click();
     await page.getByRole("button", { name: "Forget", exact: true }).click();
     const dialog = page.getByRole("dialog", { name: "Forget this device?" });
     await dialog.getByLabel("Type 1 to confirm").fill("1");
@@ -455,7 +457,7 @@ test.describe("Forget this device with a transfer running (C-38)", () => {
 test.describe("Show secret key (FR-102) and the switcher (FR-11)", () => {
   test("AC-102.1 to AC-102.3 needs the passphrase, shows the secret and hides it again, and says to clear the clipboard", async ({ page, context, browserName }) => {
     if (browserName === "chromium") await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-    await enterApp(page, "/settings", { passphrase: PASS });
+    await enterApp(page, "/settings/connections", { passphrase: PASS });
     await page.getByRole("button", { name: /^Show secret key:/ }).click();
     const dialog = page.getByRole("dialog", { name: "Show secret key" });
     await expect(dialog).toBeVisible();
@@ -479,13 +481,13 @@ test.describe("Show secret key (FR-102) and the switcher (FR-11)", () => {
   });
 
   test("AC-102.1 a connection that is only in memory cannot be revealed", async ({ page }) => {
-    await enterApp(page, "/settings");
+    await enterApp(page, "/settings/connections");
     await expect(page.getByRole("button", { name: /^Show secret key:/ })).toBeDisabled();
     await expect(page.getByText("This connection isn’t saved, so its secret key can’t be shown again.")).toBeVisible();
   });
 
   test("AC-101.1 and AC-101.2 Security shows the auto-lock choices, what is stored and the note", async ({ page }) => {
-    await enterApp(page, "/settings", { passphrase: PASS });
+    await enterApp(page, "/settings/security", { passphrase: PASS });
     const security = page.getByRole("region", { name: "Security" });
     for (const label of ["5 minutes", "15 minutes", "30 minutes", "60 minutes", "Never"]) await expect(security.getByRole("radio", { name: label, exact: true })).toBeVisible();
     await expect(security.getByRole("radio", { name: "15 minutes", exact: true })).toBeChecked();
@@ -507,11 +509,12 @@ test.describe("Show secret key (FR-102) and the switcher (FR-11)", () => {
     };
     if (compact) {
       // Below 768 px the switcher is the avatar at the end of the app bar (S37): a 44 px target, named with the connection and its lock state.
+      // The Files bar replaces the plain one while it loads; wait for it so the button measured is the one that stays.
+      await expect(page.locator('[data-component="FilesAppBar"]')).toBeVisible();
       const avatar = page.getByRole("button", { name: /^Switch connection:/ });
       await expect(avatar).toBeVisible();
-      const box = await avatar.boundingBox();
-      expect(box?.width).toBeGreaterThanOrEqual(44);
-      expect(box?.height).toBeGreaterThanOrEqual(44);
+      await expect.poll(async () => (await avatar.boundingBox())?.width ?? 0).toBeGreaterThanOrEqual(44);
+      await expect.poll(async () => (await avatar.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
       await expect(avatar).toHaveAccessibleName(/Other S3-compatible · coffer-e2e-app, Unlocked$/);
     }
 
@@ -540,7 +543,7 @@ test.describe("Show secret key (FR-102) and the switcher (FR-11)", () => {
     await page.keyboard.press("Escape");
 
     // AC-11.4: removing one connection deletes only its keys.
-    await goToRoute(page, "/settings");
+    await goToRoute(page, "/settings/connections");
     await page.getByRole("button", { name: new RegExp(`^Remove: .*${second}`) }).click();
     await page.getByRole("dialog", { name: new RegExp(`Remove .*${second}`) }).getByRole("button", { name: "Remove" }).click();
     await expect(page.getByRole("button", { name: new RegExp(`^Remove: `) })).toHaveCount(1);

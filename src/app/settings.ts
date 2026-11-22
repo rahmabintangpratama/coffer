@@ -34,6 +34,8 @@ export function parseSettings(raw: string | null): Settings {
     density: pick(stored.density, ["comfortable", "compact"] as const, defaultSettings.density),
     view: pick(stored.view, ["list", "grid"] as const, defaultSettings.view),
     showHiddenFiles: typeof stored.showHiddenFiles === "boolean" ? stored.showHiddenFiles : defaultSettings.showHiddenFiles,
+    confirmTrash: typeof stored.confirmTrash === "boolean" ? stored.confirmTrash : defaultSettings.confirmTrash,
+    coachTipsSeen: pick(stored.coachTipsSeen, [0, 1, 2, 3] as const, defaultSettings.coachTipsSeen),
     autoLockMinutes: pick(stored.autoLockMinutes, [5, 15, 30, 60, 0] as const, defaultSettings.autoLockMinutes),
     uploadConcurrency: pick(stored.uploadConcurrency, [2, 4, 6, 8] as const, defaultSettings.uploadConcurrency),
     sort: {

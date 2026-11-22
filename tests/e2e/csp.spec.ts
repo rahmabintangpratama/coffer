@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { collectErrors, cspViolations, destinations, enterApp, layoutFor, navigateTo, recordCspViolations } from "./helpers";
+import { collectErrors, cspViolations, destinations, enterApp, goToRoute, layoutFor, navigateTo, recordCspViolations } from "./helpers";
 
 // The e2e server applies dist/_headers, so this runs under the real policy.
 test.describe("Content Security Policy", () => {
@@ -21,7 +21,8 @@ test.describe("Content Security Policy", () => {
     await enterApp(page, "/");
     for (const name of destinations) await navigateTo(page, layout, name);
 
-    // Theme change, then layers (these create the most DOM and styles).
+    // Theme change, then layers (these create the most DOM and styles). Settings is a list below 768 px and Security beside the nav above.
+    await goToRoute(page, "/settings/appearance");
     await page.getByRole("radio", { name: "Dark" }).check();
     await page.getByRole("radio", { name: "System" }).check();
     if (layout === "compact") {
