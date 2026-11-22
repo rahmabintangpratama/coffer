@@ -114,6 +114,7 @@ Package manager: **pnpm** 12 with Node 22 only (`engines` is `>=22 <23` and `eng
 - Before the first commit of a session, check that `ssh-add -l` lists the signing key; if not, stop and ask.
 - **Before any history rewrite** (a rebase, an amend of more than the last commit, `filter-branch` or the like) create a backup branch named `backup/<YYYY-MM-DD>-<purpose>`. Delete it only after the result is verified (log, signatures, a diff against the backup). Never run `git reset --hard` without such a backup. Rewrite only commits that were never pushed.
 - Commit and push only when asked. Keep each commit to one logical change.
+- Tests are committed together with or after the code they test, never before it, so every commit builds and passes.
 - Review `.gitignore` before committing. It must keep covering `node_modules/`, `dist/`, `coverage/`, `playwright-report/`, `test-results/`, `.vite/`, `*.log`, `.DS_Store`, `.env` and `.env.*` (except `.env.example`), `*.local`, `.claude/settings.local.json`, `.idea/` and `.vscode/` (except shared settings).
 - Never commit secrets, real credentials or local settings files.
 
