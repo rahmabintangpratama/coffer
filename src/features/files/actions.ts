@@ -2,6 +2,7 @@ import { Copy, Download, Eye, FolderInput, Info, Link2, Pencil, Share2, Trash2 }
 import { createElement } from "react";
 import type { MenuGroup } from "@/components/ActionMenu";
 import { t } from "@/lib/i18n";
+import { writeGate } from "@/features/readonly";
 import type { Item } from "./model";
 
 export interface ActionHandlers {
@@ -27,8 +28,8 @@ const icon = (component: typeof Download) => createElement(component, { "aria-hi
  * shown disabled with the reason, never left out (FR-111).
  */
 export function actionsFor(item: Item, handlers: ActionHandlers, readOnly = false): MenuGroup[] {
-  const reason = readOnly ? t("ro.reason") : undefined;
-  const write = (disabled: boolean) => ({ disabled: disabled || readOnly, ...(reason === undefined ? {} : { reason }) });
+  const gate = writeGate(readOnly);
+  const write = gate.action;
   const organize: MenuGroup = {
     id: "organize",
     label: t("menu.group.organize"),

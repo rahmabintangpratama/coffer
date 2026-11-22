@@ -1,3 +1,4 @@
+import { canWrite } from "@/features/readonly";
 import type { RequestPool } from "@/lib/s3";
 import { LockedError, vault } from "@/lib/storage/vault";
 import type { UploadBody } from "@/lib/s3/upload";
@@ -125,7 +126,8 @@ function pump(): void {
 
 /** Queue uploads; `onDone` runs once when the whole batch has finished and at least one file arrived. */
 export function startUploads(connection: ConnectionSummary, items: readonly PlannedUpload[], folder: string, onDone?: () => void): void {
-  if (items.length === 0) return;
+  // A read-only key uploads nothing (FR-111); the New menu and drops are not offered, and a call that got through stops here.
+  if (items.length === 0 || !canWrite(connection)) return;
   const batch = nextBatch++;
   batches.set(batch, { pending: items.length, succeeded: 0, onDone });
   const transfers: Transfer[] = items.map((item) => {

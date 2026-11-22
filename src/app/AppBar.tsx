@@ -6,6 +6,7 @@ import { CofferMark } from "@/components/CofferMark";
 import { useFilesChrome } from "@/features/files/chrome";
 import { t } from "@/lib/i18n";
 import { ConnectionSwitch } from "./ConnectionSwitch";
+import { ReadOnlyChip } from "./ReadOnlyChip";
 import { isActiveRoute, routes } from "./routes";
 
 // The Files route's search, chips and selection bar. It is part of the Files chunk; the shell only asks for it while Files is showing.
@@ -57,7 +58,10 @@ export function AppBar({
     <div className="flex h-(--cf-size-appbar-height) items-center gap-2 px-3 @md:px-6">
       {menuButton}
       {brand}
-      <span className="ms-auto flex @md:hidden">{avatar}</span>
+      <span className="ms-auto flex items-center gap-2">
+        <ReadOnlyChip />
+        <span className="flex @md:hidden">{avatar}</span>
+      </span>
     </div>
   );
   // The bar of the Files route is a lazy chunk, and the screen only says it is mounted after its first render. Until both are
@@ -78,7 +82,7 @@ export function AppBar({
       {onFiles ? (
         screenMounted ? (
           <Suspense fallback={filesFallback}>
-            <FilesAppBar menuButton={menuButton} brand={brand} trailing={avatar} />
+            <FilesAppBar menuButton={menuButton} brand={brand} trailing={<><ReadOnlyChip />{avatar}</>} />
           </Suspense>
         ) : (
           filesFallback

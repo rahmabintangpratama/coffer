@@ -12,6 +12,7 @@ import { t } from "@/lib/i18n";
 import type { AppError } from "@/lib/s3/errors";
 import type { ConnectionSummary, FileItem, FolderItem, Settings } from "@/lib/types";
 import { useOperationDialogs, useTrashAction } from "@/features/operations";
+import { ReadOnlyNotice, writeGate } from "@/features/readonly";
 import { useShareAction } from "@/features/share";
 import { candidatesFromDrop, useTransfers, useUpload } from "@/features/transfers";
 import { actionsFor, type ActionHandlers } from "./actions";
@@ -41,6 +42,8 @@ export interface FilesScreenProps {
   settings: Pick<Settings, "view" | "sort" | "density" | "showHiddenFiles" | "confirmTrash">;
   onSettings: (patch: Partial<Settings>) => void;
   notify: (message: string, action?: { label: string; run: () => void }) => void;
+  /** "Use another key" on the read-only banner: the app starts Add connection. */
+  onUseAnotherKey: () => void;
 }
 
 export function FilesScreen(props: FilesScreenProps) {
@@ -56,7 +59,7 @@ function errorBody(error: AppError): string {
   return t("files.error.generic");
 }
 
-function Folder({ connection, relative, root, settings, onSettings, notify }: FilesScreenProps & { relative: string; root: string }) {
+function Folder({ connection, relative, root, settings, onSettings, notify, onUseAnotherKey }: FilesScreenProps & { relative: string; root: string }) {
   const layout = useLayout();
   const bucket = connection.bucket ?? "";
   const folderLabel = relative === "" ? bucket : (relative.slice(0, -1).split("/").at(-1) ?? bucket);
@@ -182,8 +185,13 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
     setSelection(selected.length, [
       { id: "download", label: t("act.download"), icon: <Download aria-hidden="true" className="size-5" />, disabled: !onlyFiles, onSelect: () => { handlers.download(selected); } },
       { id: "share", label: t("act.share"), icon: <Share2 aria-hidden="true" className="size-5" />, disabled: selected.length !== 1 || !onlyFiles, onSelect: () => { { const only = selected[0]; if (only) handlers.share(only); }; } },
-      { id: "move", label: t("act.move"), icon: <FolderInput aria-hidden="true" className="size-5" />, disabled: readOnly, onSelect: () => { handlers.move(selected); } },
-      ...(handlers.trash ? [{ id: "trash", label: t("act.trash"), icon: <Trash2 aria-hidden="true" className="size-5" />, disabled: readOnly, onSelect: () => { handlers.trash?.(selected); } }] : []),
+      // A read-only key drops Move and Move to trash from the bar: it has no room for a reason line, and the menus say why (AC-111.3).
+      ...(readOnly
+        ? []
+        : [
+            { id: "move", label: t("act.move"), icon: <FolderInput aria-hidden="true" className="size-5" />, onSelect: () => { handlers.move(selected); } },
+            ...(handlers.trash ? [{ id: "trash", label: t("act.trash"), icon: <Trash2 aria-hidden="true" className="size-5" />, onSelect: () => { handlers.trash?.(selected); } }] : []),
+          ]),
     ]);
   }, [selected, handlers, setSelection, readOnly]);
 
@@ -244,7 +252,7 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
   const folderMenu: MenuGroup[] = relative === "" ? [] : [
     {
       id: "new",
-      actions: [{ id: "newFolder", label: t("act.newFolder"), icon: <FolderPlus aria-hidden="true" className="size-5 text-fg-muted" />, disabled: readOnly, ...(readOnly ? { reason: t("ro.reason") } : {}), onSelect: () => { setNewFolderOpen(true); } }],
+      actions: [{ id: "newFolder", label: t("act.newFolder"), icon: <FolderPlus aria-hidden="true" className="size-5 text-fg-muted" />, ...writeGate(readOnly).action(), onSelect: () => { setNewFolderOpen(true); } }],
     },
   ];
 
@@ -296,6 +304,7 @@ function Folder({ connection, relative, root, settings, onSettings, notify }: Fi
     <section data-component="FilesScreen" className="relative flex gap-6" {...dragHandlers}>
       <div className="flex min-w-0 flex-1 flex-col gap-3">
         <h1 className="sr-only">{t("nav.files")}</h1>
+        {readOnly && <ReadOnlyNotice onUseAnotherKey={onUseAnotherKey} />}
         <div className="flex min-h-(--cf-size-touch-min) flex-wrap items-center justify-between gap-2">
           <Breadcrumb rootLabel={bucket} prefix={relative} menu={folderMenu} />
           <div className="flex items-center gap-2">

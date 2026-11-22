@@ -1,6 +1,7 @@
 import { useTransfers } from "@/features/transfers";
 import { t } from "@/lib/i18n";
 import type { ConnectionSummary, JournalEntry, OperationKind } from "@/lib/types";
+import { canWrite } from "@/features/readonly";
 import { useOperations } from "./state";
 
 export interface RunHooks {
@@ -24,6 +25,16 @@ const nameOf = (key: string) => {
 };
 
 const isStop = (error: unknown): boolean => typeof error === "object" && error !== null && ((error as { name?: unknown }).name === "AbortError" || (error as { code?: unknown }).code === "aborted");
+
+/**
+ * A read-only key changes nothing (FR-111): the screens do not offer these, and this is the one place that would stop a
+ * call that got through anyway (a journal entry from an earlier session, a stale handler). It says why and returns true.
+ */
+export function refuseRead(connection: ConnectionSummary, hooks: Pick<RunHooks, "notify">): boolean {
+  if (canWrite(connection)) return false;
+  hooks.notify(t("ro.reason"));
+  return true;
+}
 
 // Two operations on one bucket never overlap: they run one after another (technical-spec 8, Concurrency).
 let queue: Promise<unknown> = Promise.resolve();
@@ -68,6 +79,7 @@ async function runEntries(specs: readonly StartInput[], hooks: RunHooks): Promis
  * with progress, the entry survives a closed tab, and the screen can go on being used.
  */
 export function startOperation(input: StartInput, hooks: RunHooks): void {
+  if (refuseRead(input.connection, hooks)) return;
   void enqueue(async () => {
     const [final] = await runEntries([input], hooks);
     if (final?.status === "done") await announce(input.connection, final, hooks);
@@ -79,6 +91,7 @@ export function startOperation(input: StartInput, hooks: RunHooks): void {
  * item, one toast "Moved N items to trash" with an Undo that restores them all (AC-36.1, AC-36.3).
  */
 export function startTrash(input: { connection: ConnectionSummary; root: string; keys: readonly string[] }, hooks: RunHooks): void {
+  if (refuseRead(input.connection, hooks)) return;
   void enqueue(async () => {
     const { newBatchId, trashKeyOf } = await import("@/lib/s3");
     const batch = newBatchId();
@@ -100,6 +113,7 @@ export function startTrash(input: { connection: ConnectionSummary; root: string;
 
 /** Restore trashed objects, one entry each (or a whole batch as one prefix entry), then one toast (FR-70). */
 export function startRestore(input: { connection: ConnectionSummary; moves: readonly { source: string; target: string }[] }, hooks: RunHooks): void {
+  if (refuseRead(input.connection, hooks)) return;
   void enqueue(async () => {
     const finals = await runEntries(input.moves.map((move) => ({ connection: input.connection, kind: "restore", source: move.source, target: move.target })), hooks);
     const done = finals.filter((entry) => entry.status === "done");
@@ -113,6 +127,7 @@ export function startRestore(input: { connection: ConnectionSummary; moves: read
  * there, and this tab says so instead of starting it a second time (D-41).
  */
 export function resumeOperation(connection: ConnectionSummary, entry: JournalEntry, hooks: RunHooks): void {
+  if (refuseRead(connection, hooks)) return;
   useOperations.getState().removeInterrupted(entry.id);
   void (async () => {
     try {

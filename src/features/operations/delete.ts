@@ -2,7 +2,7 @@ import { useTransfers } from "@/features/transfers";
 import { t } from "@/lib/i18n";
 import type { DeleteFailure } from "@/lib/s3";
 import type { ConnectionSummary } from "@/lib/types";
-import { enqueue, type RunHooks } from "./run";
+import { enqueue, refuseRead, type RunHooks } from "./run";
 
 export interface DeleteHooks extends RunHooks {
   /** The keys that could not be deleted, after the rest went on (AC-71.3). */
@@ -16,6 +16,7 @@ export interface DeleteHooks extends RunHooks {
  * resume or undo (technical-spec 8).
  */
 export function startDelete(input: { connection: ConnectionSummary; total: number; keys?: readonly string[]; prefix?: string; owns?: (key: string) => boolean }, hooks: DeleteHooks): void {
+  if (refuseRead(input.connection, hooks)) return;
   void enqueue(async () => {
     const s3 = await import("@/lib/s3");
     const bucket = input.connection.bucket ?? "";

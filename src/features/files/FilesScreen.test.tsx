@@ -36,7 +36,7 @@ function renderScreen(layout: "compact" | "rail" = "compact", over: Partial<Para
         <header>
           <FilesAppBar menuButton={null} brand={null} />
         </header>
-        <FilesScreen connection={connection} settings={settings} onSettings={vi.fn()} notify={vi.fn()} {...over} />
+        <FilesScreen connection={connection} settings={settings} onSettings={vi.fn()} notify={vi.fn()} onUseAnotherKey={vi.fn()} {...over} />
       </LayoutContext>
     </QueryClientProvider>,
   );
@@ -205,5 +205,68 @@ describe("AC-30.3 actions that do not apply are disabled", () => {
     useSelection.getState().selectAll(["dir/", "a.txt"]);
     const toolbar = await screen.findByRole("toolbar", { name: "Selection actions" });
     expect(within(toolbar).getByRole("button", { name: "Download" })).toBeDisabled();
+  });
+});
+
+describe("FR-111 a read-only connection (S41, S42)", () => {
+  const readOnly: ConnectionSummary = { ...connection, access: "readOnly" };
+
+  it("AC-111.1 shows the reason and Use another key, and no New or FAB", async () => {
+    listPage.mockResolvedValue(page(["a.txt"]));
+    const onUseAnotherKey = vi.fn();
+    const { container } = renderScreen("compact", { connection: readOnly, onUseAnotherKey });
+    await screen.findByRole("row", { name: /a\.txt/ });
+    const banner = container.querySelector<HTMLElement>('[data-component="ReadOnlyBanner"]');
+    if (!banner) throw new Error("no banner");
+    expect(within(banner).getByText("This key is read-only")).toBeInTheDocument();
+    expect(within(banner).getByText(/You can browse, preview and download/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "New" })).toBeNull();
+    await userEvent.click(within(banner).getByRole("button", { name: "Use another key" }));
+    expect(onUseAnotherKey).toHaveBeenCalledTimes(1);
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it("an ordinary connection has no banner", async () => {
+    listPage.mockResolvedValue(page(["a.txt"]));
+    const { container } = renderScreen();
+    await screen.findByRole("row", { name: /a\.txt/ });
+    expect(container.querySelector('[data-component="ReadOnlyBanner"]')).toBeNull();
+    expect(screen.getByRole("button", { name: "New" })).toBeInTheDocument();
+  });
+
+  it("AC-111.2 the row menu disables Rename, Make a copy, Move and Move to trash with the reason, and keeps the rest", async () => {
+    listPage.mockResolvedValue(page(["a.txt"]));
+    renderScreen("compact", { connection: readOnly });
+    await screen.findByRole("row", { name: /a\.txt/ });
+    await userEvent.click(screen.getByRole("button", { name: "More actions for a.txt" }));
+    const sheet = await screen.findByRole("dialog", { name: "a.txt" });
+    for (const name of [/^Rename/, /^Make a copy/, /^Move…/, /^Move to trash/]) {
+      const item = within(sheet).getByRole("button", { name });
+      expect(item).toBeDisabled();
+      expect(item).toHaveTextContent("This key is read-only");
+    }
+    for (const name of [/^Preview/, /^Download/, /^Share link/, /^Details/, /^Copy key/]) expect(within(sheet).getByRole("button", { name })).toBeEnabled();
+  });
+
+  it("AC-111.3 the selection bar drops Move and Move to trash, and keeps Download and Share link", async () => {
+    listPage.mockResolvedValue(page(["a.txt"]));
+    renderScreen("rail", { connection: readOnly });
+    await screen.findByRole("row", { name: /a\.txt/ });
+    useSelection.getState().selectAll(["a.txt"]);
+    const toolbar = await screen.findByRole("toolbar", { name: "Selection actions" });
+    expect(within(toolbar).getByRole("button", { name: "Download" })).toBeEnabled();
+    expect(within(toolbar).getByRole("button", { name: "Share link" })).toBeEnabled();
+    expect(within(toolbar).queryByRole("button", { name: /Move/ })).toBeNull();
+    expect(within(toolbar).queryByRole("button", { name: /trash/i })).toBeNull();
+  });
+
+  it("an ordinary connection's selection bar has Move and Move to trash", async () => {
+    listPage.mockResolvedValue(page(["a.txt"]));
+    renderScreen("rail");
+    await screen.findByRole("row", { name: /a\.txt/ });
+    useSelection.getState().selectAll(["a.txt"]);
+    const toolbar = await screen.findByRole("toolbar", { name: "Selection actions" });
+    expect(within(toolbar).getByRole("button", { name: "Move" })).toBeEnabled();
+    expect(within(toolbar).getByRole("button", { name: "Move to trash" })).toBeEnabled();
   });
 });

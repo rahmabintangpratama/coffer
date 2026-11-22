@@ -8,6 +8,7 @@ import { FileIcon } from "@/features/files/FileIcon";
 import { type DeleteFailure } from "@/lib/s3";
 import { startDelete, startRestore } from "@/features/operations";
 import { useConflictPrompt } from "@/features/transfers";
+import { ReadOnlyNotice, writeGate } from "@/features/readonly";
 import { formatBytes } from "@/lib/format";
 import { t } from "@/lib/i18n";
 import { fileKindOf } from "@/lib/s3/keys";
@@ -21,10 +22,13 @@ export interface TrashScreenProps {
   connection: ConnectionSummary;
   /** The connection can write: Restore, Delete forever and Empty trash are disabled with the reason otherwise (FR-111). */
   writable: boolean;
+  /** "Use another key" on the read-only banner. */
+  onUseAnotherKey: () => void;
   notify: (message: string, action?: { label: string; run: () => void }) => void;
 }
 
 const ROW = 64;
+const READ_ONLY_REASON_ID = "trash-read-only-reason";
 const when = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
 
 function TrashRow({ item, selected, onToggle, index, count, offset }: { item: TrashItem; selected: boolean; onToggle: () => void; index: number; count: number; offset: number }) {
@@ -60,7 +64,7 @@ function TrashRow({ item, selected, onToggle, index, count, offset }: { item: Tr
  * path and deletion time. Restore goes through the conflict dialog; Delete forever and Empty trash always ask,
  * and ask for the count to be typed above 50 items and for Empty trash.
  */
-export function TrashScreen({ connection, writable, notify }: TrashScreenProps) {
+export function TrashScreen({ connection, writable, notify, onUseAnotherKey }: TrashScreenProps) {
   const root = connection.prefix ?? "";
   const bucket = connection.bucket ?? "";
   const queryClient = useQueryClient();
@@ -114,7 +118,9 @@ export function TrashScreen({ connection, writable, notify }: TrashScreenProps) 
   };
   // Items that are gone (deleted, restored) no longer count: the selection is read against the list.
   const allSelected = items.length > 0 && chosen.length === items.length;
-  const ro = writable ? undefined : t("ro.reason");
+  // Disabled with the reason on screen (the banner), and the buttons point at it for assistive technology.
+  const gate = writeGate(!writable);
+  const ro = gate.reason;
 
   const container = useRef<HTMLUListElement>(null);
   const [margin, setMargin] = useState(0);
@@ -135,6 +141,7 @@ export function TrashScreen({ connection, writable, notify }: TrashScreenProps) 
         <h1 id="trash-title" className="text-xl font-semibold">{t("nav.trash")}</h1>
         <Button
           variant="danger-tonal"
+          {...(ro ? { "aria-describedby": READ_ONLY_REASON_ID } : {})}
           disabled={!writable || items.length === 0}
           title={ro}
           onClick={() => { setRequest({ kind: "empty", count: items.length }); }}
@@ -143,7 +150,8 @@ export function TrashScreen({ connection, writable, notify }: TrashScreenProps) 
         </Button>
       </div>
       <p className="mt-2 text-fg-muted">{t("trash.note", { prefix: ".coffer-trash/" })}</p>
-      {ro && <p className="mt-1 text-sm text-fg-muted">{ro}</p>}
+      {!writable && <ReadOnlyNotice className="mt-3" onUseAnotherKey={onUseAnotherKey} />}
+      {ro && <p id={READ_ONLY_REASON_ID} className="sr-only">{ro}</p>}
 
       {failures.length > 0 && (
         <Banner
@@ -185,11 +193,11 @@ export function TrashScreen({ connection, writable, notify }: TrashScreenProps) 
             </label>
             {chosen.length > 0 && (
               <>
-                <Button size="sm" disabled={!writable || restorable.length === 0} title={ro} onClick={() => { void restore(); }}>
+                <Button size="sm" disabled={!writable || restorable.length === 0} title={ro} {...(ro ? { "aria-describedby": READ_ONLY_REASON_ID } : {})} onClick={() => { void restore(); }}>
                   <RotateCcw aria-hidden="true" className="size-4" />
                   {t("act.restore")}
                 </Button>
-                <Button size="sm" variant="danger-tonal" disabled={!writable} title={ro} onClick={() => { setRequest({ kind: "keys", items: chosen }); }}>
+                <Button size="sm" variant="danger-tonal" disabled={!writable} title={ro} {...(ro ? { "aria-describedby": READ_ONLY_REASON_ID } : {})} onClick={() => { setRequest({ kind: "keys", items: chosen }); }}>
                   <Trash2 aria-hidden="true" className="size-4" />
                   {t("del.forever")}
                 </Button>

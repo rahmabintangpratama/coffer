@@ -33,7 +33,7 @@ function renderApp(withFiles: boolean) {
       <LayoutContext value="compact">
         <Router hook={useHashLocation}>
           <AppBar menuRef={{ current: null }} menuOpen={false} onMenu={vi.fn()} />
-          {withFiles && <FilesScreen connection={connection} settings={settings} onSettings={vi.fn()} notify={vi.fn()} />}
+          {withFiles && <FilesScreen connection={connection} settings={settings} onSettings={vi.fn()} notify={vi.fn()} onUseAnotherKey={vi.fn()} />}
         </Router>
       </LayoutContext>
     </QueryClientProvider>,
