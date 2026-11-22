@@ -55,6 +55,11 @@ export function startServer(dir: string, port: number): Promise<Server> {
     })();
   });
 
+  // Node closes an idle keep-alive connection after 5 s. A browser that reuses it in that instant sends a request into a closed
+  // socket; on webkit CI that showed as a `GET /` with no answer for 30 s (docs/open-questions.md, tracked flaky tests).
+  server.keepAliveTimeout = 120_000;
+  server.headersTimeout = 125_000;
+
   return new Promise((resolveStart) => {
     server.listen(port, "127.0.0.1", () => {
       resolveStart(server);
