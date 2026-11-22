@@ -56,6 +56,8 @@ export function useKind(connection: ConnectionSummary, file: FileItem): FileKind
   return kind?.key === file.key ? kind.kind : "loading";
 }
 
+const REVOKE_DELAY_MS = 1000;
+
 /**
  * A URL an <img>, <video> or <audio> can use. On an https endpoint it is a
  * presigned link (technical-spec 6.5), so the browser streams from the provider
@@ -96,7 +98,10 @@ export function useMediaSource(connection: ConnectionSummary, file: FileItem, se
     })();
     return () => {
       made.cancelled = true;
-      if (made.url !== null) URL.revokeObjectURL(made.url);
+      // Revoked a moment after the element is gone: WebKit logs "WebKitBlobResource error 1" when a blob it is still
+      // loading is revoked in the same task that removes its <img> or <audio>.
+      const url = made.url;
+      if (url !== null) setTimeout(() => { URL.revokeObjectURL(url); }, REVOKE_DELAY_MS);
     };
   }, [connection, file.key, file.name, file.size, seconds, attempt]);
   const retry = useCallback(() => { setAttempt((value) => value + 1); }, []);
