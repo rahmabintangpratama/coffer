@@ -51,7 +51,8 @@ export function Breadcrumb({ rootLabel, prefix, menu }: { rootLabel: string; pre
                 closeLabel={t("act.close")}
                 component="FolderMenu"
                 trigger={(props) => (
-                  <button type="button" aria-label={t("menu.folder.label")} aria-haspopup="menu" {...props} className={cn(linkClass, "inline-flex items-center gap-1 font-semibold text-fg no-underline")}>
+                  // The visible text (the folder name) leads the name, so a voice-control user can say what they see (WCAG 2.5.3).
+                  <button type="button" aria-label={`${current.name}: ${t("menu.folder.label")}`} aria-haspopup="menu" {...props} className={cn(linkClass, "inline-flex items-center gap-1 font-semibold text-fg no-underline")}>
                     <span className="truncate">{current.name}</span>
                     <ChevronDown aria-hidden="true" className="size-4" />
                   </button>
