@@ -53,10 +53,20 @@ export function AppBar({
       {brand}
     </div>
   );
+  // The bar of the Files route is a lazy chunk. Until it arrives the fallback keeps its height (the chips row included), so the
+  // list does not drop by one row when the chunk lands. A tap aimed at a row would otherwise hit what moved under it.
+  const filesFallback = (
+    <div data-component="FilesAppBarLoading" className="flex flex-col">
+      {plain}
+      <div aria-hidden="true" className="py-1">
+        <div className="h-(--cf-size-chip-height)" />
+      </div>
+    </div>
+  );
   return (
     <header data-component="AppBar" className="sticky top-0 z-(--cf-z-sticky) shrink-0 border-b border-line bg-surface">
       {filesActive ? (
-        <Suspense fallback={plain}>
+        <Suspense fallback={filesFallback}>
           <FilesAppBar menuButton={menuButton} brand={brand} />
         </Suspense>
       ) : (
