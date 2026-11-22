@@ -1,30 +1,12 @@
-import { expect, test, type Page } from "@playwright/test";
+import { type Page } from "@playwright/test";
+import { expect, expectConsole, PROVOKED_NETWORK_FAILURE, test } from "./test";
 import { createClient } from "../integration/client";
-import { admin, s3Fixture, testUsers } from "../integration/config";
+import { admin, testUsers } from "../integration/config";
 import { allowOrigin, APP_ORIGIN, bareBucket, E2E_BUCKET } from "./fixture";
-import { axeViolations, collectErrors, connectCustom, fillCustomForm, layoutFor, openBucket } from "./helpers";
+import { allowBucketList, axeViolations, collectErrors, connectCustom, fillCustomForm, layoutFor, openBucket } from "./helpers";
 
 // FR-1 to FR-7, FR-110 end to end, against the S3 fixture and the production build under its real CSP.
 const sdk = createClient(admin);
-
-/** Emulates a provider whose bucket list answers CORS preflights, which the fixture's service-level call does not. */
-async function allowBucketList(page: Page): Promise<void> {
-  const cors = {
-    "access-control-allow-origin": APP_ORIGIN,
-    "access-control-allow-headers": "*",
-    "access-control-allow-methods": "GET, HEAD",
-    "access-control-expose-headers": "ETag, Date, x-amz-bucket-region",
-  };
-  const root = new URL(s3Fixture.endpoint);
-  await page.route((url) => url.origin === root.origin && url.pathname === "/", async (route) => {
-    if (route.request().method() === "OPTIONS") {
-      await route.fulfill({ status: 204, headers: cors });
-      return;
-    }
-    const response = await route.fetch();
-    await route.fulfill({ response, headers: { ...response.headers(), ...cors } });
-  });
-}
 
 const noOverflow = async (page: Page) =>
   page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
@@ -52,6 +34,8 @@ test.describe("connecting a bucket", () => {
   });
 
   test("AC-6.1, AC-6.3: a bucket without CORS shows the exact origin, and Check again passes after the rule is added", async ({ page }) => {
+    // The missing CORS rule is blocked and logged by the browser.
+    expectConsole(PROVOKED_NETWORK_FAILURE);
     const bucket = await bareBucket(sdk);
     await page.goto("/");
     await connectCustom(page, { bucket });
@@ -90,6 +74,8 @@ test.describe("connecting a bucket", () => {
   });
 
   test("AC-5.3: an endpoint nobody answers on says it can't be reached and offers Edit endpoint", async ({ page }) => {
+    // An endpoint nobody answers on is the point of this test.
+    expectConsole(PROVOKED_NETWORK_FAILURE);
     await page.goto("/");
     await connectCustom(page, { endpoint: "http://127.0.0.1:9" });
     await expect(page.getByText("Can’t reach http://127.0.0.1:9")).toBeVisible({ timeout: 30_000 });
@@ -111,6 +97,8 @@ test.describe("connecting a bucket", () => {
   });
 
   test("AC-7.3, D-28: when the list is blocked, the person types the bucket name instead", async ({ page }) => {
+    // The blocked bucket list is logged as a CORS failure.
+    expectConsole(PROVOKED_NETWORK_FAILURE);
     await page.goto("/");
     await connectCustom(page, { bucket: "" });
     await page.getByRole("button", { name: "Choose a bucket" }).click({ timeout: 30_000 });
@@ -222,6 +210,8 @@ for (const colorScheme of ["light", "dark"] as const) {
     });
 
     test("Welcome, providers, the form with errors, a CORS failure and success have no axe violations", async ({ page }) => {
+      // The CORS failure screen needs a real CORS block.
+      expectConsole(PROVOKED_NETWORK_FAILURE);
       const bucket = await bareBucket(sdk);
       await page.goto("/");
       await expect(page.getByRole("button", { name: "Connect a bucket" })).toBeVisible();

@@ -1,5 +1,6 @@
 import { GetObjectCommand, ListObjectsV2Command, PutObjectCommand } from "@aws-sdk/client-s3";
-import { expect, type Page, test } from "@playwright/test";
+import { type Page } from "@playwright/test";
+import { expect, test } from "./test";
 import { createClient } from "../integration/client";
 import { admin } from "../integration/config";
 import { putMany } from "../integration/seed";
@@ -294,11 +295,25 @@ test("D-41 Resume clicked in two tabs runs the operation once, and the result ha
     await openFolder(tab, folder);
     await expect(tab.locator('[data-component="InterruptedBanner"]').getByText("A move was interrupted")).toBeVisible({ timeout: 30_000 });
   }
+  // A toast leaves after a few seconds, and under load the move can take longer than that. Record every toast as it appears
+  // instead of reading what is left at the end (the loser's notice was gone by then on a busy machine).
+  for (const tab of tabs) {
+    await tab.evaluate(() => {
+      const seen: string[] = [];
+      (window as unknown as { __toasts: string[] }).__toasts = seen;
+      new MutationObserver(() => {
+        for (const node of document.querySelectorAll('[data-component="Toast"]')) {
+          const text = node.textContent;
+          if (text && !seen.includes(text)) seen.push(text);
+        }
+      }).observe(document.body, { childList: true, subtree: true, characterData: true });
+    });
+  }
   await Promise.all(tabs.map((tab) => tab.locator('[data-component="InterruptedBanner"]').getByRole("button", { name: "Resume" }).click()));
   await expect.poll(async () => (await keysUnder(`${folder}/src/`)).length, { timeout: 120_000 }).toBe(0);
 
   // Exactly one tab ran it; the other said so and copied nothing.
-  const messages = await Promise.all(tabs.map((tab) => toast(tab).allTextContents()));
+  const messages = await Promise.all(tabs.map((tab) => tab.evaluate(() => (window as unknown as { __toasts: string[] }).__toasts)));
   expect(messages.flat().filter((text) => text.includes("Moved src"))).toHaveLength(1);
   expect(messages.flat().some((text) => /running in another tab|already finished or was discarded/.test(text))).toBe(true);
   expect([...copies.values()].every((count) => count === 1)).toBe(true);

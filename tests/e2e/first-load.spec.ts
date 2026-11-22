@@ -1,4 +1,5 @@
-import { expect, type Page, test } from "@playwright/test";
+import { type Page } from "@playwright/test";
+import { expect, test } from "./test";
 import { gzipSync } from "node:zlib";
 import { enterApp } from "./helpers";
 

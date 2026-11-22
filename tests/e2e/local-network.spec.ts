@@ -1,4 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
+import { type Page } from "@playwright/test";
+import { expect, expectConsole, PROVOKED_NETWORK_FAILURE, test } from "./test";
 import { CreateBucketCommand } from "@aws-sdk/client-s3";
 import { createClient } from "../integration/client";
 import { admin } from "../integration/config";
@@ -48,6 +49,8 @@ test("AC-5.1, T-9: a public page asks first, and only after Continue does the br
 });
 
 test("T-9: when the browser denies access, the screen says how to allow it instead of a generic network error", async ({ page }) => {
+  // The denied loopback permission is logged as a CORS block.
+  expectConsole(PROVOKED_NETWORK_FAILURE);
   await openPublicApp(page);
   await connectCustom(page, { bucket: BUCKET });
   await page.getByRole("button", { name: "Continue" }).click({ timeout: 30_000 });

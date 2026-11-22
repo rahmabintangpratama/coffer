@@ -1,7 +1,8 @@
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { PutBucketCorsCommand, PutObjectCommand } from "@aws-sdk/client-s3";
-import { expect, test, type Page } from "@playwright/test";
+import { type Page } from "@playwright/test";
+import { expect, expectConsole, PROVOKED_NETWORK_FAILURE, test } from "./test";
 import type { ConnectionTestRun } from "../../src/lib/s3";
 import { createBucket, createClient } from "../integration/client";
 import { admin, s3Fixture, testUsers } from "../integration/config";
@@ -90,6 +91,8 @@ test("a bucket that allows the app origin passes all six steps", async ({ page, 
 });
 
 test("a bucket without a CORS rule is reported as CORS, not as an unreachable host", async ({ page, browserName }) => {
+  // A bucket without a CORS rule is blocked by the browser, which logs it.
+  expectConsole(PROVOKED_NETWORK_FAILURE);
   const result = await run(page, { bucket: withoutCors });
   console.log(`[${browserName}] cors failure\n${table("no CORS rule", result)}`);
   expect(result.outcome).toBe("failed");
@@ -98,6 +101,8 @@ test("a bucket without a CORS rule is reported as CORS, not as an unreachable ho
 });
 
 test("a host that nothing answers on is reported as a network problem", async ({ page }) => {
+  // An unreachable port is the point of this test.
+  expectConsole(PROVOKED_NETWORK_FAILURE);
   const result = await run(page, { bucket: withCors, endpoint: "http://127.0.0.1:1" });
   expect(result.outcome).toBe("failed");
   expect(status(result)).toMatchObject({ reach: "fail", cors: "skipped" });

@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, type Page, test } from "@playwright/test";
+import { type Page } from "@playwright/test";
+import { expect, expectConsole, test } from "./test";
 import { cspViolations, enterApp, recordCspViolations } from "./helpers";
 
 // M5a and M5b: the preview viewer for images, video, audio, text and code, SVG, PDF,
@@ -122,6 +123,8 @@ test.describe("preview", () => {
   });
 
   test("AC-51.2 text named .png falls to the fallback instead of a broken image", async ({ page }) => {
+    // Chromium reports a failed image decode from a blob: as a connect-src block (loopback endpoints only; an https endpoint uses a presigned link).
+    expectConsole(/^connect-src .*blob|Connecting to 'blob:/);
     await openFile(page, "mislabeled.png");
     await expect(dialog(page).getByRole("heading", { name: "No preview for this file type" })).toBeVisible({ timeout: 15_000 });
   });
@@ -287,6 +290,8 @@ test.describe("PDF, Markdown and HTML (M5b)", () => {
   });
 
   test("AC-56.2 Render in sandbox uses sandbox=\"\" and srcdoc, and nothing in the page executes or is requested", async ({ page }) => {
+    // The hostile page is blocked by the sandbox and its own policy; each block is logged.
+    expectConsole(/Blocked script execution in 'about:srcdoc'|Refused to execute the redirect|Unable to do meta refresh due to sandboxing|attacker\.invalid/);
     await openFile(page, "hostile.html");
     await dialog(page).getByRole("button", { name: "Render in sandbox" }).click();
     const frame = dialog(page).locator("iframe");
@@ -313,6 +318,8 @@ test.describe("PDF, Markdown and HTML (M5b)", () => {
   });
 
   test("no CSP violation while previewing a PDF, Markdown and rendered HTML", async ({ page }) => {
+    // The hostile page is blocked by the sandbox and its own policy; each block is logged.
+    expectConsole(/Blocked script execution in 'about:srcdoc'|Refused to execute the redirect|Unable to do meta refresh due to sandboxing|attacker\.invalid/);
     await openFile(page, "sample.pdf");
     await expect(dialog(page).getByRole("status").filter({ hasText: /^Page / })).toHaveText("Page 1 of 2", { timeout: 20_000 });
     await closeViewer(page, "sample.pdf");

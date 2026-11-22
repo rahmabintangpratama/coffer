@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./test";
 import { axeViolations as violations, enterApp, layoutFor } from "./helpers";
 
 const routes = ["/", "/files", "/starred", "/trash", "/storage", "/settings"] as const;

@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./test";
 import { collectErrors, enterApp } from "./helpers";
 
 // OQ-33 / C-53: every icon the page or the manifest points to must be served

@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./test";
 import { destinations, enterApp, goToRoute, hashFor, layoutFor, navigateTo } from "./helpers";
 
 test.describe("navigation shell", () => {

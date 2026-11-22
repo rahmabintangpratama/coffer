@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, type TestInfo } from "@playwright/test";
 import { admin, s3Fixture, testUsers } from "../integration/config";
-import { E2E_BUCKET } from "./fixture";
+import { APP_ORIGIN, E2E_BUCKET } from "./fixture";
 
 export type Layout = "compact" | "rail" | "sidebar";
 
@@ -53,6 +53,25 @@ export function collectErrors(page: Page): string[] {
     errors.push(error.message);
   });
   return errors;
+}
+
+/** Emulates a provider whose bucket list answers CORS preflights, which the fixture's service-level call does not. */
+export async function allowBucketList(page: Page): Promise<void> {
+  const cors = {
+    "access-control-allow-origin": APP_ORIGIN,
+    "access-control-allow-headers": "*",
+    "access-control-allow-methods": "GET, HEAD",
+    "access-control-expose-headers": "ETag, Date, x-amz-bucket-region",
+  };
+  const root = new URL(s3Fixture.endpoint);
+  await page.route((url) => url.origin === root.origin && url.pathname === "/", async (route) => {
+    if (route.request().method() === "OPTIONS") {
+      await route.fulfill({ status: 204, headers: cors });
+      return;
+    }
+    const response = await route.fetch();
+    await route.fulfill({ response, headers: { ...response.headers(), ...cors } });
+  });
 }
 
 /** Click a destination in whatever navigation is visible at this width. */

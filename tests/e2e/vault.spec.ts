@@ -2,7 +2,8 @@ import { mkdtempSync, truncateSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { CreateBucketCommand, ListMultipartUploadsCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
-import { expect, type Page, test } from "@playwright/test";
+import { type Page } from "@playwright/test";
+import { expect, test } from "./test";
 import { createClient } from "../integration/client";
 import { admin, s3Fixture } from "../integration/config";
 import { allowOrigin, E2E_BUCKET } from "./fixture";
@@ -374,7 +375,14 @@ test.describe("lock and forget reach every tab (C-27)", () => {
     test.setTimeout(90_000);
     const context = await browser.newContext();
     // The e2e build shortens only the 5-minute choice, to 4 seconds.
-    await context.addInitScript(() => { window.localStorage.setItem("coffer:settings", JSON.stringify({ autoLockMinutes: 5 })); });
+    // The script also runs in blank documents, where reading localStorage throws; only the app's origin needs the value.
+    await context.addInitScript(() => {
+      try {
+        window.localStorage.setItem("coffer:settings", JSON.stringify({ autoLockMinutes: 5 }));
+      } catch {
+        // Opaque origin: nothing to set.
+      }
+    });
     const busy = await context.newPage();
     await enterApp(busy, "/files", { passphrase: PASS });
     const idle = await context.newPage();

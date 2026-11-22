@@ -1,5 +1,6 @@
 import { ListObjectsV2Command, PutObjectCommand } from "@aws-sdk/client-s3";
-import { expect, type Page, test } from "@playwright/test";
+import { type Page } from "@playwright/test";
+import { expect, test } from "./test";
 import { createBucket, createClient } from "../integration/client";
 import { admin } from "../integration/config";
 import { putMany } from "../integration/seed";

@@ -1,15 +1,16 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// Layout is verified at the three design widths in two engines. Chromium covers
-// Chrome and Edge; WebKit covers Safari (iOS Safari 16.4+ is mandatory).
+// Layout is verified at the three design widths in Chromium and WebKit, and at the two ends (375 and 1440) in Firefox.
+// Chromium covers Chrome and Edge; WebKit covers Safari (iOS Safari 16.4+ is mandatory); Firefox covers the rest of C-29.
 const viewports = [
   { name: "375", width: 375, height: 812 },
   { name: "768", width: 768, height: 1024 },
   { name: "1440", width: 1440, height: 900 },
 ] as const;
 const engines = [
-  { name: "chromium", device: devices["Desktop Chrome"] },
-  { name: "webkit", device: devices["Desktop Safari"] },
+  { name: "chromium", device: devices["Desktop Chrome"], widths: ["375", "768", "1440"] },
+  { name: "webkit", device: devices["Desktop Safari"], widths: ["375", "768", "1440"] },
+  { name: "firefox", device: devices["Desktop Firefox"], widths: ["375", "1440"] },
 ] as const;
 
 const port = 4173;
@@ -33,10 +34,12 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   projects: engines.flatMap((engine) =>
-    viewports.map((viewport) => ({
-      name: `${engine.name}-${viewport.name}`,
-      use: { ...engine.device, viewport: { width: viewport.width, height: viewport.height } },
-    })),
+    viewports
+      .filter((viewport) => (engine.widths as readonly string[]).includes(viewport.name))
+      .map((viewport) => ({
+        name: `${engine.name}-${viewport.name}`,
+        use: { ...engine.device, viewport: { width: viewport.width, height: viewport.height } },
+      })),
   ),
   webServer: {
     // Serves dist with its _headers, so every e2e test runs under the real CSP.

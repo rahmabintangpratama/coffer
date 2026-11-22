@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, type Page, test } from "@playwright/test";
+import { type Page } from "@playwright/test";
+import { expect, test } from "./test";
 import { BIG_BUCKET } from "./fixture";
 import { collectErrors, enterApp, layoutFor, type Layout } from "./helpers";
 

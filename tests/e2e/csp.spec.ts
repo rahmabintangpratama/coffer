@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./test";
 import { collectErrors, cspViolations, destinations, enterApp, goToRoute, layoutFor, navigateTo, recordCspViolations } from "./helpers";
 
 // The e2e server applies dist/_headers, so this runs under the real policy.

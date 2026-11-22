@@ -109,7 +109,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        project: [chromium-375, chromium-768, chromium-1440, webkit-375, webkit-768, webkit-1440]
+        project: [chromium-375, chromium-768, chromium-1440, webkit-375, webkit-768, webkit-1440, firefox-375, firefox-1440]
 
     # Local S3 fixture for the integration tests. Fake credentials only.
     # Same image and settings as tests/integration/docker-compose.yml (C-48).
@@ -146,7 +146,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install browser
-        run: pnpm exec playwright install --with-deps ${{ startsWith(matrix.project, 'webkit') && 'webkit' || 'chromium' }}
+        run: pnpm exec playwright install --with-deps ${{ startsWith(matrix.project, 'webkit') && 'webkit' || startsWith(matrix.project, 'firefox') && 'firefox' || 'chromium' }}
 
       - name: End-to-end tests (${{ matrix.project }})
         run: pnpm exec playwright test --project=${{ matrix.project }}
@@ -156,6 +156,66 @@ jobs:
         with:
           name: blob-report-${{ matrix.project }}
           path: blob-report/
+          retention-days: 7
+
+      # The real-browser contrast results (tests/e2e/contrast.spec.ts runs in the 1440 projects); `pnpm contrast:report` turns them into docs/contrast-report.md.
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always() && endsWith(matrix.project, '-1440')
+        with:
+          name: contrast-${{ matrix.project }}
+          path: test-results/contrast/
+          if-no-files-found: ignore
+          retention-days: 30
+
+  # Lighthouse against the production build served gzip-compressed with its real _headers, on a mobile profile.
+  # Budgets are in scripts/lighthouse/budgets.ts (technical-spec 14); a page over budget fails the job.
+  lighthouse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      s3:
+        image: rustfs/rustfs@sha256:ee717072290bec9b11abfc0365f8310b00df1cd9b3639943edae47bdef05044a # 1.0.6
+        ports:
+          - 9000:9000
+        env:
+          RUSTFS_ACCESS_KEY: coffer-test-key
+          RUSTFS_SECRET_KEY: coffer-test-secret-not-real
+          RUSTFS_CONSOLE_ENABLE: "false"
+        options: >-
+          --health-cmd "curl -fsS http://127.0.0.1:9000/health"
+          --health-interval 3s
+          --health-timeout 3s
+          --health-retries 20
+
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Install browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Lighthouse (Welcome, Unlock, Files)
+        run: pnpm lighthouse
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: lighthouse-report
+          path: lighthouse-report/
           retention-days: 7
 
   e2e-report:

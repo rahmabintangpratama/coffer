@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./test";
 import { enterApp } from "./helpers";
 
 // A page that moves under a tap sends the tap to the wrong element. The Files bar is a lazy chunk; its height

@@ -2,7 +2,7 @@ import { mkdtempSync, truncateSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { HeadObjectCommand, ListMultipartUploadsCommand } from "@aws-sdk/client-s3";
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./test";
 import { createClient } from "../integration/client";
 import { admin } from "../integration/config";
 import { E2E_BUCKET } from "./fixture";
