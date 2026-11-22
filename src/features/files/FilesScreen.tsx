@@ -366,8 +366,9 @@ function Folder({ connection, relative, root, settings, onSettings, notify, onUs
         onClose={() => {
           const closing = detailsFile;
           setDetailsKey(null);
-          // From 1024 px the panel is part of the page, not a dialog, so nothing hands focus back: without this it would drop to the page.
-          if (layout === "sidebar" && closing) {
+          // From 1024 px the panel is part of the page, not a dialog, so nothing hands focus back; in the sheet the menu that opened it
+          // is already gone when the dialog closes, so the browser has nowhere to return to. Either way focus would drop to the page.
+          if (closing) {
             const label = t("row.more", { name: closing.name });
             requestAnimationFrame(() => {
               [...document.querySelectorAll<HTMLElement>("button[aria-haspopup='menu']")].find((button) => button.getAttribute("aria-label") === label)?.focus();
