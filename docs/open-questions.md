@@ -79,11 +79,10 @@ Answered by the project owner. The **From** column gives the question that was o
 - **Affects:** FR-11, AC-11.4, `lib/storage/vault.ts` (`remove`), `inventory.ts`
 
 ### OQ-38: Unlock is over the first-screen JavaScript budget
-- **Owner:** Eng, Product
-- **Status:** Open (found by the M10 Lighthouse run; see [technical-spec](technical-spec.md) section 14, D-43).
-- **Question:** The budget is 120 KB gzip of JavaScript to render the first screen on a cold load. Welcome measures 112.9 KiB (inside). Unlock measures 128.7 KiB (131,790 bytes with the Lighthouse run's gzip): the vault, the passphrase screen and the shared button load before it paints. D-43 planned to add Unlock to `tests/e2e/first-load.spec.ts` "when the vault lands in M8"; that did not happen, so the overrun went unseen. Cloudflare Pages serves Brotli to browsers that accept it, which is smaller than gzip, but the budget is stated in gzip.
-- **Recommended:** Ship 0.1.0 with a 134,000-byte limit for Unlock in `scripts/lighthouse/budgets.ts` (a ratchet, so it cannot grow), then take the 9 KiB out in v1 (the button chunk and the shared onboarding chunk are the first places to look) or raise the Unlock row of technical-spec 14 to 130 KB on purpose.
-- **Affects:** technical-spec 14, `scripts/lighthouse/budgets.ts`, FR-8, FR-9
+- **Owner:** Eng
+- **Status:** Retired (no issue; the number came from a wrong measurement).
+- **Note:** The first Lighthouse run showed 128.7 KiB of JavaScript for Unlock, which looked 8.7 KiB over the 120 KiB budget. Lighthouse's transfer size counts the response headers of every request (the CSP is about 700 bytes and is sent with each of about 20 scripts) and the idle prefetch. `tests/e2e/first-load.spec.ts` measures the gzip body of the scripts the first screen needs, with the prefetch off, for Welcome and for Unlock, and both are inside 120 KiB (it runs in CI and passes). Lighthouse therefore checks timing, layout shift, CSS and fonts, and leaves JavaScript bytes to that spec.
+- **Affects:** `scripts/lighthouse/budgets.ts`, technical-spec 14
 
 ### OQ-35: Chrome's local network access permission
 - **Owner:** Eng, Design

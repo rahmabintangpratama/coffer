@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { expect, test, chromium } from "@playwright/test";
 import { startFlow } from "lighthouse";
 import puppeteer from "puppeteer-core";
-import { checkInteraction, checkNavigation, type LhrLike, THROTTLING, UNLOCK } from "../../scripts/lighthouse/budgets";
+import { checkInteraction, checkNavigation, type LhrLike, THROTTLING } from "../../scripts/lighthouse/budgets";
 import { admin } from "../integration/config";
 import { E2E_BUCKET } from "../e2e/fixture";
 
@@ -86,7 +86,7 @@ test("AC-NFR performance budgets: Welcome, Unlock and Files stay inside technica
     const [welcome, unlock, files] = result.steps;
     if (welcome === undefined || unlock === undefined || files === undefined) throw new Error("A step is missing from the flow result");
     record("Welcome", checkNavigation(welcome.lhr as unknown as LhrLike));
-    record("Unlock", checkNavigation(unlock.lhr as unknown as LhrLike, UNLOCK));
+    record("Unlock", checkNavigation(unlock.lhr as unknown as LhrLike));
     record("Files", checkInteraction(files.lhr as unknown as LhrLike));
     writeFileSync(join(REPORT_DIR, "summary.json"), JSON.stringify({ problems }, null, 2));
     expect(problems, problems.join("\n")).toEqual([]);
