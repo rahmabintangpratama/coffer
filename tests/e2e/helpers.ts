@@ -180,13 +180,14 @@ async function settled(page: Page): Promise<void> {
 }
 
 /**
- * axe for this page. In Firefox the colour-contrast rule crashed the content process on some screens in CI (Settings in dark,
- * the Move dialog, the Security page), so it is left out there; contrast is measured in all three engines, Firefox included,
- * from the real computed colours by contrast.spec.ts, and axe's own contrast check still runs in Chromium and WebKit (D-50).
+ * axe for this page. In Firefox the content process crashed under axe on a few screens in CI (Settings, the Move dialog, the
+ * Security page), also with colour-contrast off, so the two rules that measure the most (colour-contrast and target-size) are
+ * left out there. Contrast is measured in all three engines, Firefox included, from the real computed colours by
+ * contrast.spec.ts, and both rules still run in Chromium and WebKit (D-50).
  */
 export function axeFor(page: Page): AxeBuilder {
   const builder = new AxeBuilder({ page });
-  return page.context().browser()?.browserType().name() === "firefox" ? builder.disableRules(["color-contrast"]) : builder;
+  return page.context().browser()?.browserType().name() === "firefox" ? builder.disableRules(["color-contrast", "target-size"]) : builder;
 }
 
 export async function axeViolations(page: Page) {
