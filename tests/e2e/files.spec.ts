@@ -52,6 +52,9 @@ test.describe("browse a big bucket", () => {
   });
 
   test("AC-23.1 search narrows loaded items by name without a request", async ({ page }) => {
+    // The listing keeps loading pages in the background; a slow runner was still on one when the search began (flaked once on Firefox).
+    // The claim is that the search itself asks for nothing, so start counting after the listing has gone quiet.
+    await page.waitForLoadState("networkidle");
     const requests: string[] = [];
     page.on("request", (request) => { if (request.url().includes(BIG_BUCKET)) requests.push(request.url()); });
     await page.getByRole("searchbox").fill("f-00042");
