@@ -17,7 +17,8 @@ const PASS = "correct horse battery staple";
 const unique = () => `e2e-kbd/${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 const rows = (page: Page) => page.locator('[data-component="FileRow"], [data-component="FileTile"], [data-component="FolderTile"]');
 const row = (page: Page, name: string) => rows(page).filter({ hasText: name }).first();
-const isFocused = (locator: Locator) => locator.evaluate((element) => element === document.activeElement).catch(() => false);
+// Short timeout: evaluate() waits for the element, and a hang here would otherwise run to the test timeout instead of failing.
+const isFocused = (locator: Locator) => locator.evaluate((element) => element === document.activeElement, undefined, { timeout: 2000 }).catch(() => false);
 
 async function put(key: string, body = "x"): Promise<void> {
   await s3.send(new PutObjectCommand({ Bucket: E2E_BUCKET, Key: key, Body: body }));
@@ -321,7 +322,12 @@ test.describe("keyboard only", () => {
     await page.keyboard.press("Escape");
     await expect(dialog).toHaveCount(0);
     await expect(lock).toBeFocused();
-    await page.keyboard.press("Enter");
+    // The dialog's close is reported to the page one task after it is gone; an Enter that lands before then opens nothing.
+    // Press again until it shows (a person is never that fast, so this only absorbs the test's own speed).
+    await expect(async () => {
+      await page.keyboard.press("Enter");
+      await expect(dialog).toBeVisible({ timeout: 1000 });
+    }).toPass({ timeout: 10_000 });
     await tabTo(page, dialog.getByRole("button", { name: "Lock now" }));
     await page.keyboard.press("Enter");
     await expect(page.getByRole("heading", { level: 1, name: "Coffer is locked" })).toBeVisible();

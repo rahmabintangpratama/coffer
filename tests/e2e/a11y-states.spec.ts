@@ -204,7 +204,12 @@ test.describe("axe on every screen and state", () => {
     await chooseItem(page, layout, /^Details/);
     await expect(page.locator('[data-component="DetailsPanel"]')).toBeVisible();
     await check(page, "Details", failures);
-    await page.keyboard.press("Escape");
+    // The in-layout panel (1024 px and up) is closed with its button; a sheet closes on Escape. Focus goes back to the row's menu
+    // button a frame later, so wait for it before moving focus again.
+    if (layout === "sidebar") await page.locator('[data-component="DetailsPanel"]').getByRole("button", { name: "Close" }).click();
+    else await page.keyboard.press("Escape");
+    await expect(page.locator('[data-component="DetailsPanel"]')).toBeHidden();
+    await expect(page.getByRole("button", { name: "More actions for a.txt" }).first()).toBeFocused();
 
     await row(page, "a.txt").focus();
     await page.keyboard.press("Enter");
