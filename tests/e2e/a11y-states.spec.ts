@@ -304,7 +304,11 @@ test.describe("axe on every screen and state", () => {
     await menuOf(page, layout, "report.txt");
     await check(page, "Read-only, row menu", failures);
     await page.keyboard.press("Escape");
+    // The menu hands focus back to its button when it has closed; focusing the row before that would lose it again.
+    await expect(page.getByRole("menu").or(page.getByRole("dialog"))).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "More actions for report.txt" }).first()).toBeFocused();
     await row(page, "report.txt").focus();
+    await expect(row(page, "report.txt")).toBeFocused();
     await page.keyboard.press("Enter");
     await expect(page.locator('dialog[data-component="Preview"]')).toBeVisible();
     await expect(page.locator('dialog[data-component="Preview"]').getByText("numbers")).toBeVisible({ timeout: 15_000 });
