@@ -207,7 +207,8 @@ test.describe("transfers across a lock (C-27, C-38)", () => {
     const folder = unique();
     await enterApp(page, "/files", { passphrase: PASS });
     await openFolder(page, folder);
-    await slowParts(page, 1200);
+    // Slow enough that the upload is still running when the Locked screen has appeared, even on a busy machine (it finished first at 1.2 s).
+    await slowParts(page, 4000);
     await filesInput(page).setInputFiles(bigFile("running.bin", 24));
     await expect.poll(() => incompleteIn(folder), { timeout: 20_000 }).toBeGreaterThan(0);
     await lockFromSettings(page);
