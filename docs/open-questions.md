@@ -219,7 +219,7 @@ A test that failed at first and passed on retry, and whose cause is not yet know
 
 | Test | First seen | What the trace shows | Status |
 |---|---|---|---|
-| _none open_ | | | |
+| `firefox-375` and `firefox-1440`: `operations.spec.ts` "the Move dialog passes axe", `vault.spec.ts` "AC-101.1 and AC-101.2 Security shows the auto-lock choices..." and the Move dialog step of `a11y-states.spec.ts` | M10, [CI run 45008717834](https://github.com/rahmabintangpratama/coffer/actions/runs/45008717834) (the `blob-report-firefox-1440` artifact) | `frame.evaluate: Page crashed` inside `AxeBuilder.analyze()`, every time and on retry, also with `color-contrast` and `target-size` off (run [45152578093](https://github.com/rahmabintangpratama/coffer/actions/runs/45152578093)). The same screens pass axe in Chromium and WebKit; Firefox passes axe on every other screen. Playwright's Firefox does not start on the maintainer's macOS, so there was no local trace to read. | Open. axe is skipped for these two screens in Firefox, with the reason in each test (D-50). Find the rule that crashes it by running Firefox in the Linux Playwright image, or after a Playwright update. |
 
 ### Closed
 

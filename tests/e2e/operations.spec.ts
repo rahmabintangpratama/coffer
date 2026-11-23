@@ -132,7 +132,8 @@ test.describe("rename, copy and move", () => {
     await expect.poll(() => keysUnder(`${folder}/`), { timeout: 20_000 }).toEqual([`${folder}/a.txt`, `${folder}/b.txt`, `${folder}/target/keep.txt`]);
   });
 
-  test("the Move dialog passes axe", async ({ page }, testInfo) => {
+  test("the Move dialog passes axe", async ({ page, browserName }, testInfo) => {
+    test.skip(browserName === "firefox", "axe crashes Firefox's content process on this dialog in CI (tracked in open-questions.md, D-50); Chromium and WebKit run it.");
     await chooseFromMenu(page, layoutFor(testInfo), "a.txt", /^Move…/);
     const dialog = page.getByRole("dialog", { name: "Move 1 item" });
     await expect(dialog.getByRole("treeitem", { name: /Current location/ })).toBeVisible();
