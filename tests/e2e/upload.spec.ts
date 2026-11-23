@@ -147,6 +147,9 @@ test.describe("upload", () => {
   test("AC-41.5 and AC-44.5 a reload mid-upload leaves nothing open and the panel says it was interrupted", async ({ page }) => {
     // The reload cancels the request that was in flight; WebKit reports that as an uncaught rejection.
     expectConsole(PROVOKED_NETWORK_FAILURE);
+    // Upload, reload, reconnect and the abort at the provider run one after the other; the waits below add up to more than the
+    // default 30 s, which a slow Firefox runner used up (the 30 s wait for the notice could never be reached).
+    test.setTimeout(90_000);
     await holdParts(page);
     await filesInput(page).setInputFiles(bigFile("interrupted.bin", 60));
     await expect.poll(() => incompleteIn(folder), { timeout: 20_000 }).toBeGreaterThan(0);
