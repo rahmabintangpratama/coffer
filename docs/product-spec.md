@@ -180,7 +180,7 @@ The UI never hides these. Each one is surfaced where it affects the person.
 - AC-11.1 Given two or more connections, When the avatar (mobile, rail) or sidebar block is activated, Then the switcher lists them with lock state in the accessible name.
 - AC-11.2 Given a locked connection is chosen, When selected, Then Unlock appears.
 - AC-11.3 Given `Add connection`, When chosen, Then onboarding starts without losing the current session.
-- AC-11.4 Given a connection is removed in Settings, Then only that connection's keys are deleted.
+- AC-11.4 Given a connection is removed in Settings, Then only that connection's data in this browser is deleted: its keys, its transfers, its unfinished uploads and its Starred and Recent entries (AC-102.5 to AC-102.7). Bucket data and other connections are untouched.
 
 **States:** one connection, several, locked entries.
 **Screens:** `S37_ConnSwitch`
@@ -604,7 +604,7 @@ The UI never hides these. Each one is surfaced where it affects the person.
 **Story:** As a user, I want to see and control what's stored.
 **Acceptance**
 - AC-101.1 Given Security, Then auto-lock choices (5, 15, 30, 60 minutes and Never with a warning), Lock now, `What's stored on this device` and `Forget this device` show.
-- AC-101.2 Given `What's stored`, Then it lists saved connections, the journal, starred and recent with counts, and states that Coffer sends nothing except to the provider.
+- AC-101.2 Given `What's stored`, Then it lists saved connections, the journal, starred and recent with counts, and states that Coffer sends nothing except to the provider. `Forget this device` is the only action that removes all of it; removing one connection deletes only that connection's rows (AC-102.5).
 - AC-101.3 Given `Change passphrase` (v1), Then the old passphrase is required, the new one must be at least 12 characters, and every saved connection is re-encrypted before the old key is dropped.
 
 **Screens:** `S50_SettingsList`, `S51_SettingsSecurity`
@@ -616,6 +616,9 @@ The UI never hides these. Each one is surfaced where it affects the person.
 - AC-102.2 Given the correct passphrase, Then the secret shows for 15 seconds and hides again (`reveal.note`).
 - AC-102.3 Given a copy, Then the notice "Copied. Clear your clipboard when you're done." shows.
 - AC-102.4 Given any state, Then secrets never appear in URLs, toasts, titles, logs or error text.
+- AC-102.5 Given `Remove` on a saved connection that has no unfinished move, Then the confirmation lists exactly what will be removed (its saved keys, and the counts of its running or waiting transfers, unfinished uploads, Starred and Recent entries) and says that the bucket, its files, other connections and the passphrase are not touched. On confirm, its transfers stop, its incomplete multipart uploads are aborted at the provider (best effort; the toast says how many succeeded and how many failed), and its journal, upload, Starred and Recent rows and its saved profile are deleted. If it was the active connection, the app goes to Unlock or Welcome.
+- AC-102.6 Given the connection has an interrupted or running move, When `Remove` is chosen, Then removal is blocked by a dialog that offers `Resume` or `Discard` for each interrupted entry (a running one says to try again when it finishes); after the last one is discarded the confirmation follows.
+- AC-102.7 Given a removal, Then no row of that connection (journal, uploads, Starred, Recent, profile) remains in storage, and no row of another connection changes.
 
 **Edge cases:** memory-only connections cannot be revealed after submission ([C-26](open-questions.md#owner-confirmed-decisions)). **Screens:** `T50_SettingsPages`, `S51_SettingsSecurity`
 

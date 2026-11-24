@@ -2,7 +2,7 @@
 
 - **Purpose:** the result of the pre-release security audit: what was reviewed, what was found, what was fixed, and what is left for the owner, with severity and rationale.
 - **Status:** Draft (source review complete; the items marked "needs validation" wait for owner checks in [manual-test-plan.md](manual-test-plan.md)).
-- **Last updated:** 2026-11-22
+- **Last updated:** 2026-11-24
 - **Source files in `design/`:** [SECURITY-DESIGN.md](../design/SECURITY-DESIGN.md) (read only)
 - **Related:** [release-checklist.md](release-checklist.md), [technical-spec.md](technical-spec.md) section 11, [ADR-005](adr/ADR-005-encrypted-local-vault.md), [open-questions.md](open-questions.md)
 
@@ -29,10 +29,10 @@
 | S-4 | Signed requests follow redirects | Needs validation | none yet |
 | S-5 | Listing keys are decoded without checking the response says they were encoded | Needs validation | none yet |
 | S-6 | Forget this device can report success while another tab holds the database | Recorded | Low |
-| S-7 | Removing one connection leaves its transfers and local records until Forget | Recorded (product decision) | Low |
+| S-7 | Removing one connection leaves its transfers and local records until Forget | Fixed ([C-55](open-questions.md)) | Low |
 | S-8 | Memory-only connections never auto-lock | Accepted by design | n/a |
 | S-9 | Download anchor navigates to the presigned URL if the provider ignores `attachment` | Needs validation | none yet |
-| S-10 | Bidirectional-text characters in object names are not isolated everywhere | Recorded | Low |
+| S-10 | Bidirectional-text characters in object names are not isolated everywhere | Fixed | Low |
 | S-11 | A rendered HTML preview can leak DNS and preconnect hints | Needs validation | none yet |
 | S-12 | Object keys with `.` or `..` segments cannot be previewed or moved | Recorded | Informational |
 | B-1 | Test-only build switches would ship if set in the Pages dashboard | Mitigated by a check in the deploy steps | Informational |
@@ -66,6 +66,18 @@ No critical or high finding. No confirmed finding is left unresolved.
 - **Test:** two tests in `vault-saved.test.ts` (`M10 audit: a lock that lands while an unlock...`, `...during a first save`).
 - **Severity:** low. The window is short and the person typed the passphrase in that tab.
 
+### S-7: Remove connection left its transfers and rows (low, fixed)
+
+- **Result:** `vault.remove` deleted the sealed profile only. Its running transfers kept their lease, and its journal, upload, starred and recent rows (object keys, endpoint, bucket in the clear) stayed until Forget this device.
+- **Fix:** the owner decided ([OQ-37](open-questions.md#oq-37-what-remove-connection-deletes), [C-55](open-questions.md)): Remove is blocked by an unfinished move, then stops the connection's transfers, aborts its incomplete multipart uploads (best effort, counts shown) and deletes its rows in one transaction. Commit [d471a50](https://github.com/rahmabintangpratama/coffer/commit/d471a5049606b1602828a4fc52a33a89a39cdc70).
+- **Test:** `tests/integration/connection-removal.test.ts`, `tests/e2e/remove-connection.spec.ts`, the Connections tests in `SecuritySettings.test.tsx`, and two lease tests in `vault-saved.test.ts`.
+
+### S-10: bidirectional and invisible characters in names (low, fixed)
+
+- **Result:** `FileRow` isolated names, but the preview header, breadcrumb, dialogs, toasts, transfer panel and the download file name did not. A name like `invoice<U+202E>fdp.exe` could be drawn as `invoiceexe.pdf`.
+- **Fix:** every name is drawn in an isolated bidi context (`<bdi>`, or U+2068 ... U+2069 around the values `t()` fills in and in `title` and `aria-label`). Details, Rename, Make a copy and the delete confirmations show each hidden character as `⟨U+202E⟩` with a warning, and the download name has them stripped. Commit [f043426](https://github.com/rahmabintangpratama/coffer/commit/f043426d7887a42428d021af16beb39655531e3d).
+- **Test:** `src/lib/names.test.ts`, `src/components/HiddenCharsNotice.test.tsx`, `tests/e2e/hidden-names.spec.ts` (RLO, LRO, RLI and zero-width names: the extension stays last in the list, and Details, Rename and Delete forever show the stored order).
+
 ## 4. Needs validation (no severity until confirmed)
 
 | ID | Missing fact | How to check | If confirmed |
@@ -78,9 +90,7 @@ No critical or high finding. No confirmed finding is left unresolved.
 ## 5. Recorded, not fixed
 
 - **S-6 (low).** `forgetDevice` swallows a blocked database delete and shows success; a tab running an older cached build that does not close its handle keeps the sealed records until it closes. After Forget the page reloads to Welcome. Only the encrypted records remain, and the `coffer:saved` hint is cleared. Fix when it matters: report "Some data could not be removed" when the delete is still blocked after the timeout. Not blocking: an old build cannot exist before the first release.
-- **S-7 (low, product decision).** `vault.remove` deletes the connection and its keys but not its running transfers (they hold a lease by design, C-27) or the journal, upload, starred and recent rows (object keys, endpoint, bucket in the clear). Forget removes all of it. Decide whether AC-11.4 means "keys only". Recorded as [OQ-37](open-questions.md#oq-37-what-remove-connection-deletes).
 - **S-8 (accepted).** A connection whose keys are only in memory does not auto-lock; nothing is stored, and a reload drops it. Documented in the vault header.
-- **S-10 (low).** `FileRow` wraps names in `<bdi>`, but the preview header, breadcrumb, some dialogs and the download file name keep U+202E and similar characters. A name like `report‮fdp.exe` can look like another extension. Fix: wrap names in `<bdi>` everywhere and strip bidi controls from the download file name. Not done now because the effect depends on each browser's save dialog.
 - **S-12 (informational).** Keys with `.` or `..` segments (made by other tools) are normalised by the URL parser, the SigV4 signature then fails, and preview, download and moves of that object are blocked. No path to another object was found, because the signature binds the key.
 - **B-1 (informational).** `VITE_COFFER_LOAD_ALL_CAP` and `VITE_COFFER_AUTOLOCK_TEST_MS` are baked in at build time. They cannot be set at run time from a URL, hash or storage. They would ship only if someone set them in the Pages dashboard (the auto-lock would become milliseconds). The deploy guide now says the only variable is `NODE_VERSION` and adds a check.
 - **B-2 (informational).** Preview deployments run the build for every branch. A malicious change to `package.json` would run in that build, which holds no secret (only `NODE_VERSION`). Single-owner repository: no action.
@@ -100,5 +110,5 @@ No critical or high finding. No confirmed finding is left unresolved.
 ## 7. What the owner should do
 
 1. Run manual test **core-15a** on every provider (settles S-5), and watch the redirect and download behaviour while doing the matrix (S-4, S-9).
-2. Decide S-7 (what "remove a connection" should delete) and S-10 (bidirectional text), or accept them for 0.1.0.
+2. S-7 and S-10 are decided and fixed (above); no owner decision is left from this audit.
 3. Optionally rerun this audit with the sandbox enabled (`/sandbox` in Claude Code, then restart the session) if you want the skill's executed checks and JSON records.
