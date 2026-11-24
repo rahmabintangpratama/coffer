@@ -7,7 +7,7 @@ import { expect, test } from "./test";
 import { createClient } from "../integration/client";
 import { admin, s3Fixture } from "../integration/config";
 import { allowOrigin, E2E_BUCKET } from "./fixture";
-import { axeViolations, connectCustom, enterApp, fillCustomForm, goToRoute } from "./helpers";
+import { axeViolations, connectCustom, dumpStorage, enterApp, fillCustomForm, goToRoute } from "./helpers";
 
 // M8: save on this device, unlock, lock and auto-lock, Forget this device, Show secret key, the switcher, and lock across tabs
 // (FR-8, FR-9, FR-10, FR-11, FR-101, FR-102, C-27, C-38). The fake keys are the fixture's; nothing here is a real credential.
@@ -27,33 +27,6 @@ async function incompleteIn(folder: string): Promise<number> {
 }
 async function keysUnder(prefix: string): Promise<string[]> {
   return ((await s3.send(new ListObjectsV2Command({ Bucket: E2E_BUCKET, Prefix: prefix }))).Contents ?? []).map((object) => object.Key ?? "").sort();
-}
-
-/** Everything this origin stores, as one string: all IndexedDB stores, localStorage and sessionStorage. */
-async function dumpStorage(page: Page): Promise<string> {
-  return page.evaluate(
-    () =>
-      new Promise<string>((resolve) => {
-        const parts = [JSON.stringify(Object.entries(localStorage)), JSON.stringify(Object.entries(sessionStorage))];
-        const open = indexedDB.open("coffer");
-        open.onerror = () => { resolve(parts.join("\n")); };
-        open.onsuccess = () => {
-          const database = open.result;
-          const names = [...database.objectStoreNames];
-          if (names.length === 0) { database.close(); resolve(parts.join("\n")); return; }
-          const transaction = database.transaction(names, "readonly");
-          let pending = names.length;
-          for (const name of names) {
-            const all = transaction.objectStore(name).getAll();
-            all.onsuccess = () => {
-              parts.push(`${name}:${JSON.stringify(all.result)}`);
-              pending -= 1;
-              if (pending === 0) { database.close(); resolve(parts.join("\n")); }
-            };
-          }
-        };
-      }),
-  );
 }
 
 async function lockFromSettings(page: Page): Promise<void> {

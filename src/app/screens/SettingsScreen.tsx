@@ -7,6 +7,7 @@ import { vault } from "@/lib/storage/vault";
 import type { ConnectionSummary, Settings } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { forgetThisDevice, lockNow } from "../lock";
+import { connectionRemoval } from "../removal";
 import { useSession } from "../session";
 import { useSettings } from "../settings";
 import { AboutPage } from "./settings/AboutPage";
@@ -51,6 +52,7 @@ export function SettingsScreen({ connection, notify }: { connection: ConnectionS
           <ConnectionsSettings
             active={connection}
             saved={saved}
+            removal={connectionRemoval}
             notify={notify}
             onRemoved={(removed) => {
               session.setSaved(saved.filter((entry) => entry.id !== removed.id));

@@ -24,7 +24,7 @@ const TrashRoute = lazy(() => import("./screens/TrashRoute"));
 const HomeScreen = lazy(() => import("@/features/files").then((module) => ({ default: module.HomeScreen })));
 const filesGroups = ["files", "det", "filter", "search", "sel", "kind", "col", "view", "sort", "row", "menu", "home", "type", "dlg", "conf", "upl", "drop", "pv", "op", "ro", "share"] as const;
 const trashGroups = ["trash", "del", "sel", "conf", "op", "ro"] as const;
-const settingsGroups = ["sec", "stored", "forget", "reveal", "conn", "ob", "beh", "about"] as const;
+const settingsGroups = ["sec", "stored", "forget", "reveal", "conn", "ob", "beh", "about", "op"] as const;
 
 // The upload queue reads how many parts may be in flight from the settings at the moment each part starts.
 configureTransfers({ getConcurrency: () => useSettings.getState().uploadConcurrency });

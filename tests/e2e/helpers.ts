@@ -203,3 +203,29 @@ export async function axeViolations(page: Page) {
   }));
 }
 
+/** Everything this origin stores, as one string: all IndexedDB stores, localStorage and sessionStorage. */
+export async function dumpStorage(page: Page): Promise<string> {
+  return page.evaluate(
+    () =>
+      new Promise<string>((resolve) => {
+        const parts = [JSON.stringify(Object.entries(localStorage)), JSON.stringify(Object.entries(sessionStorage))];
+        const open = indexedDB.open("coffer");
+        open.onerror = () => { resolve(parts.join("\n")); };
+        open.onsuccess = () => {
+          const database = open.result;
+          const names = [...database.objectStoreNames];
+          if (names.length === 0) { database.close(); resolve(parts.join("\n")); return; }
+          const transaction = database.transaction(names, "readonly");
+          let pending = names.length;
+          for (const name of names) {
+            const all = transaction.objectStore(name).getAll();
+            all.onsuccess = () => {
+              parts.push(`${name}:${JSON.stringify(all.result)}`);
+              pending -= 1;
+              if (pending === 0) { database.close(); resolve(parts.join("\n")); }
+            };
+          }
+        };
+      }),
+  );
+}

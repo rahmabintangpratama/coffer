@@ -343,23 +343,26 @@ export const vault = {
    * Cancel every running transfer: "Stop transfers and lock" (C-38). Transfers still waiting for the unlock stay queued
    * (AC-9.6); Forget passes `includeWaiting` because nothing will be there to start them.
    */
-  stopLeases(options: { includeWaiting?: boolean } = {}): void {
+  stopLeases(options: { includeWaiting?: boolean; connectionId?: string } = {}): void {
+    const mine = (id: string) => options.connectionId === undefined || id === options.connectionId;
     if (options.includeWaiting === true) {
       for (const waiter of [...waiters]) {
+        if (!mine(waiter.connectionId)) continue;
         waiters.delete(waiter);
         waiter.signal?.removeEventListener("abort", waiter.onAbort);
         waiter.reject(abortError());
       }
     }
-    for (const { controller } of [...leases]) controller.abort();
+    for (const { lease, controller } of [...leases]) if (mine(lease.connectionId)) controller.abort();
   },
 
-  /** Resolves when no lease is held, or after `timeoutMs`: the aborted transfers have then cleaned up at the provider. */
-  leasesSettled(timeoutMs: number): Promise<void> {
-    if (leases.size === 0) return Promise.resolve();
+  /** Resolves when no lease is held (for one connection, when none of its leases is), or after `timeoutMs`: the aborted transfers have then cleaned up at the provider. */
+  leasesSettled(timeoutMs: number, connectionId?: string): Promise<void> {
+    const held = () => [...leases].some(({ lease }) => connectionId === undefined || lease.connectionId === connectionId);
+    if (!held()) return Promise.resolve();
     return new Promise((resolve) => {
       const timer = setTimeout(done, timeoutMs);
-      const off = vault.onLeaseChange(() => { if (leases.size === 0) done(); });
+      const off = vault.onLeaseChange(() => { if (!held()) done(); });
       function done() {
         clearTimeout(timer);
         off();

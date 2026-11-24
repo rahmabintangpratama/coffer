@@ -4,9 +4,9 @@ import { axe } from "jest-axe";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as forget from "@/lib/storage/forget";
 import { vault } from "@/lib/storage/vault";
-import type { ConnectionSummary } from "@/lib/types";
+import type { ConnectionSummary, JournalEntry } from "@/lib/types";
 import { ConnectionSwitcher } from "./ConnectionSwitcher";
-import { ConnectionsSettings, type ConnectionsSettingsProps } from "./ConnectionsSettings";
+import { type ConnectionRemoval, ConnectionsSettings, type ConnectionsSettingsProps, type RemovalPlan } from "./ConnectionsSettings";
 import { SecuritySettings, type SecuritySettingsProps } from "./SecuritySettings";
 
 // FR-101, FR-102, FR-11: Security and Connections settings, and the switcher.
@@ -20,8 +20,16 @@ const two = connection("docs");
 function props(over: Partial<SecuritySettingsProps> = {}): SecuritySettingsProps {
   return { autoLockMinutes: 15, onAutoLock: vi.fn(), savedCount: 2, onLock: vi.fn(), onForget: vi.fn(() => Promise.resolve()), ...over };
 }
+const emptyPlan: RemovalPlan = { unfinished: [], transfers: 0, uploads: 0, starred: 0, recent: 0 };
+const entry = (id: string, status: JournalEntry["status"] = "interrupted"): JournalEntry => ({
+  id, kind: "move", connectionId: "docs", endpoint: "https://s3.example.test", bucket: "docs", source: "reports/", target: "archive/", status, phase: "copying",
+  total: 10, done: 4, startedAt: "2026-01-01T00:00:00Z", updatedAt: "2026-01-01T00:00:00Z",
+});
+function removalOf(over: Partial<ConnectionRemoval> = {}): ConnectionRemoval {
+  return { inspect: vi.fn(() => Promise.resolve(emptyPlan)), resume: vi.fn(), discard: vi.fn(() => Promise.resolve()), remove: vi.fn(() => Promise.resolve({ aborted: 0, failed: 0 })), ...over };
+}
 function connectionProps(over: Partial<ConnectionsSettingsProps> = {}): ConnectionsSettingsProps {
-  return { active: one, saved: [one, two], onRemoved: vi.fn(), notify: vi.fn(), ...over };
+  return { active: one, saved: [one, two], removal: removalOf(), onRemoved: vi.fn(), notify: vi.fn(), ...over };
 }
 
 beforeEach(() => {
@@ -95,29 +103,74 @@ describe("AC-11.4 and AC-102.1 Connections", () => {
     expect(screen.getByRole("button", { name: `Show secret key: ${two.name}` })).toBeEnabled();
   });
 
-  it("removing one deletes only its keys and reports it", async () => {
-    const remove = vi.spyOn(vault, "remove").mockResolvedValue();
-    const p = connectionProps();
+  it("OQ-37 the confirmation lists what goes, and removing runs the removal once and reports it", async () => {
+    const removal = removalOf({ inspect: vi.fn(() => Promise.resolve({ ...emptyPlan, transfers: 2, uploads: 1, starred: 3, recent: 1 })) });
+    const p = connectionProps({ removal });
     render(<ConnectionsSettings {...p} />);
     await userEvent.click(screen.getByRole("button", { name: `Remove: ${two.name}` }));
     const dialog = await screen.findByRole("dialog", { name: `Remove ${two.name}?` });
-    expect(within(dialog).getByText(/Its saved keys are deleted from this device/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/Your bucket and its files are not touched/)).toBeInTheDocument();
+    for (const line of ["Its saved keys", "2 running or waiting transfers, stopped", "1 unfinished upload, cancelled at your provider", "3 starred items", "1 recent file"]) expect(within(dialog).getByText(line)).toBeInTheDocument();
+    expect(within(dialog).getByText(/Other connections, their transfers and your passphrase stay/)).toBeInTheDocument();
     await userEvent.click(within(dialog).getByRole("button", { name: "Remove" }));
     await vi.waitFor(() => { expect(p.onRemoved).toHaveBeenCalledWith(two); });
-    expect(remove).toHaveBeenCalledTimes(1);
-    expect(remove).toHaveBeenCalledWith("docs");
+    expect(removal.remove).toHaveBeenCalledTimes(1);
+    expect(removal.remove).toHaveBeenCalledWith(two);
     expect(p.notify).toHaveBeenCalledWith(`Removed ${two.name}`);
   });
 
+  it("OQ-37 says how many unfinished uploads were cancelled and how many were not", async () => {
+    const removal = removalOf({ remove: vi.fn(() => Promise.resolve({ aborted: 2, failed: 1 })) });
+    const p = connectionProps({ removal });
+    render(<ConnectionsSettings {...p} />);
+    await userEvent.click(screen.getByRole("button", { name: `Remove: ${two.name}` }));
+    await userEvent.click(within(await screen.findByRole("dialog", { name: `Remove ${two.name}?` })).getByRole("button", { name: "Remove" }));
+    await vi.waitFor(() => { expect(p.notify).toHaveBeenCalledWith(`Removed ${two.name}. 2 of 3 unfinished uploads cancelled at your provider; 1 could not be and may still use space there.`); });
+  });
+
   it("a removal that fails says so and keeps the connection in the list", async () => {
-    vi.spyOn(vault, "remove").mockRejectedValue(new Error("blocked"));
-    const p = connectionProps();
+    const p = connectionProps({ removal: removalOf({ remove: vi.fn(() => Promise.reject(new Error("blocked"))) }) });
     render(<ConnectionsSettings {...p} />);
     await userEvent.click(screen.getByRole("button", { name: `Remove: ${two.name}` }));
     const dialog = await screen.findByRole("dialog", { name: `Remove ${two.name}?` });
     await userEvent.click(within(dialog).getByRole("button", { name: "Remove" }));
     await vi.waitFor(() => { expect(p.notify).toHaveBeenCalledWith(`Couldn’t remove ${two.name}. Try again.`); });
     expect(p.onRemoved).not.toHaveBeenCalled();
+  });
+
+  it("OQ-37 an unfinished move blocks the removal and offers Resume or Discard", async () => {
+    const removal = removalOf({ inspect: vi.fn(() => Promise.resolve({ ...emptyPlan, unfinished: [{ entry: entry("e1"), live: false }] })) });
+    const p = connectionProps({ removal });
+    render(<ConnectionsSettings {...p} />);
+    await userEvent.click(screen.getByRole("button", { name: `Remove: ${two.name}` }));
+    const dialog = await screen.findByRole("dialog", { name: "Finish the unfinished moves first" });
+    expect(within(dialog).getByText("reports: 4 of 10 done")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: `Remove ${two.name}?` })).toBeNull();
+    await userEvent.click(within(dialog).getByRole("button", { name: "Resume" }));
+    expect(removal.resume).toHaveBeenCalledWith(two, expect.objectContaining({ id: "e1" }));
+    expect(removal.remove).not.toHaveBeenCalled();
+  });
+
+  it("OQ-37 discarding the last unfinished move goes on to the confirmation", async () => {
+    let discarded = false;
+    const removal = removalOf({
+      inspect: vi.fn(() => Promise.resolve(discarded ? emptyPlan : { ...emptyPlan, unfinished: [{ entry: entry("e1"), live: false }] })),
+      discard: vi.fn(() => { discarded = true; return Promise.resolve(); }),
+    });
+    render(<ConnectionsSettings {...connectionProps({ removal })} />);
+    await userEvent.click(screen.getByRole("button", { name: `Remove: ${two.name}` }));
+    await userEvent.click(within(await screen.findByRole("dialog", { name: "Finish the unfinished moves first" })).getByRole("button", { name: "Discard" }));
+    expect(await screen.findByRole("dialog", { name: `Remove ${two.name}?` })).toBeInTheDocument();
+    expect(removal.remove).not.toHaveBeenCalled();
+  });
+
+  it("OQ-37 a move that is still running cannot be resumed or discarded", async () => {
+    const removal = removalOf({ inspect: vi.fn(() => Promise.resolve({ ...emptyPlan, unfinished: [{ entry: entry("e1", "running"), live: true }] })) });
+    render(<ConnectionsSettings {...connectionProps({ removal })} />);
+    await userEvent.click(screen.getByRole("button", { name: `Remove: ${two.name}` }));
+    const dialog = await screen.findByRole("dialog", { name: "Finish the unfinished moves first" });
+    expect(within(dialog).getByText("Still running. Try again when it finishes.")).toBeInTheDocument();
+    expect(within(dialog).queryByRole("button", { name: "Resume" })).toBeNull();
   });
 
   it("What's stored lists the upload state as well", async () => {

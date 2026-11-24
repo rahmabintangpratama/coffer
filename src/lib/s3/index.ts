@@ -23,6 +23,7 @@ export { listPage, PAGE_SIZE, type ListPage, type ListPageOptions } from "./list
 export type { S3Client as S3Handle } from "@aws-sdk/client-s3";
 export { headObject, type ObjectHead } from "./head";
 export { clientFor, withLeasedClient } from "./connection-client";
+export { abortRecorded, abortStoredUploads, type AbortSummary } from "./abort-uploads";
 export { existingKeys, HEAD_LIMIT, putFolder } from "./conflicts";
 export { folderNameProblem, keepBothKey, keyProblem, type KeyProblem } from "./keys";
 export { RequestPool } from "./pool";

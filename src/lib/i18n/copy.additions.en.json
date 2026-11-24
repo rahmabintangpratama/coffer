@@ -41,11 +41,24 @@
     "switcherTitle": "Connections",
     "remove": "Remove",
     "removeTitle": "Remove {name}?",
-    "removeBody": "Its saved keys are deleted from this device. Your bucket and files are not changed.",
+    "removeBody": "This only changes this browser. Your bucket and its files are not touched. These are removed from this device:",
     "active": "Current",
     "notSaved": "Not saved on this device",
     "removed": "Removed {name}",
-    "removeFailed": "Couldn’t remove {name}. Try again."
+    "removeFailed": "Couldn’t remove {name}. Try again.",
+    "removeKeys": "Its saved keys",
+    "removeTransfers": "{count, plural, one {# running or waiting transfer, stopped} other {# running or waiting transfers, stopped}}",
+    "removeUploads": "{count, plural, one {# unfinished upload, cancelled at your provider} other {# unfinished uploads, cancelled at your provider}}",
+    "removeStarred": "{count, plural, one {# starred item} other {# starred items}}",
+    "removeRecent": "{count, plural, one {# recent file} other {# recent files}}",
+    "removeKeep": "Other connections, their transfers and your passphrase stay as they are.",
+    "removeBusy": "Removing",
+    "removedUploads": "Removed {name}. {aborted} of {total} unfinished uploads cancelled at your provider.",
+    "removedUploadsFailed": "Removed {name}. {aborted} of {total} unfinished uploads cancelled at your provider; {failed} could not be and may still use space there.",
+    "blockedTitle": "Finish the unfinished moves first",
+    "blockedBody": "{name} has {count, plural, one {a move that was cut off} other {# moves that were cut off}}. Removing it now would lose track of {count, plural, one {it} other {them}}. Resume or discard each one, then remove the connection.",
+    "blockedEntry": "{name}: {done} of {total} done",
+    "blockedLive": "Still running. Try again when it finishes."
   },
   "dlg": {
     "zip": {

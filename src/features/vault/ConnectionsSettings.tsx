@@ -2,26 +2,85 @@ import { useRef, useState } from "react";
 import { Button } from "@/components/Button";
 import { Dialog } from "@/components/Dialog";
 import { t } from "@/lib/i18n";
-import { vault } from "@/lib/storage/vault";
-import type { ConnectionSummary } from "@/lib/types";
+import { nameOfEntry } from "@/lib/storage/journal";
+import type { ConnectionSummary, JournalEntry } from "@/lib/types";
 import { RevealDialog } from "./RevealDialog";
+
+/** What Remove needs from the app (OQ-37, C-55); the page owns only the dialogs. */
+export interface ConnectionRemoval {
+  /** Read what is stored for the connection: unfinished moves (`live` ones are still running) and the counts to list. */
+  inspect: (connection: ConnectionSummary) => Promise<RemovalPlan>;
+  resume: (connection: ConnectionSummary, entry: JournalEntry) => void;
+  discard: (entry: JournalEntry) => Promise<void>;
+  /** Stop its transfers, abort its unfinished uploads, delete its rows and keys. Resolves with how the aborts went. */
+  remove: (connection: ConnectionSummary) => Promise<{ aborted: number; failed: number }>;
+}
+
+export interface RemovalPlan {
+  unfinished: { entry: JournalEntry; live: boolean }[];
+  transfers: number;
+  uploads: number;
+  starred: number;
+  recent: number;
+}
 
 export interface ConnectionsSettingsProps {
   /** The active connection and the saved ones. */
   active: ConnectionSummary;
   saved: readonly ConnectionSummary[];
+  removal: ConnectionRemoval;
   /** A saved connection was removed here; the app drops it from its list (and leaves the session when it was the active one). */
   onRemoved: (connection: ConnectionSummary) => void;
   notify: (message: string) => void;
 }
 
+type Step = { kind: "blocked"; connection: ConnectionSummary; plan: RemovalPlan } | { kind: "confirm"; connection: ConnectionSummary; plan: RemovalPlan };
+
 /** The Connections page (FR-11, FR-102): each connection with Show secret key and Remove. */
-export function ConnectionsSettings({ active, saved, onRemoved, notify }: ConnectionsSettingsProps) {
+export function ConnectionsSettings({ active, saved, removal, onRemoved, notify }: ConnectionsSettingsProps) {
   const [revealing, setRevealing] = useState<ConnectionSummary | null>(null);
-  const [removing, setRemoving] = useState<ConnectionSummary | null>(null);
+  const [step, setStep] = useState<Step | null>(null);
+  const [busy, setBusy] = useState(false);
   const revealReturn = useRef<HTMLElement | null>(null);
   const connections = saved.some((connection) => connection.id === active.id) ? saved : [active, ...saved];
   const isSaved = (connection: ConnectionSummary) => saved.some((entry) => entry.id === connection.id);
+
+  // An unfinished move blocks the removal: without its journal entry it would be lost without a banner (C-55).
+  const review = async (connection: ConnectionSummary) => {
+    try {
+      const plan = await removal.inspect(connection);
+      setStep({ kind: plan.unfinished.length > 0 ? "blocked" : "confirm", connection, plan });
+    } catch {
+      notify(t("conn.removeFailed", { name: connection.name }));
+    }
+  };
+
+  const confirmRemove = async (connection: ConnectionSummary) => {
+    setBusy(true);
+    try {
+      const { aborted, failed } = await removal.remove(connection);
+      const total = aborted + failed;
+      notify(total === 0 ? t("conn.removed", { name: connection.name }) : t(failed === 0 ? "conn.removedUploads" : "conn.removedUploadsFailed", { name: connection.name, aborted, total, failed }));
+      setStep(null);
+      onRemoved(connection);
+    } catch {
+      setStep(null);
+      notify(t("conn.removeFailed", { name: connection.name }));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const blocked = step?.kind === "blocked" ? step : null;
+  const confirming = step?.kind === "confirm" ? step : null;
+  const counts = confirming
+    ? [
+        confirming.plan.transfers > 0 ? t("conn.removeTransfers", { count: confirming.plan.transfers }) : null,
+        confirming.plan.uploads > 0 ? t("conn.removeUploads", { count: confirming.plan.uploads }) : null,
+        confirming.plan.starred > 0 ? t("conn.removeStarred", { count: confirming.plan.starred }) : null,
+        confirming.plan.recent > 0 ? t("conn.removeRecent", { count: confirming.plan.recent }) : null,
+      ].filter((line): line is string => line !== null)
+    : [];
 
   return (
     <section data-component="ConnectionsSettings" aria-labelledby="connections-title">
@@ -45,7 +104,7 @@ export function ConnectionsSettings({ active, saved, onRemoved, notify }: Connec
                 {t("reveal.title")}
               </Button>
               {isSaved(connection) && (
-                <Button size="sm" variant="danger-tonal" aria-label={`${t("conn.remove")}: ${connection.name}`} onClick={() => { setRemoving(connection); }}>
+                <Button size="sm" variant="danger-tonal" aria-label={`${t("conn.remove")}: ${connection.name}`} onClick={() => { void review(connection); }}>
                   {t("conn.remove")}
                 </Button>
               )}
@@ -56,25 +115,43 @@ export function ConnectionsSettings({ active, saved, onRemoved, notify }: Connec
       </ul>
 
       <RevealDialog connection={revealing} onClose={() => { setRevealing(null); }} notify={notify} returnFocusRef={revealReturn} />
-      <Dialog open={removing !== null} onClose={() => { setRemoving(null); }} title={t("conn.removeTitle", { name: removing?.name ?? "" })} closeLabel={t("act.close")}>
+
+      <Dialog open={blocked !== null} onClose={() => { setStep(null); }} title={t("conn.blockedTitle")} closeLabel={t("act.close")}>
+        {blocked && (
+          <>
+            <p className="text-base">{t("conn.blockedBody", { name: blocked.connection.name, count: blocked.plan.unfinished.length })}</p>
+            <ul className="mt-4 flex flex-col divide-y divide-line">
+              {blocked.plan.unfinished.map(({ entry, live }) => (
+                <li key={entry.id} className="flex flex-col gap-2 py-3">
+                  <p className="text-base break-words">{t("conn.blockedEntry", { name: nameOfEntry(entry), done: entry.done, total: entry.total })}</p>
+                  {live ? (
+                    <p className="text-sm text-fg-muted">{t("conn.blockedLive")}</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      <Button size="sm" variant="primary" onClick={() => { removal.resume(blocked.connection, entry); setStep(null); }}>{t("op.resume")}</Button>
+                      <Button size="sm" onClick={() => { void removal.discard(entry).then(() => review(blocked.connection)); }}>{t("op.discard")}</Button>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+            <div className="mt-6 flex justify-end">
+              <Button variant="secondary" onClick={() => { setStep(null); }}>{t("act.close")}</Button>
+            </div>
+          </>
+        )}
+      </Dialog>
+
+      <Dialog open={confirming !== null} onClose={() => { if (!busy) setStep(null); }} title={t("conn.removeTitle", { name: confirming?.connection.name ?? "" })} closeLabel={t("act.close")}>
         <p className="text-base">{t("conn.removeBody")}</p>
+        <ul className="mt-3 list-disc pl-5 text-base">
+          <li>{t("conn.removeKeys")}</li>
+          {counts.map((line) => <li key={line}>{line}</li>)}
+        </ul>
+        <p className="mt-3 text-sm text-fg-muted">{t("conn.removeKeep")}</p>
         <div className="mt-6 flex flex-col-reverse gap-2 @md:flex-row @md:justify-end">
-          <Button variant="secondary" onClick={() => { setRemoving(null); }}>{t("act.cancel")}</Button>
-          <Button
-            variant="danger"
-            onClick={() => {
-              const target = removing;
-              setRemoving(null);
-              if (!target) return;
-              void vault.remove(target.id).then(
-                () => {
-                  notify(t("conn.removed", { name: target.name }));
-                  onRemoved(target);
-                },
-                () => { notify(t("conn.removeFailed", { name: target.name })); },
-              );
-            }}
-          >
+          <Button variant="secondary" disabled={busy} onClick={() => { setStep(null); }}>{t("act.cancel")}</Button>
+          <Button variant="danger" loading={busy} onClick={() => { if (confirming) void confirmRemove(confirming.connection); }}>
             {t("conn.remove")}
           </Button>
         </div>

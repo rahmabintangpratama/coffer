@@ -288,6 +288,38 @@ describe("C-27 and C-38 leases", () => {
     await expect(waiting).rejects.toMatchObject({ name: "AbortError" });
   });
 
+  it("OQ-37 stopping one connection's leases leaves the others running, and settling waits for that one only", async () => {
+    await saveFirst("c1");
+    vault.put("c2", keys);
+    await vault.save(summary("c2"), PASS);
+    const one = vault.lease("c1");
+    const two = vault.lease("c2");
+    vault.stopLeases({ connectionId: "c1" });
+    expect(one.signal.aborted).toBe(true);
+    expect(two.signal.aborted).toBe(false);
+    const settled = vault.leasesSettled(5000, "c1");
+    setTimeout(() => { one.release(); }, 30);
+    await settled;
+    expect(vault.leaseCount()).toBe(1);
+    await vault.leasesSettled(50, "nobody");
+    two.release();
+  });
+
+  it("OQ-37 stopping one connection's leases rejects only its waiters", async () => {
+    await saveFirst("c1");
+    vault.lock();
+    const mine = vault.leaseWhenUnlocked("c1");
+    const other = vault.leaseWhenUnlocked("c2");
+    vault.stopLeases({ includeWaiting: true, connectionId: "c1" });
+    await expect(mine).rejects.toMatchObject({ name: "AbortError" });
+    let settled = false;
+    void other.then(() => { settled = true; }, () => { settled = true; });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(settled).toBe(false);
+    vault.stopLeases({ includeWaiting: true });
+    await expect(other).rejects.toMatchObject({ name: "AbortError" });
+  });
+
   it("leasesSettled resolves when the last lease is released, or after the timeout", async () => {
     await saveFirst();
     const lease = vault.lease("c1");

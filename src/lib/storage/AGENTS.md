@@ -32,6 +32,10 @@ Vault, operation journal, upload state and IndexedDB. No React imports; must not
 - Schema changes are additive `upgrade` steps with a test that opens each older version and migrates it. Never drop data silently.
 - Settings live in `localStorage` keys `coffer:settings` and `coffer:theme` ([ADR-007](../../../docs/adr/ADR-007-local-data-placement.md)).
 
+## Remove a connection
+
+- `vault.remove(id)` deletes the sealed profile only. The app's removal (`src/app/removal.ts`, C-55) first stops that connection's transfers (`vault.stopLeases({ connectionId })`, `leasesSettled(ms, id)`), aborts its incomplete uploads, then calls `purgeConnectionData(id)` (`connection-data.ts`: its journal, upload, starred and recent rows in one transaction) and last `vault.remove`. A new store keyed by connection id must be added to `connection-data.ts` in the same change. Unfinished journal entries block the removal.
+
 ## Forget this device
 
 - Removes: running transfers and their leases, pending timers and clients, database `coffer` (close handles first), every `localStorage` key prefixed `coffer:`, `sessionStorage`, Cache Storage and service workers if present, in-memory vault and query cache.

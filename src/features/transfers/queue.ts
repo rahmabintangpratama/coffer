@@ -155,6 +155,25 @@ export function cancelTransfer(id: string): void {
   finishBatch(job.batch, false);
 }
 
+/** How many uploads of one connection are queued, waiting or running (for the Remove confirmation). */
+export function countConnectionTransfers(connectionId: string): number {
+  return [...jobs.values()].filter((job) => job.connection.id === connectionId).length;
+}
+
+/**
+ * Stop every upload of one connection, queued, waiting or running (OQ-37, C-55). A running one aborts its multipart
+ * upload and drops its record by itself; the caller waits for its lease to end. Returns how many it stopped.
+ */
+export function cancelConnectionTransfers(connectionId: string): number {
+  let stopped = 0;
+  for (const [id, job] of [...jobs]) {
+    if (job.connection.id !== connectionId) continue;
+    cancelTransfer(id);
+    stopped += 1;
+  }
+  return stopped;
+}
+
 /** Try a failed upload again from the start (AC-44.2). */
 export function retryTransfer(id: string): void {
   const job = jobs.get(id);
