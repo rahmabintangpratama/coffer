@@ -67,7 +67,7 @@ function ReviewDialog({ connection, entry, onClose }: { connection: ConnectionSu
             <section key={heading}>
               <h3 className="font-semibold">{heading}</h3>
               <ul className="mt-1 font-mono text-sm break-all text-fg-muted">
-                {sample.map((key) => <li key={key}>{key}</li>)}
+                {sample.map((key) => <li key={key}><bdi>{key}</bdi></li>)}
               </ul>
             </section>
           ))}

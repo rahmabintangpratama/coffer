@@ -3,6 +3,7 @@ import { type KeyboardEvent, lazy, Suspense } from "react";
 import { ActionMenu } from "@/components/ActionMenu";
 import { Button } from "@/components/Button";
 import { FullscreenDialog } from "@/components/FullscreenDialog";
+import { isolate } from "@/lib/names";
 import { t, type CopyKey } from "@/lib/i18n";
 import type { ConnectionSummary, FileItem, FileKind } from "@/lib/types";
 import { HtmlView } from "./HtmlView";
@@ -86,7 +87,7 @@ export function Preview({ connection, files, index, onClose, onClosed, onStep, o
     <FullscreenDialog label={t("pv.label", { name: file.name })} onClose={onClose} onClosed={() => { onClosed?.(index); }} onKeyDown={onKeyDown}>
       <header className="flex h-(--cf-size-appbar-height) shrink-0 items-center gap-2 border-b border-(--cf-color-inverse-border) px-2">
         <Button variant="ghost" iconOnly aria-label={t("act.back")} icon={<ArrowLeft aria-hidden="true" className="size-6" />} onClick={onClose} />
-        <h1 className="min-w-0 flex-1 truncate text-md font-semibold" title={file.name}>{file.name}</h1>
+        <h1 className="min-w-0 flex-1 truncate text-md font-semibold" title={isolate(file.name)}><bdi>{file.name}</bdi></h1>
         <p role="status" className="shrink-0 text-sm text-(--cf-color-inverse-muted)">{t("pv.pos", { position: index + 1, total: files.length })}</p>
         <Button variant="ghost" iconOnly aria-label={t("act.download")} icon={<Download aria-hidden="true" className="size-5" />} onClick={() => { onDownload(file); }} />
         <Button variant="ghost" iconOnly aria-label={t("act.share")} icon={<Share2 aria-hidden="true" className="size-5" />} onClick={() => { onShare(file); }} />

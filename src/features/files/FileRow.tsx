@@ -4,6 +4,7 @@ import { ActionMenu, type MenuGroup } from "@/components/ActionMenu";
 import type { LayoutMode } from "@/components/layout";
 import { formatBytes, formatModified } from "@/lib/format";
 import { t } from "@/lib/i18n";
+import { isolate } from "@/lib/names";
 import { cn } from "@/lib/utils";
 import { FileIcon } from "./FileIcon";
 import type { Item } from "./model";
@@ -103,7 +104,7 @@ export function Name({ name, className }: { name: string; className?: string }) 
   const stem = name.slice(0, split);
   const tail = name.slice(split);
   return (
-    <p className={cn("flex min-w-0 text-base", className)} title={name}>
+    <p className={cn("flex min-w-0 text-base", className)} title={isolate(name)}>
       <bdi className="min-w-0 truncate">{stem}</bdi>
       <bdi className="shrink-0 whitespace-pre">{tail}</bdi>
     </p>

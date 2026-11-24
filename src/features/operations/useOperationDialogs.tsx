@@ -1,6 +1,7 @@
 import { type SyntheticEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/Button";
 import { Dialog } from "@/components/Dialog";
+import { HiddenCharsNotice } from "@/components/HiddenCharsNotice";
 import { Field, TextInput } from "@/components/Field";
 import { FolderTree, type TreeFolder } from "@/components/FolderTree";
 import { useConflictPrompt } from "@/features/transfers";
@@ -137,6 +138,7 @@ function RenameDialog({ item, folderPrefix, onClose, decide, connection, hooks }
         <Field label={t("dlg.rename.label")} error={error ?? undefined}>
           <TextInput ref={input} value={name} autoFocus autoComplete="off" spellCheck={false} onChange={(event) => { setName(event.target.value); setError(null); }} />
         </Field>
+        <HiddenCharsNotice names={[...new Set([item?.name ?? "", name])]} className="mt-3" />
         <div className="mt-6 flex justify-end gap-2">
           <Button onClick={close}>{t("act.cancel")}</Button>
           <Button type="submit" variant="primary" loading={busy}>{t("dlg.rename.confirm")}</Button>
@@ -203,6 +205,7 @@ function CopyDialog({ item, folderPrefix, folderName, onClose, decide, connectio
         <Field label={t("dlg.copy.label")} hint={checking ? t("dlg.copy.checking") : t("dlg.copy.hint", { folder: folderName })} error={error ?? undefined}>
           <TextInput value={name} disabled={checking} autoFocus autoComplete="off" spellCheck={false} onChange={(event) => { setName(event.target.value); setError(null); }} />
         </Field>
+        <HiddenCharsNotice names={[name]} className="mt-3" />
         <div className="mt-6 flex justify-end gap-2">
           <Button onClick={close}>{t("act.cancel")}</Button>
           <Button type="submit" variant="primary" loading={busy} disabled={checking}>{t("dlg.copy.confirm")}</Button>

@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { Button } from "@/components/Button";
 import { Dialog } from "@/components/Dialog";
+import { HiddenCharsNotice } from "@/components/HiddenCharsNotice";
 import { t } from "@/lib/i18n";
 import type { ConnectionSummary } from "@/lib/types";
 import { type RunHooks, startTrash } from "./run";
@@ -30,6 +31,7 @@ export function useTrashAction({ connection, root, hooks, confirm }: Options) {
   const dialog = (
     <Dialog open={asking !== null} onClose={close} title={t("dlg.trash.title")} closeLabel={t("act.close")}>
       <p className="text-base">{t("dlg.trash.body", { count: asking?.length ?? 0, name: asking?.[0]?.name ?? "" })}</p>
+      <HiddenCharsNotice names={asking?.map((item) => item.name) ?? []} className="mt-3" />
       <div className="mt-6 flex justify-end gap-2">
         <Button variant="secondary" onClick={close}>{t("act.cancel")}</Button>
         <Button

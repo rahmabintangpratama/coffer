@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/Button";
 import { Dialog } from "@/components/Dialog";
+import { HiddenCharsNotice } from "@/components/HiddenCharsNotice";
 import { t } from "@/lib/i18n";
 import type { TrashItem } from "./model";
 
@@ -27,6 +28,7 @@ function Body({ request, bucket, onClose, onConfirm }: { request: DeleteRequest;
   return (
     <>
       <p className="text-base">{body}</p>
+      {request.kind === "keys" && <HiddenCharsNotice names={request.items.map((item) => item.name)} className="mt-3" />}
       {typedCount && (
         <label className="mt-4 block">
           <span className="block text-sm font-semibold">{t("del.typeCount", { count })}</span>

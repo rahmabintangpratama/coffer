@@ -1,6 +1,7 @@
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { ActionMenu, type MenuGroup } from "@/components/ActionMenu";
 import { useLayout } from "@/components/layout";
+import { isolate } from "@/lib/names";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { crumbsOf, pathFromPrefix } from "./model";
@@ -26,7 +27,7 @@ export function Breadcrumb({ rootLabel, prefix, menu }: { rootLabel: string; pre
     <nav aria-label={t("files.breadcrumb.label")} data-component="Breadcrumb">
       <ol className="flex min-w-0 flex-wrap items-center gap-1 text-base">
         <li className="flex items-center gap-1">
-          {current ? <a href={`#${pathFromPrefix("")}`} className={linkClass}>{rootLabel}</a> : <span aria-current="page" className="px-1 py-2 font-semibold">{rootLabel}</span>}
+          {current ? <a href={`#${pathFromPrefix("")}`} className={linkClass}><bdi>{rootLabel}</bdi></a> : <span aria-current="page" className="px-1 py-2 font-semibold"><bdi>{rootLabel}</bdi></span>}
         </li>
         {folded && (
           <li className="flex items-center gap-1">
@@ -37,7 +38,7 @@ export function Breadcrumb({ rootLabel, prefix, menu }: { rootLabel: string; pre
         {shown.map((crumb) => (
           <li key={crumb.prefix} className="flex min-w-0 items-center gap-1">
             {sep}
-            <a href={`#${pathFromPrefix(crumb.prefix)}`} className={cn(linkClass, "truncate")}>{crumb.name}</a>
+            <a href={`#${pathFromPrefix(crumb.prefix)}`} className={cn(linkClass, "truncate")}><bdi>{crumb.name}</bdi></a>
           </li>
         ))}
         {current && (
@@ -47,19 +48,19 @@ export function Breadcrumb({ rootLabel, prefix, menu }: { rootLabel: string; pre
               <ActionMenu
                 groups={menu}
                 triggerLabel={t("menu.folder.label")}
-                title={current.name}
+                title={isolate(current.name)}
                 closeLabel={t("act.close")}
                 component="FolderMenu"
                 trigger={(props) => (
                   // The visible text (the folder name) leads the name, so a voice-control user can say what they see (WCAG 2.5.3).
-                  <button type="button" aria-label={`${current.name}: ${t("menu.folder.label")}`} aria-haspopup="menu" {...props} className={cn(linkClass, "inline-flex items-center gap-1 font-semibold text-fg no-underline")}>
-                    <span className="truncate">{current.name}</span>
+                  <button type="button" aria-label={`${isolate(current.name)}: ${t("menu.folder.label")}`} aria-haspopup="menu" {...props} className={cn(linkClass, "inline-flex items-center gap-1 font-semibold text-fg no-underline")}>
+                    <span className="truncate"><bdi>{current.name}</bdi></span>
                     <ChevronDown aria-hidden="true" className="size-4" />
                   </button>
                 )}
               />
             ) : (
-              <span aria-current="page" className="truncate px-1 py-2 font-semibold">{current.name}</span>
+              <span aria-current="page" className="truncate px-1 py-2 font-semibold"><bdi>{current.name}</bdi></span>
             )}
           </li>
         )}

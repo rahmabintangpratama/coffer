@@ -2,6 +2,7 @@ import * as ContextMenu from "@radix-ui/react-context-menu";
 import * as Dropdown from "@radix-ui/react-dropdown-menu";
 import { Check, EllipsisVertical } from "lucide-react";
 import { type MouseEvent, type ReactElement, type ReactNode, useState } from "react";
+import { isolate } from "@/lib/names";
 import { cn } from "@/lib/utils";
 import { Button } from "./Button";
 import { useLayout } from "./layout";
@@ -110,7 +111,7 @@ export function ActionMenu({ groups, triggerLabel, title, closeLabel, component,
             onClick={open}
           />
         )}
-        <Sheet open={sheetOpen} onClose={() => { setSheetOpen(false); opener?.focus(); }} title={title} closeLabel={closeLabel} component={component}>
+        <Sheet open={sheetOpen} onClose={() => { setSheetOpen(false); opener?.focus(); }} title={isolate(title)} closeLabel={closeLabel} component={component}>
           {groups.map((group) => (
             <div key={group.id} role="group" aria-label={group.label}>
               {group.actions.map((action) => (

@@ -2,10 +2,12 @@ import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/Button";
+import { HiddenCharsNotice } from "@/components/HiddenCharsNotice";
 import { type LayoutMode } from "@/components/layout";
 import { Sheet } from "@/components/Sheet";
 import { formatBytes } from "@/lib/format";
 import { t, type CopyKey } from "@/lib/i18n";
+import { revealHiddenChars } from "@/lib/names";
 import type { ConnectionSummary, FileItem, FileKind } from "@/lib/types";
 import { getClient } from "./client";
 import { FileIcon } from "./FileIcon";
@@ -49,13 +51,14 @@ function Body({ connection, file, folder, onCopyKey }: { connection: ConnectionS
       <div className="flex items-center justify-center rounded-md bg-subtle py-6">
         <FileIcon kind={file.fileKind} className="size-12" />
       </div>
-      <p className="text-md font-semibold break-words">{file.name}</p>
+      <p className="text-md font-semibold break-words">{revealHiddenChars(file.name)}</p>
+      <HiddenCharsNotice names={[file.key]} listed={false} />
       <dl className="flex flex-col gap-3">
         <Field label={t("det.typeLabel")}>{t(kindLabel[file.fileKind])}</Field>
         <Field label={t("det.sizeLabel")}>{t("det.size.value", { size: formatBytes(file.size), bytes: file.size.toLocaleString() })}</Field>
         <Field label={t("det.locationLabel")}>{t("det.location.value", { bucket, folder })}</Field>
         <Field label={t("det.key")}>
-          <span className="font-mono text-sm break-all">{file.key}</span>
+          <span className="font-mono text-sm break-all">{revealHiddenChars(file.key)}</span>
           <Button variant="link" size="sm" onClick={onCopyKey} className="ml-2">{t("act.copyKey")}</Button>
         </Field>
         <Field label={t("det.modifiedLabel")}>{modified}</Field>

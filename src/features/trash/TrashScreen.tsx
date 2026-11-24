@@ -10,6 +10,7 @@ import { startDelete, startRestore } from "@/features/operations";
 import { useConflictPrompt } from "@/features/transfers";
 import { ReadOnlyNotice, writeGate } from "@/features/readonly";
 import { formatBytes } from "@/lib/format";
+import { isolate } from "@/lib/names";
 import { t } from "@/lib/i18n";
 import { fileKindOf } from "@/lib/s3/keys";
 import { parseTrashKey } from "@/lib/s3/trash";
@@ -46,8 +47,8 @@ function TrashRow({ item, selected, onToggle, index, count, offset }: { item: Tr
       </label>
       <FileIcon kind={item.folder ? "folder" : fileKindOf(item.name)} />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-base" title={item.path}>{item.name}</p>
-        <p className="truncate text-sm text-fg-muted" title={item.path}>
+        <p className="truncate text-base" title={isolate(item.path)}><bdi>{item.name}</bdi></p>
+        <p className="truncate text-sm text-fg-muted" title={isolate(item.path)}>
           {t("trash.originalPath", { path: item.path })}
         </p>
       </div>

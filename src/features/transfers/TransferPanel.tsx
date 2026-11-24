@@ -2,6 +2,7 @@ import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { useLayoutEffect, useRef } from "react";
 import { Button } from "@/components/Button";
 import { formatBytes } from "@/lib/format";
+import { isolate } from "@/lib/names";
 import { t, type CopyKey } from "@/lib/i18n";
 import { cancelTransfer, retryTransfer } from "./queue";
 import { type OperationRow, type Transfer, useTransfers } from "./store";
@@ -19,7 +20,7 @@ function OperationProgress({ row }: { row: OperationRow }) {
   const text = t("op.progress", { done: row.done.toLocaleString(), total: row.total.toLocaleString() });
   return (
     <li data-component="TransferRow" data-status="running" data-kind="operation" className="py-2">
-      <p className="truncate text-base" title={row.name}>{row.title ?? t("op.title", { name: row.name })}</p>
+      <p className="truncate text-base" title={isolate(row.name)}>{row.title ?? t("op.title", { name: row.name })}</p>
       <div role="progressbar" aria-label={row.title ?? t("op.title", { name: row.name })} aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent} aria-valuetext={text} className="mt-1 h-1.5 overflow-hidden rounded-full bg-subtle">
         <div className="h-full bg-accent" style={{ width: `${percent.toString()}%` }} />
       </div>
@@ -42,14 +43,14 @@ function ProgressRow({ transfer }: { transfer: Transfer }) {
   return (
     <li data-component="TransferRow" data-status={transfer.status} className="flex items-start gap-3 py-2">
       <div className="min-w-0 flex-1">
-        <p className="truncate text-base" title={transfer.name}>{transfer.name}</p>
+        <p className="truncate text-base" title={isolate(transfer.name)}><bdi>{transfer.name}</bdi></p>
         {failed ? (
           <p role="alert" className="text-sm text-danger-fg">{t(errorCopy[transfer.error ?? ""] ?? "upl.error.generic")}</p>
         ) : (
           <>
             <div
               role="progressbar"
-              aria-label={transfer.name}
+              aria-label={isolate(transfer.name)}
               aria-valuemin={0}
               aria-valuemax={100}
               aria-valuenow={percent}
@@ -67,7 +68,7 @@ function ProgressRow({ transfer }: { transfer: Transfer }) {
         <Button
           variant="ghost"
           iconOnly
-          aria-label={`${t("act.cancelItem")}: ${transfer.name}`}
+          aria-label={`${t("act.cancelItem")}: ${isolate(transfer.name)}`}
           icon={<X aria-hidden="true" className="size-4" />}
           onClick={() => { cancelTransfer(transfer.id); }}
         />

@@ -21,7 +21,12 @@
       "cta": "Go to Home",
       "title": "Page not found"
     },
-    "placeholder": "This screen is not built yet."
+    "placeholder": "This screen is not built yet.",
+    "hiddenNames": {
+      "title": "{count, plural, one {This name has hidden characters} other {# names have hidden characters}}",
+      "body": "Direction and zero-width characters can make a name look like another file type. Each one is shown below as ⟨U+XXXX⟩, in the order it is stored.",
+      "more": "{count, plural, one {and # more name} other {and # more names}}"
+    }
   },
   "conn": {
     "expired": {
