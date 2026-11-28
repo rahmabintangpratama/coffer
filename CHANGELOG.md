@@ -4,6 +4,25 @@ All notable changes to Coffer are listed here. The format follows [Keep a Change
 
 ## [Unreleased]
 
+### Added
+
+- **Starred and Recent.** Add to or remove from starred in the row menu, the selection bar and the viewer; a Starred view with each item's folder; Recent files on Home. Both are kept in this browser only.
+- **Storage usage.** Calculate usage on request: total size, object count and the largest folders, cancellable.
+- **Search all of the bucket.** From a search in the current folder, scan the whole bucket by name, with each match's folder.
+- **Keyboard shortcuts.** F2, M, S, I, Delete on the list, `/` and Ctrl/⌘+K for search, `?` for the shortcut sheet; hints in the menus.
+- **Grid thumbnails** for images.
+- **Connections.** Add, test and rename connections in Settings.
+- **Shell.** New at the top of the sidebar, a Details toggle in Files, the Files link reopens the last folder, Upload and New folder in an empty folder, an Open item for folders, a link to the source on About.
+
+### Fixed
+
+- The viewer's buttons were invisible in the dark theme, its More menu did not open, Details opened behind it with the previous file, and its Back button could land on the bucket root.
+- What's stored counted finished operations as interrupted moves.
+- Double-click on a file now opens it.
+- Toasts: Undo closes the toast and says what was restored, moves name their folder, and toasts no longer cover the sidebar.
+- Trash shows a trashed folder as one entry.
+- The Move dialog sorts folders like the file list; filter menus open at their chip; the Share dialog names the file.
+
 ## [0.1.0] - not yet released
 
 First public release. Coffer is a browser-only, mobile-first file manager for S3-compatible object storage. It is a static site: there is no backend, database or account, and the browser signs every request with the keys you enter and talks directly to your provider.

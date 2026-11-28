@@ -25,15 +25,18 @@ The consequence is that your bucket must allow requests from the app's origin (C
 **MVP** (see the [product spec](docs/product-spec.md#release-plan)):
 
 - Connect with 21 provider presets (one of them a generic option with your own endpoint), with a connection test that explains what failed
-- Browse folders in list or grid view, with sorting and a name filter for the current folder
+- Browse folders in list or grid view (with image thumbnails), with sorting, a name filter for the current folder and a search across the whole bucket
 - Upload files and folders, with multipart uploads and a transfer panel
 - Download, and preview images, video, audio, PDF, text and code, SVG, Markdown and HTML (as source, with an optional sandbox)
 - Rename, move, copy and delete, with Trash and Undo
 - Share links (presigned URLs with an explicit expiry)
 - Save a connection on the device, encrypted with a passphrase, with auto-lock
 - Read-only connections for keys that cannot write
+- Starred items and recent files, kept in this browser
+- Storage usage, calculated on request
+- Keyboard shortcuts (press `?` in the file list)
 
-**v1:** Starred and Recent, storage usage, command palette and keyboard shortcuts, folder download as .zip, resume of interrupted uploads, drag-to-move, coach tips, changing the passphrase, search across the whole bucket and a demo workspace.
+**v1:** command palette, folder download as .zip, resume of interrupted uploads, drag-to-move, coach tips, changing the passphrase, editing a saved connection's endpoint and a demo workspace.
 
 **Not planned:** a backend, a database, accounts, server-side search, a sync client, or bucket administration such as policies and lifecycle rules.
 
