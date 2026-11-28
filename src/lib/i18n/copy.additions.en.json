@@ -298,7 +298,7 @@
       "listLabel": "Providers"
     },
     "ro": {
-      "unverified": "This bucket is empty, so Coffer couldn’t confirm that reading works."
+      "unverified": "This key can list the bucket, but there was no file to read, so Coffer couldn’t confirm that reading works."
     },
     "save": {
       "strong": "Strong. 16 characters or more is best.",

@@ -643,7 +643,7 @@ The UI never hides these. Each one is surfaced where it affects the person.
 **Acceptance**
 - AC-110.1 Given list and read pass and the write step fails with AccessDenied, Then the test ends with outcome `readOnly` and `ReadOnlyOffer` shows `Connect read-only` and `Edit keys`.
 - AC-110.2 Given `Connect read-only`, Then the profile is saved with `access: "readOnly"`.
-- AC-110.3 Given the write is denied and the listed object is gone before it can be read (`NoSuchKey`), Then the offer is still made, with reading marked unverified, as for an empty bucket.
+- AC-110.3 Given the write is denied and the listed object is gone before it can be read (`NoSuchKey`), Then the offer is still made, with reading marked unverified. The message for unverified reading says the key can list the bucket and there was no file to read; it does not say the bucket is empty, because an empty bucket, an empty start folder and a deleted object all end here.
 - AC-110.4 Given the write is denied and the listed object is empty (a folder placeholder, for one), so the one-byte read is answered `416`, Then reading counts as verified and the offer is made.
 
 **Edge cases:** an empty bucket cannot prove read ([C-21](open-questions.md#owner-confirmed-decisions)). **Screens:** `O44_ReadOnlyOffer`

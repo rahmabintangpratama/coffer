@@ -253,9 +253,17 @@ describe("ConnectingScreen: read-only offer (O44)", () => {
     expect(onConnected.mock.calls[0]?.[0].access).toBe("readOnly");
   });
 
-  it("says when reading could not be proven because the bucket is empty", async () => {
+  it("AC-110.3 says no file could be read, without claiming the bucket is empty", async () => {
+    // The same offer covers an empty bucket, an empty start folder and an object deleted before it was read.
     setup(run("readOnly", { id: "write", failure: "accessDenied" }, { readVerified: false }));
-    expect(await screen.findByText("This bucket is empty, so Coffer couldn’t confirm that reading works.")).toBeInTheDocument();
+    expect(await screen.findByText("This key can list the bucket, but there was no file to read, so Coffer couldn’t confirm that reading works.")).toBeInTheDocument();
+    expect(screen.queryByText(/bucket is empty/i)).toBeNull();
+  });
+
+  it("says nothing about reading once it was proven", async () => {
+    setup(run("readOnly", { id: "write", failure: "accessDenied" }, { readVerified: true }));
+    expect(await screen.findByText("This key can read but not write")).toBeInTheDocument();
+    expect(screen.queryByText(/couldn’t confirm that reading works/)).toBeNull();
   });
 });
 
