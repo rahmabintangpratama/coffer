@@ -1,0 +1,29 @@
+{
+  "csp": {
+    "default-src": "'none'",
+    "script-src": "'self'",
+    "style-src": "'self'",
+    "img-src": "'self' data: blob: https:",
+    "media-src": "blob: https:",
+    "font-src": "'self'",
+    "worker-src": "'self' blob:",
+    "manifest-src": "'self'",
+    "connect-src": "'self' https: http://localhost:* http://127.0.0.1:*",
+    "frame-src": "'none'",
+    "object-src": "'none'",
+    "base-uri": "'none'",
+    "form-action": "'none'",
+    "frame-ancestors": "'none'"
+  },
+  "headers": {
+    "Referrer-Policy": "no-referrer",
+    "X-Content-Type-Options": "nosniff",
+    "Cross-Origin-Opener-Policy": "same-origin",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
+    "Strict-Transport-Security": "max-age=63072000; includeSubDomains"
+  },
+  "cache": [
+    { "value": "public, max-age=31536000, immutable", "paths": ["/assets/*", "/fonts/*", "/icons/*", "/favicon.svg"] },
+    { "value": "no-cache", "paths": ["/", "/index.html", "/theme-init.js"] }
+  ]
+}

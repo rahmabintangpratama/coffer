@@ -4,6 +4,7 @@ import { createServer, type Server } from "node:http";
 import { gzipSync } from "node:zlib";
 import { dirname, extname, join, normalize, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { normalizeBase } from "../deploy/base.ts";
 import { parseHeaders, type ParsedHeaders } from "../headers/check.ts";
 
 // Serves a build directory and applies its _headers file the way Cloudflare
@@ -41,7 +42,8 @@ const COMPRESSIBLE = new Set([".html", ".js", ".mjs", ".css", ".json", ".webmani
  * `gzip` answers like the host does: text is sent gzip-compressed to a browser that accepts it. The Lighthouse run turns it on so
  * its transfer sizes are what a visitor downloads; the e2e run leaves it off.
  */
-export function startServer(dir: string, port: number, options: { gzip?: boolean } = {}): Promise<Server> {
+export function startServer(dir: string, port: number, options: { gzip?: boolean; base?: string } = {}): Promise<Server> {
+  const base = options.base ?? "/";
   const root = resolve(dir);
   const rules = parseHeaders(readFileSync(join(root, "_headers"), "utf8"));
 
@@ -52,7 +54,9 @@ export function startServer(dir: string, port: number, options: { gzip?: boolean
         // A malformed escape such as "/%" throws here; it must answer 404, not crash the server.
         const pathname = decodeURIComponent(new URL(request.url ?? "/", "http://localhost").pathname);
         headers = headersFor(rules, pathname);
-        const relative = pathname === "/" ? "index.html" : normalize(pathname).replace(/^[/\\]+/, "");
+        if (!pathname.startsWith(base)) throw new Error("outside the base");
+        const below = pathname.slice(base.length - 1);
+        const relative = below === "/" ? "index.html" : normalize(below).replace(/^[/\\]+/, "");
         const file = resolve(root, relative);
         if (file !== root && !file.startsWith(root + sep)) throw new Error("outside root");
         const body = await readFile(file);
@@ -92,8 +96,9 @@ function main(): void {
   const repo = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
   const dir = option("--dir", join(repo, "dist"));
   const port = Number(option("--port", "4173"));
-  void startServer(dir, port, { gzip: args.includes("--gzip") }).then(() => {
-    console.log(`Serving ${dir} with its _headers on http://127.0.0.1:${port}`);
+  const base = normalizeBase(option("--base", process.env.COFFER_BASE ?? "/"));
+  void startServer(dir, port, { gzip: args.includes("--gzip"), base }).then(() => {
+    console.log(`Serving ${dir} with its _headers on http://127.0.0.1:${port}${base}`);
   });
 }
 

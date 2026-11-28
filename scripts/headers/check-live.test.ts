@@ -1,16 +1,18 @@
 // @vitest-environment node
-import { copyFileSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { copyFileSync, cpSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { readConfig, renderHeadersFile } from "../deploy/render.ts";
 import { startServer } from "../serve/dist-server.ts";
 import { checkLive } from "./check.ts";
 
 // `pnpm headers:check --url`: a live deployment is checked by what it sends, here against the repo's own dist server.
 const headers = fileURLToPath(new URL("../../public/_headers", import.meta.url));
 const dir = mkdtempSync(join(tmpdir(), "coffer-live-"));
+const subDir = mkdtempSync(join(tmpdir(), "coffer-live-base-"));
 let base = "";
 let close = () => undefined as unknown;
 
@@ -23,6 +25,10 @@ beforeAll(async () => {
   writeFileSync(join(dir, "theme-init.js"), "");
   writeFileSync(join(dir, "favicon.svg"), "<svg xmlns='http://www.w3.org/2000/svg'/>");
   writeFileSync(join(dir, "fonts", "ibm-plex-sans-latin-400-normal.woff2"), "x");
+  // The same site built for a subpath: the page and the header rules carry the base.
+  cpSync(dir, subDir, { recursive: true });
+  writeFileSync(join(subDir, "index.html"), '<!doctype html><script type="module" src="/coffer/assets/index-abc.js"></script>');
+  writeFileSync(join(subDir, "_headers"), renderHeadersFile(readConfig(), "/coffer/"));
   const server = await startServer(dir, 0);
   base = `http://127.0.0.1:${(server.address() as AddressInfo).port.toString()}`;
   close = () => server.close();
@@ -69,5 +75,21 @@ describe("headers:check --url", () => {
       return Promise.resolve(new Response(root ? "<html></html>" : "no", { status: root ? 200 : 404 }));
     };
     expect((await checkLive(base, notFound)).join("\n")).toContain("status 404, expected 200");
+  });
+
+  it("ADR-010 checks a deployment under a path, and lets index.html redirect to the folder", async () => {
+    const sub = await startServer(subDir, 0, { base: "/coffer/" });
+    const address = `http://127.0.0.1:${(sub.address() as AddressInfo).port.toString()}/coffer`;
+    try {
+      expect(await checkLive(address)).toEqual([]);
+      const redirecting: typeof fetch = (input, init) => {
+        const url = new URL(input instanceof Request ? input.url : input.toString());
+        if (url.pathname === "/coffer/index.html") return Promise.resolve(new Response(null, { status: 308, headers: { location: "/coffer/" } }));
+        return fetch(input, init);
+      };
+      expect(await checkLive(address, redirecting)).toEqual([]);
+    } finally {
+      sub.close();
+    }
   });
 });

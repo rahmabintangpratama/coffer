@@ -92,6 +92,9 @@ jobs:
       - name: Bundle budgets
         run: pnpm size:check
 
+      - name: Host configurations match deploy/headers.json
+        run: pnpm deploy:check
+
       - name: Security headers
         run: pnpm headers:check
 

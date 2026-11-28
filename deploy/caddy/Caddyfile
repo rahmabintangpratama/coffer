@@ -1,0 +1,37 @@
+# Generated from deploy/headers.json by `pnpm deploy:build` (ADR-010). Do not edit by hand.
+# Put the files of dist/ in COFFER_ROOT. Set COFFER_SITE to your domain for HTTPS.
+
+{$COFFER_SITE::8080} {
+	root * {$COFFER_ROOT:/srv}
+	encode gzip
+
+	header {
+		Content-Security-Policy "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob: https:; media-src blob: https:; font-src 'self'; worker-src 'self' blob:; manifest-src 'self'; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+		Referrer-Policy "no-referrer"
+		X-Content-Type-Options "nosniff"
+		Cross-Origin-Opener-Policy "same-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+		Strict-Transport-Security "max-age=63072000; includeSubDomains"
+	}
+
+	# Only a file that exists gets its cache rule: a missing asset must not be cached for a year.
+	@cache0 {
+		file
+		path /assets/* /fonts/* /icons/* /favicon.svg
+	}
+	header @cache0 Cache-Control "public, max-age=31536000, immutable"
+
+	# Only a file that exists gets its cache rule: a missing asset must not be cached for a year.
+	@cache1 {
+		file
+		path / /index.html /theme-init.js
+	}
+	header @cache1 Cache-Control "no-cache"
+
+	@webmanifest path *.webmanifest
+	header @webmanifest Content-Type application/manifest+json
+
+	# The Cloudflare and Netlify header file is not part of the site here.
+	respond /_headers 404
+	file_server
+}

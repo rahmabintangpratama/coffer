@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
+import { normalizeBase } from "../deploy/base.ts";
 
 /** headers of one path rule, by lower-case name */
 export type HeaderRule = Record<string, string>;
@@ -74,11 +75,12 @@ function parseCsp(value: string): Map<string, string> {
   return directives;
 }
 
-/** Returns a list of problems; empty means the file matches the spec. */
-export function checkHeaders(rules: ParsedHeaders): string[] {
+/** Returns a list of problems; empty means the file matches the spec. `base` is the path a subpath build is served under. */
+export function checkHeaders(rules: ParsedHeaders, base = "/"): string[] {
   const problems: string[] = [];
-  const all = rules["/*"];
-  if (!all) return ["Missing the /* rule."];
+  const under = (path: string) => `${base}${path.slice(1)}`;
+  const all = rules[under("/*")];
+  if (!all) return [`Missing the ${under("/*")} rule.`];
 
   const csp = all["content-security-policy"];
   if (csp === undefined) {
@@ -103,28 +105,41 @@ export function checkHeaders(rules: ParsedHeaders): string[] {
     else if (got !== expected) problems.push(`Header ${name} is "${got}", expected "${expected}".`);
   }
   for (const [path, expected] of Object.entries(EXPECTED_CACHE)) {
-    const got = rules[path]?.["cache-control"];
-    if (got === undefined) problems.push(`Missing Cache-Control rule for ${path}.`);
-    else if (got !== expected) problems.push(`Cache-Control for ${path} is "${got}", expected "${expected}".`);
+    const got = rules[under(path)]?.["cache-control"];
+    if (got === undefined) problems.push(`Missing Cache-Control rule for ${under(path)}.`);
+    else if (got !== expected) problems.push(`Cache-Control for ${under(path)} is "${got}", expected "${expected}".`);
   }
   return problems;
 }
 
-/** Paths a live check asks for, with the rule that must match them. The asset and font names are found on the page, so a rebuild does not break the check. */
-async function livePaths(base: URL, fetcher: typeof fetch): Promise<{ path: string; rule: string }[]> {
-  const page = await fetcher(new URL("/", base));
+/**
+ * Paths a live check asks for, relative to the deployment's address, with the rule that must match them. The script's
+ * name is found on the page, so a rebuild does not break the check.
+ */
+async function livePaths(base: URL, fetcher: typeof fetch): Promise<{ url: URL; path: string; rule: string }[]> {
+  const page = await fetcher(base);
   const html = page.ok ? await page.text() : "";
-  const asset = /\/assets\/[^"']+\.js/.exec(html)?.[0];
+  const asset = /["']([^"']*assets\/[^"']+\.js)["']/.exec(html)?.[1];
+  const at = (relative: string, rule: string) => {
+    const url = new URL(relative, base);
+    return { url, path: url.pathname, rule };
+  };
   const paths = [
-    { path: "/", rule: "/" },
-    { path: "/index.html", rule: "/index.html" },
-    { path: "/theme-init.js", rule: "/theme-init.js" },
-    { path: "/favicon.svg", rule: "/favicon.svg" },
-    { path: "/fonts/ibm-plex-sans-latin-400-normal.woff2", rule: "/fonts/*" },
+    at("./", "/"),
+    at("index.html", "/index.html"),
+    at("theme-init.js", "/theme-init.js"),
+    at("favicon.svg", "/favicon.svg"),
+    at("fonts/ibm-plex-sans-latin-400-normal.woff2", "/fonts/*"),
   ];
-  if (asset) paths.push({ path: asset, rule: "/assets/*" });
+  if (asset !== undefined) paths.push(at(asset, "/assets/*"));
   return paths;
 }
+
+/** Some hosts answer `index.html` with a redirect to the folder itself, which is checked on its own. */
+const redirectsToRoot = (response: Response, url: URL, base: URL): boolean => {
+  const location = response.headers.get("location");
+  return response.status >= 300 && response.status < 400 && location !== null && new URL(location, url).pathname === base.pathname;
+};
 
 /**
  * Check a deployment, not a file: the headers a live URL really sends. Every response must carry the global headers and the
@@ -133,21 +148,24 @@ async function livePaths(base: URL, fetcher: typeof fetch): Promise<{ path: stri
  */
 export async function checkLive(baseUrl: string, fetcher: typeof fetch = fetch): Promise<string[]> {
   const problems: string[] = [];
+  // A subpath deployment is given with its path, such as https://example.test/coffer/.
   const base = new URL(baseUrl);
-  let paths: { path: string; rule: string }[];
+  if (!base.pathname.endsWith("/")) base.pathname += "/";
+  let paths: { url: URL; path: string; rule: string }[];
   try {
     paths = await livePaths(base, fetcher);
   } catch (error) {
     return [`Could not reach ${baseUrl}: ${error instanceof Error ? error.message : "unknown error"}.`];
   }
-  for (const { path, rule } of paths) {
+  for (const { url, path, rule } of paths) {
     let response: Response;
     try {
-      response = await fetcher(new URL(path, base), { redirect: "manual" });
+      response = await fetcher(url, { redirect: "manual" });
     } catch (error) {
       problems.push(`${path}: request failed (${error instanceof Error ? error.message : "unknown error"}).`);
       continue;
     }
+    if (rule === "/index.html" && redirectsToRoot(response, url, base)) continue;
     if (!response.ok) {
       problems.push(`${path}: status ${response.status.toString()}, expected 200.`);
       continue;
@@ -205,6 +223,9 @@ function main(): void {
   const repo = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
   const targets = process.argv.slice(2);
   const files = targets.length > 0 ? targets : [join(repo, "public", "_headers"), join(repo, "dist", "_headers")];
+  // The built copy of a subpath build carries the base in its paths; the committed one never does.
+  const built = join(repo, "dist", "_headers");
+  const base = normalizeBase(process.env.COFFER_BASE);
   let failed = false;
   let checked = 0;
   for (const file of files) {
@@ -216,7 +237,7 @@ function main(): void {
       continue;
     }
     checked += 1;
-    const problems = checkHeaders(parseHeaders(readFileSync(file, "utf8")));
+    const problems = checkHeaders(parseHeaders(readFileSync(file, "utf8")), file === built || targets.length > 0 ? base : "/");
     const name = relative(repo, file);
     if (problems.length === 0) {
       console.log(`${name}: OK`);
