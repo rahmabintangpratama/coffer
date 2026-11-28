@@ -6,7 +6,6 @@ export {
   credentialsFromValues,
   effectiveBucket,
   FALLBACK_REGION,
-  fieldForRole,
   jwtExpiry,
   regionFieldId,
   resolveAddressing,

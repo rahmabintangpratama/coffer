@@ -9,7 +9,6 @@ import {
   ADVANCED_FIELDS,
   buildEndpoint,
   defaultValues,
-  fieldForRole,
   hostLooksRight,
   needsGenericSessionToken,
   parsePaste,
@@ -158,11 +157,6 @@ export function CredentialsScreen({ preset, initialValues, initialBucket = "", o
     const own: FieldProblem[] = [];
     if (edit && name.trim() === "") own.push({ target: "name", text: t("conn.nameEmpty") });
     if (edit && bucket.trim() === "") own.push({ target: "bucket", text: t("form.error.required", { field: t("form.bucketLabel") }) });
-    // A saved session token is typed again too: without it the new server would be tested with different credentials than before.
-    const tokenField = fieldForRole(preset, runValues, "sessionToken");
-    if (edit && tokenField !== undefined && !staysOnServer(formValues) && vault.hasSessionToken(edit.connectionId) && (runValues[tokenField] ?? "").trim() === "") {
-      own.push({ target: tokenField, text: t("conn.editTokenAgain") });
-    }
     if (!result.ok || own.length > 0) {
       setProblems([...own, ...(result.ok ? [] : describeProblems(preset, result.problems))]);
       return;
@@ -220,7 +214,7 @@ export function CredentialsScreen({ preset, initialValues, initialBucket = "", o
   };
 
   const insecure = problems.find((problem) => problem.insecure);
-  const advancedHasProblem = problems.some((problem) => problem.target === ADVANCED_FIELDS.prefix || problem.target === ADVANCED_FIELDS.sessionToken);
+  const advancedHasProblem = problems.some((problem) => problem.target === ADVANCED_FIELDS.prefix);
   const kept = staysOnServer(values);
 
   return (
@@ -369,7 +363,7 @@ export function CredentialsScreen({ preset, initialValues, initialBucket = "", o
               <p className="text-sm text-fg-muted">{t("form.addr.hint")}</p>
             </div>
             {needsGenericSessionToken(preset) ? (
-              <Field label={t("form.sessionTokenLabel")} optionalLabel={t("form.optional")} marker={marker(ADVANCED_FIELDS.sessionToken)} error={problemFor(ADVANCED_FIELDS.sessionToken)}>
+              <Field label={t("form.sessionTokenLabel")} optionalLabel={t("form.optional")} marker={marker(ADVANCED_FIELDS.sessionToken)}>
                 <TextInput
                   type="password"
                   mono

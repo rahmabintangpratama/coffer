@@ -119,7 +119,7 @@ describe("AC-11.6 Edit connection", () => {
       await userEvent.type(endpoint, "https://s3.other-provider.test");
     };
 
-    it("never reads the saved keys, and asks for the access key ID, the secret and the session token again", async () => {
+    it("never reads the saved keys, and asks for the access key ID and the secret again", async () => {
       vault.put(connection.id, { ...saved, sessionToken: token });
       const read = vi.spyOn(vault, "credentialsFor");
       setup();
@@ -127,8 +127,7 @@ describe("AC-11.6 Edit connection", () => {
       expect(screen.getByText(/the saved keys are not sent there/)).toBeInTheDocument();
       expect(screen.queryByPlaceholderText("Saved. Leave empty to keep it")).toBeNull();
       await test();
-      expect(await screen.findByText("Type the session token again for the new server.")).toBeInTheDocument();
-      expect(screen.getByText("Access Key ID is required.")).toBeInTheDocument();
+      expect(await screen.findByText("Access Key ID is required.")).toBeInTheDocument();
       expect(screen.getByText("Secret Access Key is required.")).toBeInTheDocument();
       expect(mocks.runConnectionTest).not.toHaveBeenCalled();
       expect(read).not.toHaveBeenCalled();
@@ -147,6 +146,21 @@ describe("AC-11.6 Edit connection", () => {
       await vi.waitFor(() => { expect(actions.save).toHaveBeenCalled(); });
       const next = vi.mocked(actions.save).mock.calls[0]?.[0];
       await expect(vault.credentialsFor(next?.id ?? "")).resolves.toEqual({ accessKeyId: "typed-example-access-id", secretAccessKey: "typed-example-secret", sessionToken: "typed-example-token" });
+    });
+
+    it("takes an empty session token as static keys, whatever the saved connection used", async () => {
+      vault.put(connection.id, { ...saved, sessionToken: token });
+      const read = vi.spyOn(vault, "credentialsFor");
+      const { actions } = setup();
+      await moveEndpoint();
+      await userEvent.type(screen.getByLabelText("Access Key ID"), "typed-example-access-id");
+      await userEvent.type(screen.getByLabelText("Secret Access Key"), "typed-example-secret");
+      await test();
+      await userEvent.click(await screen.findByRole("button", { name: "Save changes" }));
+      await vi.waitFor(() => { expect(actions.save).toHaveBeenCalled(); });
+      expect(read).not.toHaveBeenCalledWith(connection.id);
+      const next = vi.mocked(actions.save).mock.calls[0]?.[0];
+      await expect(vault.credentialsFor(next?.id ?? "")).resolves.toEqual({ accessKeyId: "typed-example-access-id", secretAccessKey: "typed-example-secret" });
     });
 
     it("keeps the saved keys again when the endpoint goes back to the saved server", async () => {

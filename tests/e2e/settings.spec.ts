@@ -274,13 +274,11 @@ test.describe("M11 Settings → Connections", () => {
     await expect(page.getByText(/the saved keys are not sent there/)).toBeVisible();
     await page.getByRole("button", { name: "Test connection" }).click();
     await expect(page.getByText("Access Key ID is required.")).toBeVisible();
-    await expect(page.getByText("Type the session token again for the new server.")).toBeVisible();
     expect(sent).toEqual([]);
 
-    const typed = await temporaryCredentials();
-    await page.getByLabel("Access Key ID").fill(typed.accessKeyId);
-    await page.getByLabel("Secret Access Key").fill(typed.secretAccessKey);
-    await page.getByLabel("Session token").fill(typed.sessionToken);
+    // Static keys: the session token stays empty.
+    await page.getByLabel("Access Key ID").fill(admin.accessKeyId);
+    await page.getByLabel("Secret Access Key").fill(admin.secretAccessKey);
     await page.getByRole("button", { name: "Test connection" }).click();
     await page.getByRole("button", { name: "Save changes" }).click({ timeout: 30_000 });
     await page.getByRole("button", { name: "Save changes" }).click();
@@ -289,6 +287,7 @@ test.describe("M11 Settings → Connections", () => {
     for (const request of sent) {
       expect(request).not.toContain(temporary.accessKeyId);
       expect(request).not.toContain(temporary.sessionToken);
+      expect(request.toLowerCase()).not.toContain("x-amz-security-token");
     }
   });
 });

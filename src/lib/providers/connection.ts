@@ -118,7 +118,7 @@ export function credentialsFromValues(preset: ProviderPreset, values: FieldValue
 }
 
 /** The form field a key goes in: the one with that role whose roleWhen holds, else the field with that id. */
-export function fieldForRole(preset: ProviderPreset, values: FieldValues, role: Role): string | undefined {
+function fieldForRole(preset: ProviderPreset, values: FieldValues, role: Role): string | undefined {
   const matching = preset.fields.find((field) => field.role === role && isVisible(field, values) && (!field.roleWhen || (values[field.roleWhen.field] ?? "") === field.roleWhen.equals));
   const own = preset.fields.find((field) => field.id === role && isVisible(field, values));
   return matching?.id ?? own?.id ?? (role === "sessionToken" && preset.sessionToken ? ADVANCED_FIELDS.sessionToken : undefined);

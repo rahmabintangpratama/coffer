@@ -86,8 +86,7 @@
     "editFailedBody": "The saved connection is unchanged. Try again.",
     "edited": "Saved {name}",
     "editedOldKept": "Saved {name}. The old connection couldn’t be removed: remove it in Settings.",
-    "editHostChanged": "The endpoint points to another server, so the saved keys are not sent there. Type the access key ID, the secret key and any session token again.",
-    "editTokenAgain": "Type the session token again for the new server.",
+    "editHostChanged": "The endpoint points to another server, so the saved keys are not sent there. Type the access key ID and the secret key again, and a session token if the new server uses one.",
     "editJournal": "The history of past operations: they can no longer be undone",
     "editCarried": "{count, plural, one {# starred or recent entry for files in the new location moves} other {# starred or recent entries for files in the new location move}} to the new connection."
   },
