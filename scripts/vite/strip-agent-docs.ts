@@ -1,5 +1,5 @@
 import { rmSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import type { Plugin } from "vite";
 
 /**
@@ -13,7 +13,7 @@ export function stripAgentDocs(): Plugin {
     name: "coffer:strip-agent-docs",
     apply: "build",
     configResolved(config) {
-      outDir = join(config.root, config.build.outDir);
+      outDir = resolve(config.root, config.build.outDir);
     },
     closeBundle() {
       for (const name of ["AGENTS.md", "CLAUDE.md"]) rmSync(join(outDir, name), { force: true });

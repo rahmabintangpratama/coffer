@@ -5,17 +5,23 @@ import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig } from "vite";
 import { copyGroups } from "./scripts/vite/copy-groups.ts";
 import { appVersion, sourceUrl } from "./scripts/vite/app-version.ts";
+import { deploy, deployTarget } from "./scripts/vite/deploy.ts";
+import { normalizeBase } from "./scripts/deploy/base.ts";
 import { providerCount } from "./scripts/vite/provider-count.ts";
 import { stripAgentDocs } from "./scripts/vite/strip-agent-docs.ts";
 
 const root = (path: string) => fileURLToPath(new URL(path, import.meta.url));
+// The path the site is served under (ADR-010). Routes are in the fragment, so only asset addresses depend on it.
+const base = normalizeBase(process.env.COFFER_BASE);
 
 export default defineConfig({
+  base,
   plugins: [
     react(),
     tailwindcss(),
     copyGroups(),
     stripAgentDocs(),
+    deploy(base, deployTarget(process.env.COFFER_TARGET)),
     // `pnpm size:analyze` writes per-module sizes next to dist/, outside it (dist/ ships only what C-22 allows).
     ...(process.env.COFFER_ANALYZE === "1" ? [visualizer({ filename: "bundle-stats.json", template: "raw-data", gzipSize: true })] : []),
   ],

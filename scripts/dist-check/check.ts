@@ -1,6 +1,7 @@
-import { existsSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
+import { normalizeBase } from "../deploy/base.ts";
 
 /**
  * dist/ ships what C-22 allows from public/ (`_headers`, `fonts/`, `theme-init.js`,
@@ -19,9 +20,19 @@ function files(dir: string): string[] {
   });
 }
 
+/** Addresses from the root of the origin in a page or a style sheet: `src="/x"`, `href="/x"`, `url(/x)`. */
+const ROOT_ADDRESS = /(?:\b(?:src|href)=["']|url\(["']?)(\/(?!\/)[^"')\s]*)/g;
+
+/** Under a subpath, an address that does not start with the base asks the host for a file that is not there. */
+export function outsideBase(text: string, base: string): string[] {
+  return [...text.matchAll(ROOT_ADDRESS)].map((match) => match[1] ?? "").filter((address) => !address.startsWith(base));
+}
+
 /** Returns a list of problems; empty means dist/ holds only what it should. */
-export function checkDist(dist: string): string[] {
+export function checkDist(dist: string, base = "/"): string[] {
   const problems: string[] = [];
+  const pages = existsSync(dist) ? files(dist).filter((path) => /\.(?:html|css|webmanifest)$/.test(path)) : [];
+  for (const path of pages) for (const address of outsideBase(readFileSync(path, "utf8"), base)) problems.push(`${relative(dist, path)} asks for ${address}, outside the base ${base}`);
   if (!existsSync(join(dist, "index.html"))) problems.push("index.html is missing.");
   for (const name of readdirSync(dist)) {
     if (!TOP_LEVEL.has(name)) problems.push(`Unexpected top-level entry: ${name}`);
@@ -46,7 +57,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     console.error("dist/ is missing: run pnpm build first.");
     process.exit(1);
   }
-  const problems = checkDist(dist);
+  const problems = checkDist(dist, normalizeBase(process.env.COFFER_BASE));
   for (const problem of problems) console.error(`PROBLEM: ${problem}`);
   if (problems.length === 0) console.log(`dist/ holds only the C-22 allowlist, index.html and hashed assets (${files(dist).length.toString()} files).`);
   process.exit(problems.length === 0 ? 0 : 1);

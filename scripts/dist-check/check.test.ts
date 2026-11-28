@@ -32,6 +32,16 @@ describe("dist allowlist (C-22)", () => {
     expect(problems).toMatch(/Unexpected file in fonts\//);
     expect(problems).toMatch(/Unexpected file in icons\//);
   });
+  it("ADR-010 reports an address outside the base of a subpath build", () => {
+    const root = dist(GOOD);
+    writeFileSync(join(root, "index.html"), '<script src="/coffer/theme-init.js"></script><link href="/favicon.svg" /><a href="https://example.test/x">x</a>');
+    writeFileSync(join(root, "assets", "index-abcd1234.css"), 'a{src:url("/fonts/a.woff2")}b{src:url(/coffer/fonts/b.woff2)}');
+    const problems = checkDist(root, "/coffer/");
+    expect(problems).toHaveLength(2);
+    expect(problems.join("\n")).toContain("/favicon.svg");
+    expect(problems.join("\n")).toContain("/fonts/a.woff2");
+    expect(checkDist(root)).toEqual([]);
+  });
   it("reports a missing index.html", () => {
     expect(checkDist(dist(GOOD.filter((file) => file !== "index.html"))).join("\n")).toMatch(/index\.html is missing/);
   });
