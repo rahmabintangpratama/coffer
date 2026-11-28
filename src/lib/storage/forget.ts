@@ -1,5 +1,5 @@
 import { closeSharedDb, sealDb, sharedDb } from "./db";
-import { DATABASE_NAME, LOCAL_STORAGE_PREFIX } from "./inventory";
+import { DATABASE_NAME, OWNED_PREFIX } from "./inventory";
 import { isUnfinished } from "./journal";
 import { heldOperationIds } from "./locks";
 import { vault } from "./vault";
@@ -11,6 +11,8 @@ export interface ForgetDeps {
   sessionStorage?: Storage;
   caches?: CacheStorage;
   serviceWorker?: ServiceWorkerContainer;
+  /** The address the app is served under, such as `https://host/coffer/`: the only service worker scope that is Coffer's. */
+  scope?: string;
   /** How long to wait for other tabs to close their handles before the delete is left pending (it still completes). */
   blockedMs?: number;
 }
@@ -23,7 +25,7 @@ const safe = async (task: () => unknown): Promise<void> => {
   }
 };
 
-function deleteDatabase(factory: IDBFactory, blockedMs: number): Promise<void> {
+function deleteOwnDatabase(factory: IDBFactory, blockedMs: number): Promise<void> {
   return new Promise((resolve) => {
     const request = factory.deleteDatabase(DATABASE_NAME);
     // Another tab that still has the database open gets a versionchange event and closes; until then the delete is "blocked".
@@ -38,33 +40,38 @@ function deleteDatabase(factory: IDBFactory, blockedMs: number): Promise<void> {
   });
 }
 
+function removeOwnedKeys(storage: Storage): void {
+  for (let index = storage.length - 1; index >= 0; index -= 1) {
+    const key = storage.key(index);
+    if (key?.startsWith(OWNED_PREFIX)) storage.removeItem(key);
+  }
+}
+
+const ownScope = (): string | undefined => (typeof location === "undefined" ? undefined : new URL(import.meta.env.BASE_URL, location.origin).href);
+
 /**
  * Forget this device (FR-10, technical-spec 9): stop running transfers and their leases, close the database
- * handle, delete the database, every `coffer:` localStorage key, sessionStorage, Cache Storage and service
- * workers, then drop the keys held in memory. The caller clears the query cache and reloads to Welcome.
+ * handle, delete the database, the `coffer:` keys of both web storages, the `coffer:` caches and the service worker
+ * registered for the app's own base, then drop the keys held in memory. Nothing clears a whole store: an origin can
+ * hold other apps, and their data stays (C-61). The caller clears the query cache and reloads to Welcome.
  * Buckets and files are not touched.
  */
 export async function forgetDevice(deps: ForgetDeps = {}): Promise<void> {
   await stopEverything();
   await safe(sealDb);
-  await safe(() => deleteDatabase(deps.indexedDB ?? indexedDB, deps.blockedMs ?? 3000));
-  await safe(() => {
-    const local = deps.localStorage ?? window.localStorage;
-    for (let index = local.length - 1; index >= 0; index -= 1) {
-      const key = local.key(index);
-      if (key?.startsWith(LOCAL_STORAGE_PREFIX)) local.removeItem(key);
-    }
-  });
-  await safe(() => { (deps.sessionStorage ?? window.sessionStorage).clear(); });
+  await safe(() => deleteOwnDatabase(deps.indexedDB ?? indexedDB, deps.blockedMs ?? 3000));
+  await safe(() => { removeOwnedKeys(deps.localStorage ?? window.localStorage); });
+  await safe(() => { removeOwnedKeys(deps.sessionStorage ?? window.sessionStorage); });
   await safe(async () => {
     const storage = deps.caches ?? (typeof caches === "undefined" ? undefined : caches);
     if (!storage) return;
-    for (const name of await storage.keys()) await storage.delete(name);
+    for (const name of await storage.keys()) if (name.startsWith(OWNED_PREFIX)) await storage.delete(name);
   });
   await safe(async () => {
     const container = deps.serviceWorker ?? (typeof navigator === "undefined" ? undefined : navigator.serviceWorker);
-    if (!container) return;
-    for (const registration of await container.getRegistrations()) await registration.unregister();
+    const scope = deps.scope ?? ownScope();
+    if (!container || scope === undefined) return;
+    for (const registration of await container.getRegistrations()) if (registration.scope === scope) await registration.unregister();
   });
   vault.lock();
 }

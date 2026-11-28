@@ -74,6 +74,7 @@ Answered by the project owner. The **From** column gives the question that was o
 | C-58 | C-56 | **Edit connection, keys and local data.** (1) When the endpoint's server (scheme, host and port) changes, the saved access key ID, secret and session token are not used: they are typed again (the session token: see C-59). The test never sends saved credentials to another server. A change of region, bucket or start folder on the same server may keep them; a templated region that changes the host counts as another server. (2) When the destination changes, the screen says before saving that the history of past operations does not carry over; Starred and Recent are moved to the new record when server and bucket are unchanged (keys under the new start folder), and are listed as removed otherwise. | FR-11, AC-11.6 |
 | C-59 | C-58 | **Session token on a host change.** The saved credentials are never read when the server changes. The access key ID and the secret are required; the session token is optional, and an empty one means static keys. | FR-11, AC-11.6 |
 | C-60 | n/a | **Deploy portability.** Coffer deploys to any static host without weakening security where the host sends headers; Cloudflare Pages is the reference target. One source for the headers, a configurable base path, and GitHub Pages as a documented degraded tier ([ADR-010](adr/ADR-010-deploy-portability.md)). | ADR-010 |
+| C-61 | OQ-41 | **Forget this device removes only what Coffer owns**, on any origin: its named database, storage keys and caches with the `coffer:` prefix, and only the service worker registration whose scope is Coffer's base. No origin-wide clear. Every key Coffer writes already had the prefix, so nothing needed to be migrated. | FR-10, AC-10.6 |
 
 ## Open questions
 
@@ -86,9 +87,9 @@ Answered by the project owner. The **From** column gives the question that was o
 
 ### OQ-41: Forget this device on a shared origin
 - **Owner:** Product, Security
-- **Status:** Open (found while documenting subpath hosting, ADR-010).
+- **Status:** Closed by [C-61](#owner-confirmed-decisions) (found while documenting subpath hosting, ADR-010).
 - **Question:** Forget this device clears `sessionStorage`, every Cache Storage entry and every service worker of the origin. Coffer creates none of them itself. On an origin it shares with other apps (a path such as `/coffer/`, or a GitHub Pages project site), this removes theirs. Its IndexedDB database `coffer` and `coffer:` keys are also readable by those apps.
-- **Recommended:** Keep asking for an origin of its own (as the guides do), and stop clearing storage Coffer never writes, which FR-10 would need to allow.
+- **Resolution:** Forget removes only Coffer's own names. Other apps on the same origin can still read Coffer's data, so the guides ask for an origin of its own and the first screen warns on a shared one.
 - **Affects:** FR-10, technical-spec 9, `lib/storage/forget.ts`, [deploy guides](deploy/README.md)
 
 ### OQ-40: Editing a saved connection's endpoint, region or bucket

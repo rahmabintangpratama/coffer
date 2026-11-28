@@ -28,7 +28,7 @@ Edit `deploy/headers.json`, then run `pnpm deploy:build`. It writes the four fil
 
 Set `COFFER_BASE` when you build, for example `COFFER_BASE=/coffer/ pnpm build`. Routes stay in the URL fragment, so no rewrite rules are needed. For nginx and Caddy, render the matching configuration with `pnpm deploy:build --base /coffer/ --out out/` and put the files of `dist/` in a `coffer/` folder under the web root. GitHub Pages project sites use a path too. Hosting under a path on Cloudflare Pages, Netlify or Vercel is not covered: give Coffer an address of its own there.
 
-**Give Coffer an origin of its own.** Browser storage, including saved connections, is shared by everything on one origin (scheme, host and port), whatever the path. Another app on the same origin can read the encrypted records, can run code that reaches them while Coffer is open, and loses its own session storage, caches and service workers when someone uses `Forget this device` ([OQ-41](../open-questions.md#oq-41-forget-this-device-on-a-shared-origin)).
+**Give Coffer an origin of its own.** Browser storage, including saved connections, is shared by everything on one origin (scheme, host and port), whatever the path. Another app on the same origin can read the encrypted records and can run code that reaches them while Coffer is open. `Forget this device` removes only Coffer's own data ([C-61](../open-questions.md#owner-confirmed-decisions)); it does not protect that data from the other apps.
 
 ## For every target
 

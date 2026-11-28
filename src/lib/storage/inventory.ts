@@ -19,7 +19,11 @@ export interface InventoryItem {
 }
 
 export const DATABASE_NAME = DB_NAME;
-export const LOCAL_STORAGE_PREFIX = "coffer:";
+/**
+ * Everything Coffer names in a store it shares with the rest of the origin (web storage keys, caches) starts with this.
+ * Forget this device removes only what carries it, so other apps on the same origin keep their data (C-61).
+ */
+export const OWNED_PREFIX = "coffer:";
 
 export const INVENTORY: readonly InventoryItem[] = [
   { id: "connections", kind: "indexeddb", where: `${DATABASE_NAME}/connections`, encrypted: true, files: ["src/lib/storage/db.ts", "src/lib/storage/connection-store.ts"] },
@@ -32,9 +36,10 @@ export const INVENTORY: readonly InventoryItem[] = [
   { id: "theme", kind: "localStorage", where: "coffer:theme", encrypted: false, files: ["src/app/theme.ts", "public/theme-init.js"] },
   { id: "saved-hint", kind: "localStorage", where: "coffer:saved", encrypted: false, files: ["src/lib/storage/hint.ts"] },
   { id: "tab-signal", kind: "localStorage", where: "coffer:signal", encrypted: false, files: ["src/lib/storage/tabsync.ts"] },
-  { id: "session", kind: "sessionStorage", where: "sessionStorage", encrypted: false, files: [] },
-  { id: "cache", kind: "cache", where: "Cache Storage", encrypted: false, files: [] },
-  { id: "service-worker", kind: "serviceWorker", where: "service worker registrations", encrypted: false, files: [] },
+  // Coffer writes none of these three today. Forget clears its own names anyway, so a later use cannot be left behind.
+  { id: "session", kind: "sessionStorage", where: `${OWNED_PREFIX}* keys`, encrypted: false, files: [] },
+  { id: "cache", kind: "cache", where: `caches named ${OWNED_PREFIX}*`, encrypted: false, files: [] },
+  { id: "service-worker", kind: "serviceWorker", where: "the registration whose scope is the app's base path", encrypted: false, files: [] },
   { id: "keys", kind: "memory", where: "memory", encrypted: false, files: ["src/lib/storage/vault.ts"] },
 ];
 

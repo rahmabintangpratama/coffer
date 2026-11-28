@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { connectionStore } from "./connection-store";
 import { closeSharedDb, DB_NAME, migrations, openCoffer, sharedDb, unsealDbForTests } from "./db";
 import { forgetDevice, releaseStorage, storedReport } from "./forget";
-import { INVENTORY, KNOWN_LOCAL_KEYS, NON_STORAGE_FILES } from "./inventory";
+import { INVENTORY, KNOWN_LOCAL_KEYS, NON_STORAGE_FILES, OWNED_PREFIX } from "./inventory";
 import { vault } from "./vault";
 
 // FR-10, AC-10.3, AC-10.4, ADR-007: every storage location is in the inventory, and Forget clears every line of it.
@@ -47,6 +47,15 @@ describe("the inventory covers every use of browser storage", () => {
     expect([...found].filter((key) => !KNOWN_LOCAL_KEYS.includes(key))).toEqual([]);
   });
 
+  it("every web storage key carries the prefix Forget removes", () => {
+    expect(KNOWN_LOCAL_KEYS.filter((key) => !key.startsWith(OWNED_PREFIX))).toEqual([]);
+  });
+
+  it("no source clears a whole store, or deletes caches or workers it has not checked are Coffer's (C-61)", () => {
+    const wide = /\b(localStorage|sessionStorage)\??\.clear\(|\.sessionStorage\)\.clear\(|\.deleteDatabase\((?!DATABASE_NAME)/;
+    expect(sources.filter((source) => wide.test(code(source.text))).map((source) => source.path)).toEqual([]);
+  });
+
   it("the inventory lists every IndexedDB store", async () => {
     await closeSharedDb();
     const db = await openDB(`${DB_NAME}-shape`, migrations.length, { upgrade: (handle, old) => { for (let step = old; step < migrations.length; step += 1) migrations[step]?.(handle as never); } });
@@ -79,9 +88,9 @@ describe("AC-10.3 and AC-10.4 Forget this device", () => {
     await closeSharedDb();
   });
 
-  it("clears every inventory line, leaves other sites' keys alone, and drops the keys in memory", async () => {
-    const local = fakeStorage({ "coffer:settings": "{}", "coffer:theme": "dark", "coffer:saved": "1", "coffer:signal": "x", "other:keep": "stay" });
-    const session = fakeStorage({ a: "1" });
+  it("clears every inventory line, leaves everything other apps keep on the origin, and drops the keys in memory", async () => {
+    const local = fakeStorage({ "coffer:settings": "{}", "coffer:theme": "dark", "coffer:saved": "1", "coffer:signal": "x", "other:keep": "stay", coffeeshop: "stay" });
+    const session = fakeStorage({ "coffer:draft": "1", "other:session": "stay" });
     (globalThis as { window?: unknown }).window = { localStorage: local, sessionStorage: session };
 
     const handle = await sharedDb();
@@ -95,18 +104,22 @@ describe("AC-10.3 and AC-10.4 Forget this device", () => {
     expect(await storedReport()).toEqual({ connections: 1, journal: 1, starred: 1, recent: 1, uploads: 1 });
 
     const cleared: string[] = [];
-    const caches = { keys: () => Promise.resolve(["v1"]), delete: (name: string) => { cleared.push(`cache:${name}`); return Promise.resolve(true); } } as unknown as CacheStorage;
-    const serviceWorker = { getRegistrations: () => Promise.resolve([{ unregister: () => { cleared.push("sw"); return Promise.resolve(true); } }]) } as unknown as ServiceWorkerContainer;
-    await forgetDevice({ localStorage: local, sessionStorage: session, caches, serviceWorker });
+    const caches = { keys: () => Promise.resolve(["coffer:v1", "other-app-v1"]), delete: (name: string) => { cleared.push(`cache:${name}`); return Promise.resolve(true); } } as unknown as CacheStorage;
+    const registration = (scope: string) => ({ scope, unregister: () => { cleared.push(`sw:${scope}`); return Promise.resolve(true); } });
+    const serviceWorker = { getRegistrations: () => Promise.resolve([registration("https://host.test/coffer/"), registration("https://host.test/"), registration("https://host.test/coffer/other/")]) } as unknown as ServiceWorkerContainer;
+    await openDB("other-app", 1, { upgrade: (db) => { db.createObjectStore("things"); } }).then((db) => db.put("things", "stay", "k").then(() => { db.close(); }));
+    await forgetDevice({ localStorage: local, sessionStorage: session, caches, serviceWorker, scope: "https://host.test/coffer/" });
 
+    const foreign = await openDB("other-app", 1);
+    expect(await foreign.get("things", "k")).toBe("stay");
+    foreign.close();
     // The database is gone: opening it again finds empty stores.
     const reopened = await openCoffer();
     for (const name of reopened.objectStoreNames) expect(await reopened.count(name), name).toBe(0);
     reopened.close();
-    expect(local.length).toBe(1);
-    expect(local.getItem("other:keep")).toBe("stay");
-    expect(session.length).toBe(0);
-    expect(cleared.sort()).toEqual(["cache:v1", "sw"]);
+    expect([local.length, local.getItem("other:keep"), local.getItem("coffeeshop")]).toEqual([2, "stay", "stay"]);
+    expect([session.length, session.getItem("other:session")]).toEqual([1, "stay"]);
+    expect(cleared.sort()).toEqual(["cache:coffer:v1", "sw:https://host.test/coffer/"]);
     expect(vault.isUnlocked()).toBe(false);
     await expect(vault.credentialsFor("c1")).rejects.toThrow("locked");
     delete (globalThis as { window?: unknown }).window;

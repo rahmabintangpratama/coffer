@@ -38,5 +38,5 @@ Vault, operation journal, upload state and IndexedDB. No React imports; must not
 
 ## Forget this device
 
-- Removes: running transfers and their leases, pending timers and clients, database `coffer` (close handles first), every `localStorage` key prefixed `coffer:`, `sessionStorage`, Cache Storage and service workers if present, in-memory vault and query cache.
+- Removes: running transfers and their leases, pending timers and clients, database `coffer` (close handles first), every `localStorage` and `sessionStorage` key prefixed `coffer:`, caches named `coffer:*`, the service worker scoped to the app base, in-memory vault and query cache. Never clear a whole store (C-61); a new name in a shared store starts with `coffer:`.
 - `inventory.ts` is the single list of storage locations. Add a location there, to What's stored and to `forgetDevice` in the same change; `inventory.test.ts` fails when source touches browser storage in a file the list does not name.
