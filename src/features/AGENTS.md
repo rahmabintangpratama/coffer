@@ -11,7 +11,7 @@ One folder per feature area. Layer rules are in [../AGENTS.md](../AGENTS.md).
 - Before building, read the feature's FR block: acceptance criteria, states, edge cases and linked screen IDs.
 - Cover **all** states from the spec (empty, loading, partial, error, success). A missing state is a bug.
 - Match the board IDs listed under **Screens** at 375, 768 and 1440; compare against `design/screens.md` and `design/components.md`.
-- Layout: `index.ts` exports the public surface; internals are private. Other features import only from `index.ts`.
+- Layout: `index.ts` exports the public surface; internals are private. Other features import only from `index.ts`. One exception: `onboarding/UnlockScreen` lazy-loads `vault/ForgetDialog` by path, because the vault index would put the Settings pages on the first screen (D-43).
 - Name tests after the AC they prove (`AC-36.1 moves to .coffer-trash without confirmation`).
 - Read-only connections: gate write actions with the shared capability helper, disabled with the reason `ro.reason`, never silently missing.
 - Mutations that touch many objects go through the journal in `lib/storage` (FR-45).

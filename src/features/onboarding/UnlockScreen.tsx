@@ -1,8 +1,7 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { lazy, Suspense, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Banner } from "@/components/Banner";
 import { Button } from "@/components/Button";
 import { Field, TextInput } from "@/components/Field";
-import { ForgetDialog } from "@/features/vault";
 import { t } from "@/lib/i18n";
 import { vault, WrongPassphraseError } from "@/lib/storage/vault";
 import type { ConnectionSummary } from "@/lib/types";
@@ -23,6 +22,24 @@ export interface UnlockScreenProps {
   /** "Stop transfers and lock" (C-38). */
   onStopTransfers: () => void;
   onForget: () => Promise<void>;
+}
+
+// By file path, not the feature's index: the index brings the Settings pages onto the first screen (D-43), and the
+// dialog is only needed when it is asked for. It is fetched once the browser is idle, so it also opens offline.
+const loadForgetDialog = () => import("@/features/vault/ForgetDialog");
+const ForgetDialog = lazy(() =>
+  loadForgetDialog().then(
+    (module) => ({ default: module.ForgetDialog }),
+    () => ({ default: ForgetLoadFailed }),
+  ),
+);
+
+function ForgetLoadFailed() {
+  return (
+    <div role="alert" className="mx-auto w-full max-w-lg px-4 pb-6">
+      <Banner tone="danger" title={t("app.loadError.title")}>{t("app.loadError.body")}</Banner>
+    </div>
+  );
 }
 
 /** After this many wrong passphrases in a row the button waits, for longer each time. This is for usability, not a defence (technical-spec 9). */
@@ -54,6 +71,8 @@ export function UnlockScreen({ reason, minutes, previousId, onUnlocked, onUseOth
   const [waitTotal, setWaitTotal] = useState(0);
   const [failed, setFailed] = useState(false);
   const [forgetting, setForgetting] = useState(false);
+  // Once asked for it stays mounted, so closing it can hand focus back.
+  const [forgetAsked, setForgetAsked] = useState(false);
   const transfers = useSyncExternalStore(subscribeLeases, leaseCount);
   const forgetButton = useRef<HTMLButtonElement>(null);
 
@@ -62,6 +81,17 @@ export function UnlockScreen({ reason, minutes, previousId, onUnlocked, onUseOth
     void vault.savedCount().then((count) => { if (current && count === 0) onNothingSaved(); }, () => undefined);
     return () => { current = false; };
   }, [onNothingSaved]);
+
+  useEffect(() => {
+    const prefetch = () => { void loadForgetDialog().catch(() => undefined); };
+    // Safari has no requestIdleCallback, so a timer stands in.
+    if (typeof window.requestIdleCallback === "function") {
+      const handle = window.requestIdleCallback(prefetch);
+      return () => { window.cancelIdleCallback(handle); };
+    }
+    const timer = window.setTimeout(prefetch, 1500);
+    return () => { window.clearTimeout(timer); };
+  }, []);
 
   useEffect(() => {
     if (waitLeft <= 0) return;
@@ -146,13 +176,17 @@ export function UnlockScreen({ reason, minutes, previousId, onUnlocked, onUseOth
           </form>
           <div className="flex flex-col gap-2">
             <Button variant="secondary" onClick={onUseOther}>{t("ob.unlock.other")}</Button>
-            <Button ref={forgetButton} variant="link" onClick={() => { setForgetting(true); }} className="self-start">
+            <Button ref={forgetButton} variant="link" onClick={() => { setForgetAsked(true); setForgetting(true); }} className="self-start">
               {t("ob.unlock.forgetLabel")}
             </Button>
             <p className="text-sm text-fg-muted">{t("ob.unlock.forget.note")}</p>
           </div>
         </StepFrame>
-        <ForgetDialog open={forgetting} onClose={() => { setForgetting(false); }} onForget={onForget} returnFocusRef={forgetButton} />
+        {forgetAsked && (
+          <Suspense fallback={null}>
+            <ForgetDialog open={forgetting} onClose={() => { setForgetting(false); }} onForget={onForget} returnFocusRef={forgetButton} />
+          </Suspense>
+        )}
       </div>
     </div>
   );
