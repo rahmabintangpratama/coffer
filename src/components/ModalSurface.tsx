@@ -10,6 +10,8 @@ export interface ModalSurfaceProps {
   onClose: () => void;
   /** Visible title. It also names the dialog. */
   title: string;
+  /** A decorative icon before the title (the Share dialog shows the file's type). */
+  titleIcon?: ReactNode;
   closeLabel: string;
   /**
    * bottom: a bottom sheet. start: a side drawer. responsive: a bottom sheet
@@ -47,7 +49,7 @@ const panelByPlacement: Record<Placement, string> = {
  * container queries and the theme apply to it.
  */
 export function ModalSurface(props: ModalSurfaceProps) {
-  const { open, onClose, title, closeLabel, placement, component, children, panelProps, className, returnFocusRef } = props;
+  const { open, onClose, title, titleIcon, closeLabel, placement, component, children, panelProps, className, returnFocusRef } = props;
   const dialog = useRef<HTMLDialogElement>(null);
   const openRef = useRef(open);
   const titleId = useId();
@@ -108,8 +110,9 @@ export function ModalSurface(props: ModalSurfaceProps) {
           />
         )}
         <div className="flex items-center justify-between gap-2 px-4 pt-3 pb-2">
-          <h2 id={titleId} className="text-lg font-semibold">
-            {title}
+          <h2 id={titleId} className="flex min-w-0 items-center gap-2 text-lg font-semibold">
+            {titleIcon}
+            <span className="min-w-0 break-words">{title}</span>
           </h2>
           <Button variant="ghost" iconOnly aria-label={closeLabel} icon={<X aria-hidden="true" className="size-5" />} onClick={onClose} />
         </div>

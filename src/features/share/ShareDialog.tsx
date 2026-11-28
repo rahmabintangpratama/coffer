@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { Banner } from "@/components/Banner";
 import { Button } from "@/components/Button";
 import { Dialog } from "@/components/Dialog";
+import { FileIcon } from "@/components/FileIcon";
+import { fileKindOf } from "@/lib/s3/keys";
 import { SessionTokenNotice } from "@/components/SessionTokenNotice";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -42,7 +44,13 @@ type Loaded = typeof S3;
  */
 export function ShareDialog({ connection, file, onClose, notify }: ShareDialogProps) {
   return (
-    <Dialog open={file !== null} onClose={onClose} title={t("act.share")} closeLabel={t("act.close")}>
+    <Dialog
+      open={file !== null}
+      onClose={onClose}
+      title={file ? t("share.title", { name: file.name }) : t("act.share")}
+      {...(file ? { titleIcon: <FileIcon kind={fileKindOf(file.name)} className="size-5 shrink-0" /> } : {})}
+      closeLabel={t("act.close")}
+    >
       {file && <ShareBody key={file.key} connection={connection} file={file} onClose={onClose} notify={notify} />}
     </Dialog>
   );

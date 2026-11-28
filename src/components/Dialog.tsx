@@ -5,6 +5,7 @@ export interface DialogProps {
   open: boolean;
   onClose: () => void;
   title: string;
+  titleIcon?: ReactNode;
   closeLabel: string;
   returnFocusRef?: RefObject<HTMLElement | null>;
   /** 640 px from 768 px instead of 480 px (the Move dialog with its folder tree). */

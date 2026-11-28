@@ -37,6 +37,14 @@ async function open(summary: ConnectionSummary, notify = vi.fn()) {
   await screen.findByRole("radio", { name: "1 day" });
   return view;
 }
+
+describe("M11 the dialog names the file", () => {
+  it("is titled Share “{name}” with the file's icon", async () => {
+    await open(connection());
+    const dialog = screen.getByRole("dialog", { name: "Share “report.txt”" });
+    expect(dialog.querySelector("h2 svg")).not.toBeNull();
+  });
+});
 const choice = (name: string) => screen.getByRole("radio", { name });
 const labels = ["15 minutes", "30 minutes", "1 hour", "1 day", "7 days"];
 

@@ -344,7 +344,8 @@
     "session": {
       "none": "Your session token expires in under 15 minutes, so a link can’t be created. Use new credentials.",
       "unknown": "Coffer doesn’t know when this token expires, so links last at most 1 hour."
-    }
+    },
+    "title": "Share “{name}”"
   },
   "stor": {
     "idle": {

@@ -14,7 +14,8 @@ test.afterAll(() => { s3.destroy(); });
 const unique = () => `e2e-share/${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 const rows = (page: Page) => page.locator('[data-component="FileRow"], [data-component="FileTile"], [data-component="FolderTile"]');
 const row = (page: Page, name: string) => rows(page).filter({ hasText: name }).first();
-const dialog = (page: Page) => page.getByRole("dialog", { name: "Share link" });
+// M11: the dialog is named after the file it shares.
+const dialog = (page: Page) => page.getByRole("dialog", { name: /^Share “.+”$/ });
 const serious = (violations: Awaited<ReturnType<typeof axeViolations>>) => violations.filter((v) => v.impact === "serious" || v.impact === "critical");
 const choice = (page: Page, name: string) => dialog(page).getByRole("radio", { name });
 
