@@ -1,7 +1,7 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 import { FilterChips, type ChipSpec } from "@/components/FilterChips";
 import { useLayout } from "@/components/layout";
-import { SearchPill } from "@/components/SearchPill";
+import { SEARCH_PILL_ID, SearchPill } from "@/components/SearchPill";
 import { SelectionBar } from "@/components/SelectionBar";
 import { t, type CopyKey } from "@/lib/i18n";
 import { useFilesChrome } from "./chrome";
@@ -32,9 +32,16 @@ const modifiedLabel: Record<ModifiedFilter, CopyKey> = {
  */
 export default function FilesAppBar({ menuButton, brand, trailing }: { menuButton: ReactNode; brand: ReactNode; trailing?: ReactNode }) {
   const layout = useLayout();
-  const { searchPlaceholder, filters, setFilters, selectedCount, selectionActions } = useFilesChrome();
+  const { searchPlaceholder, filters, setFilters, selectedCount, selectionActions, searchFocusRequest } = useFilesChrome();
+  // `/` and Ctrl/Cmd+K ask for the pill; it may only now be back on screen after the selection was cleared.
+  const handled = useRef(searchFocusRequest);
   const clear = useSelection((state) => state.clear);
   const selecting = selectedCount > 0;
+  useEffect(() => {
+    if (selecting || handled.current === searchFocusRequest) return;
+    handled.current = searchFocusRequest;
+    document.getElementById(SEARCH_PILL_ID)?.focus();
+  }, [selecting, searchFocusRequest]);
 
   const chips: ChipSpec[] = [
     {

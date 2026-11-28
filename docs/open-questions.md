@@ -74,7 +74,7 @@ Answered by the project owner. The **From** column gives the question that was o
 
 ### OQ-39: Ctrl+K does not move focus on the Linux CI runners
 - **Owner:** Eng
-- **Status:** Open (M11).
+- **Status:** Closed (M11): with items selected the selection bar replaces the app bar, so the pill was not on screen when `/` or Ctrl+K asked for it, and on the slower runners it was not back by the next frame either. The selection is cleared and the app bar focuses the pill once it has mounted.
 - **Question:** In Files, ⌘/Ctrl+K focuses the search pill (AC-26.4). On macOS it works in Chromium and WebKit. On the Linux runners, in Chromium, WebKit and Firefox, the test's own listener saw `k` with `ctrlKey` and `defaultPrevented` true (so Coffer's handler ran), yet the focused element stayed the row, also when focus moved on the next frame ([run 46114371634](https://github.com/rahmabintangpratama/coffer/actions/runs/46114371634), [run 46115449926](https://github.com/rahmabintangpratama/coffer/actions/runs/46115449926)). `/` moves focus with the same function. Is this the headless Linux environment, or do real Linux and Windows browsers behave the same?
 - **Recommended:** Add Ctrl+K on Windows and Linux desktop browsers to the manual compatibility matrix. Until then `tests/e2e/shortcuts.spec.ts` runs the Ctrl+K check as `fixme` off macOS; `/` remains the documented search key on every platform.
 - **Affects:** FR-26, AC-26.4, `features/files/FilesScreen.tsx`
@@ -243,6 +243,7 @@ A test that failed at first and passed on retry, and whose cause is not yet know
 | `firefox-375` `upload.spec.ts` "AC-41.5 and AC-44.5 a reload mid-upload leaves nothing open..." | M11, [CI run 46110919892](https://github.com/rahmabintangpratama/coffer/actions/runs/46110919892) (`blob-report-firefox-375`) | Not read yet. | Open. Passes on retry. |
 | `firefox-375`, `firefox-1440` `a11y-states.spec.ts` "a connected session..." and `firefox-1440` `a11y.spec.ts` "/settings in dark" | M11, [CI runs 46108500560](https://github.com/rahmabintangpratama/coffer/actions/runs/46108500560) and [46113228328](https://github.com/rahmabintangpratama/coffer/actions/runs/46113228328) | `frame.evaluate: Page crashed` inside axe, the Firefox crash of the first row. | Open with the first row. |
 | `chromium-1440` `operations.spec.ts` "D-41 Resume clicked in two tabs runs the operation once..." | M11, [CI run 46115449926](https://github.com/rahmabintangpratama/coffer/actions/runs/46115449926) (`blob-report-chromium-1440`) | Not read yet. | Open. Passes on retry. |
+| `firefox-375` `onboarding.spec.ts` "Welcome, providers, the form with errors... have no axe violations" and `firefox-375` `readonly.spec.ts` "S41 the Trash view..." | M11, [CI run 46117806560](https://github.com/rahmabintangpratama/coffer/actions/runs/46117806560) | The axe one is the Firefox crash family of the first row; S41 is the `firefox-1440` entry above, now also at 375. | Open with those rows. |
 
 ### Closed
 

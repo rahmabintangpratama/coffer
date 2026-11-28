@@ -5,7 +5,6 @@ import { type DragEvent, lazy, Suspense, useCallback, useEffect, useMemo, useRef
 import { useLocation } from "wouter";
 import { Banner } from "@/components/Banner";
 import { Button } from "@/components/Button";
-import { SEARCH_PILL_ID } from "@/components/SearchPill";
 import { ContextMenuArea, type MenuGroup } from "@/components/ActionMenu";
 import { SIDEBAR_NEW_ID, useLayout } from "@/components/layout";
 import { Skeleton } from "@/components/Skeleton";
@@ -248,11 +247,12 @@ function Folder({ connection, relative, root, settings, onSettings, notify, onUs
   );
   // The pill is in the app bar, away from the list that owns the "/" shortcut, so it is found by its id.
   // While items are selected the selection bar replaces the app bar and the pill is not there: clear the selection,
-  // then focus the pill once it is back (on the next frame).
+  // and the app bar focuses the pill once it is back.
+  const requestSearchFocus = useFilesChrome((state) => state.requestSearchFocus);
   const focusSearch = useCallback(() => {
     if (useSelection.getState().keys.size > 0) useSelection.getState().clear();
-    requestAnimationFrame(() => { document.getElementById(SEARCH_PILL_ID)?.focus(); });
-  }, []);
+    requestSearchFocus();
+  }, [requestSearchFocus]);
   const onContextItem = useCallback(
     (item: Item) => {
       if (actionsFor(item, handlers, readOnly).length === 0) return false;

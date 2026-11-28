@@ -21,6 +21,9 @@ interface FilesChromeState {
   /** The last folder opened per connection, as its Files path, for the Files link (this session only, cleared on lock). */
   lastFolder: Readonly<Record<string, string>>;
   rememberFolder: (connectionId: string, path: string) => void;
+  /** Bumped to ask the app bar to focus its search pill once the pill is on screen (it is not while items are selected). */
+  searchFocusRequest: number;
+  requestSearchFocus: () => void;
   activate: (searchPlaceholder: string) => void;
   deactivate: () => void;
   setFilters: (filters: Filters) => void;
@@ -35,6 +38,8 @@ export const useFilesChrome = create<FilesChromeState>((set) => ({
   selectionActions: [],
   sidebarCollapsed: false,
   lastFolder: {},
+  searchFocusRequest: 0,
+  requestSearchFocus: () => { set((state) => ({ searchFocusRequest: state.searchFocusRequest + 1 })); },
   rememberFolder: (connectionId, path) => { set((state) => ({ lastFolder: { ...state.lastFolder, [connectionId]: path } })); },
   activate: (searchPlaceholder) => { set({ active: true, searchPlaceholder }); },
   // Leaving a folder drops its search and filters, as the screen's state always did.
