@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { ConnectionSwitch } from "./ConnectionSwitch";
 import { mainDestinations } from "./nav-items";
 import { NavLink } from "./NavLink";
+import { SIDEBAR_NEW_ID } from "@/components/layout";
 
 /** Sidebar from 1024 px. Collapsing keeps the icons and moves the labels to the accessible name. */
 export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
@@ -20,6 +21,7 @@ export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle:
         collapsed ? "w-(--cf-size-rail-width)" : "w-(--cf-size-sidebar-width)",
       )}
     >
+      <div id={SIDEBAR_NEW_ID} className="mb-2 flex empty:hidden" />
       <div className="flex flex-1 flex-col gap-1">
         {mainDestinations.map((destination) => (
           <NavLink

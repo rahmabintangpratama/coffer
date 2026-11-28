@@ -15,7 +15,7 @@ const icon = (Component: typeof Plus) => <Component aria-hidden="true" className
  * folder. The pickers are hidden file inputs started from the menu click, which
  * is the user gesture the browser needs.
  */
-export function NewMenu({ onNewFolder, onFiles, raised }: { onNewFolder: () => void; onFiles: (candidates: UploadCandidate[]) => void; raised: boolean }) {
+export function NewMenu({ onNewFolder, onFiles, raised, place = "toolbar" }: { onNewFolder: () => void; onFiles: (candidates: UploadCandidate[]) => void; raised: boolean; /** In the sidebar it fills the width, or shows only its icon when the sidebar is collapsed. */ place?: "toolbar" | "sidebar" | "sidebar-collapsed" }) {
   const layout = useLayout();
   const files = useRef<HTMLInputElement>(null);
   const folder = useRef<HTMLInputElement>(null);
@@ -61,9 +61,13 @@ export function NewMenu({ onNewFolder, onFiles, raised }: { onNewFolder: () => v
               )}
             />
           ) : (
-            <Button {...props} variant="primary" icon={<Plus aria-hidden="true" className="size-5" />} data-component="NewMenuButton">
-              {t("act.new")}
-            </Button>
+            place === "sidebar-collapsed" ? (
+              <Button {...props} variant="primary" iconOnly aria-label={t("act.new")} icon={<Plus aria-hidden="true" className="size-5" />} data-component="NewMenuButton" className="mx-auto" />
+            ) : (
+              <Button {...props} variant="primary" icon={<Plus aria-hidden="true" className="size-5" />} data-component="NewMenuButton" className={place === "sidebar" ? "w-full justify-start" : undefined}>
+                {t("act.new")}
+              </Button>
+            )
           )
         }
       />

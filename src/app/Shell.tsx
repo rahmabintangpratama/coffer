@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { LayoutContext } from "@/components/layout";
+import { useFilesChrome } from "@/features/files/chrome";
 import { TransferPanelHost } from "./TransferPanelHost";
 import { t } from "@/lib/i18n";
 import { AppBar } from "./AppBar";
@@ -79,7 +80,11 @@ export function Shell({ children }: { children: ReactNode }) {
         <Sidebar
           collapsed={sidebarCollapsed}
           onToggle={() => {
-            setSidebarCollapsed((value) => !value);
+            setSidebarCollapsed((value) => {
+              // Files reads it to draw New at the top of the sidebar as an icon or a full button.
+              useFilesChrome.setState({ sidebarCollapsed: !value });
+              return !value;
+            });
           }}
         />
         <div className="flex min-w-0 flex-1 flex-col">

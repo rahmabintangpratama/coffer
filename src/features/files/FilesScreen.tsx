@@ -1,12 +1,13 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { Download, FolderInput, FolderPlus, Share2, Star, StarOff, Trash2 } from "lucide-react";
+import { Download, FolderInput, FolderPlus, Info, Share2, Star, StarOff, Trash2 } from "lucide-react";
+import { createPortal } from "react-dom";
 import { type DragEvent, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { Banner } from "@/components/Banner";
 import { Button } from "@/components/Button";
 import { SEARCH_PILL_ID } from "@/components/SearchPill";
 import { ContextMenuArea, type MenuGroup } from "@/components/ActionMenu";
-import { useLayout } from "@/components/layout";
+import { SIDEBAR_NEW_ID, useLayout } from "@/components/layout";
 import { Skeleton } from "@/components/Skeleton";
 import { t } from "@/lib/i18n";
 import type { AppError } from "@/lib/s3/errors";
@@ -114,6 +115,7 @@ function Folder({ connection, relative, root, settings, onSettings, notify, onUs
   const activate = useFilesChrome((state) => state.activate);
   const deactivate = useFilesChrome((state) => state.deactivate);
   const setSelection = useFilesChrome((state) => state.setSelection);
+  const sidebarCollapsed = useFilesChrome((state) => state.sidebarCollapsed);
   // The app bar shows this folder's search and chips for as long as the screen is mounted.
   const searchPlaceholder = relative === "" ? t("search.placeholderRoot", { bucket }) : t("search.placeholderFolder", { folder: folderLabel });
   useEffect(() => {
@@ -347,6 +349,11 @@ function Folder({ connection, relative, root, settings, onSettings, notify, onUs
 
   const viewProps = { readOnly, onShortcut, items: visible, density: settings.density, folderLabel, handlers, onOpenFolder: openFolder, onSearchShortcut: focusSearch, onContextItem, focusRequest };
 
+  // From 1024 px New sits at the top of the sidebar (design screens.md); the sidebar leaves an empty slot for it.
+  const sidebarNew = layout === "sidebar" ? document.getElementById(SIDEBAR_NEW_ID) : null;
+  const newPlace = sidebarNew ? (sidebarCollapsed ? "sidebar-collapsed" : "sidebar") : "toolbar";
+  const newMenu = <NewMenu onNewFolder={() => { setNewFolderOpen(true); }} onFiles={(candidates) => void upload(candidates)} raised={hasTransfers} place={newPlace} />;
+
   let body;
   if (listing.isPending) {
     body = (
@@ -398,7 +405,22 @@ function Folder({ connection, relative, root, settings, onSettings, notify, onUs
           <Breadcrumb rootLabel={bucket} prefix={relative} menu={folderMenu} />
           <div className="flex items-center gap-2">
             <ViewControls sort={settings.sort} view={settings.view} onSort={(sort) => { onSettings({ sort }); }} onView={(view) => { onSettings({ view }); }} onRefresh={() => void refresh()} refreshing={refreshing} />
-            {writable && <NewMenu onNewFolder={() => { setNewFolderOpen(true); }} onFiles={(candidates) => void upload(candidates)} raised={hasTransfers} />}
+            {layout === "sidebar" && (
+              <Button
+                variant="ghost"
+                iconOnly
+                aria-label={t("act.details")}
+                aria-pressed={detailsFile !== null}
+                disabled={detailsFile === null && !(selected.length === 1 && selected[0]?.kind === "file")}
+                title={t("act.details")}
+                icon={<Info aria-hidden="true" className="size-5" />}
+                onClick={() => {
+                  const only = selected[0];
+                  setDetailsKey(detailsFile !== null ? null : only?.kind === "file" ? only.key : null);
+                }}
+              />
+            )}
+            {writable && (sidebarNew ? createPortal(newMenu, sidebarNew) : newMenu)}
           </div>
         </div>
         {!listing.isPending && !listing.error && (
