@@ -284,6 +284,9 @@ importers:
       '@vitejs/plugin-react':
         specifier: 6.3.0
         version: 6.3.0(vite@8.3.8(@types/node@22.20.5)(jiti@2.7.0))
+      axe-core-firefox:
+        specifier: npm:axe-core@4.12.1
+        version: axe-core@4.12.1
       eslint:
         specifier: 10.15.0
         version: 10.15.0(jiti@2.7.0)(supports-color@7.2.0)

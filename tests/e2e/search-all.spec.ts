@@ -21,7 +21,7 @@ async function seeded(): Promise<string> {
   return bucket;
 }
 
-test("AC-23.6 a search at the top names what it searched, then finds matches in every folder with their location", async ({ page, browserName }) => {
+test("AC-23.6 a search at the top names what it searched, then finds matches in every folder with their location", async ({ page }) => {
   const bucket = await seeded();
   await enterApp(page, "/files", { bucket, passphrase: PASS });
   await expect(rows(page).filter({ hasText: "top.txt" })).toBeVisible({ timeout: 15_000 });
@@ -37,7 +37,7 @@ test("AC-23.6 a search at the top names what it searched, then finds matches in 
   await expect(items).toHaveCount(2); // the trash copy is left out
   await expect(items.filter({ hasText: "summary.PDF" }).getByRole("link", { name: `In ${bucket}/docs/deep` })).toBeVisible();
   // axe crashes Firefox's content process on long pages in CI (D-50); Chromium and WebKit check it.
-  if (browserName !== "firefox") expect(await axeViolations(page)).toEqual([]);
+  expect(await axeViolations(page)).toEqual([]);
 
   // Typing narrows what was scanned, with no new listing.
   let lists = 0;

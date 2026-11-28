@@ -468,8 +468,7 @@ test.describe("Show secret key (FR-102) and the switcher (FR-11)", () => {
     await expect(page.getByText("This connection isn’t saved, so its secret key can’t be shown again.")).toBeVisible();
   });
 
-  test("AC-101.1 and AC-101.2 Security shows the auto-lock choices, what is stored and the note", async ({ page, browserName }) => {
-    test.skip(browserName === "firefox", "axe crashes Firefox's content process on this page in CI (tracked in open-questions.md, D-50); Chromium and WebKit run it.");
+  test("AC-101.1 and AC-101.2 Security shows the auto-lock choices, what is stored and the note", async ({ page }) => {
     await enterApp(page, "/settings/security", { passphrase: PASS });
     const security = page.getByRole("region", { name: "Security" });
     for (const label of ["5 minutes", "15 minutes", "30 minutes", "60 minutes", "Never"]) await expect(security.getByRole("radio", { name: label, exact: true })).toBeVisible();

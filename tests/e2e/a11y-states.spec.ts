@@ -123,9 +123,7 @@ test.describe("axe on every screen and state", () => {
     expect(failures).toEqual([]);
   });
 
-  test("a connected session: Files and every dialog, menu and sheet over it, then Trash, Settings, the switcher and the lock screens", async ({ page, browserName }, testInfo) => {
-    // Quarantined: the crash moves between the states of this walk, so single states cannot be left out.
-    test.skip(browserName === "firefox", "axe crashes Firefox's content process in CI: https://github.com/rahmabintangpratama/coffer/issues/1. Chromium and WebKit run it.");
+  test("a connected session: Files and every dialog, menu and sheet over it, then Trash, Settings, the switcher and the lock screens", async ({ page }, testInfo) => {
     test.setTimeout(240_000);
     const layout = layoutFor(testInfo);
     const compact = layout === "compact";

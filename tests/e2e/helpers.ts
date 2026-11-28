@@ -1,5 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, type TestInfo } from "@playwright/test";
+import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { admin, s3Fixture, testUsers } from "../integration/config";
 import { APP_ORIGIN, E2E_BUCKET } from "./fixture";
 
@@ -182,15 +184,15 @@ async function settled(page: Page): Promise<void> {
 export const isFirefox = (page: Page): boolean => page.context().browser()?.browserType().name() === "firefox";
 
 /**
- * axe for this page. In Firefox the content process crashed under axe on a few screens in CI (Settings, the Move dialog, the
- * Security page), also with colour-contrast off, so the two rules that measure the most (colour-contrast and target-size) are
- * left out there. Two screens still crashed it (the Move dialog and the Security page); axe is skipped for those in Firefox with
- * the reason stated in the test, and they are tracked in open-questions.md. Contrast is measured in all three engines, Firefox included, from the real computed colours by
- * contrast.spec.ts, and both rules still run in Chromium and WebKit (D-50).
+ * axe-core 4.13.0 and later crash Firefox's content process on several screens (issue 1: reproduced in the Linux
+ * Playwright image; single rules pass, 4.12.1 passes the same runs). Firefox therefore gets 4.12.1, with every rule on
+ * and no screen left out. Chromium and WebKit use the version @axe-core/playwright brings. Drop this when a later
+ * axe-core runs clean in Firefox.
  */
+const firefoxAxe = readFileSync(createRequire(import.meta.url).resolve("axe-core-firefox/axe.min.js"), "utf8");
+
 export function axeFor(page: Page): AxeBuilder {
-  const builder = new AxeBuilder({ page });
-  return isFirefox(page) ? builder.disableRules(["color-contrast", "target-size"]) : builder;
+  return isFirefox(page) ? new AxeBuilder({ page, axeSource: firefoxAxe }) : new AxeBuilder({ page });
 }
 
 export async function axeViolations(page: Page) {

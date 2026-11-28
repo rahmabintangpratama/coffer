@@ -16,7 +16,7 @@ Integration tests, end-to-end tests and shared fixtures. Unit and component test
 - Integration: use a fresh bucket prefix per test; clean up in `afterEach`; inject faults through the S3 test middleware (crash after copy, after verify, mid-multipart, `SlowDown`, expired token).
 - E2E runs against the production build served by `scripts/serve/dist-server.ts`, which applies `dist/_headers`; a CSP violation in the console fails the shell tests.
 - E2E viewport matrix: **375, 768 and 1440**, light and dark for visual and axe checks. Chromium for every spec; WebKit and Firefox for smoke and layout.
-- Every e2e screen runs axe (serious and critical must be zero). Add keyboard-only flows for every FR with a keyboard path.
+- Every e2e screen runs axe (serious and critical must be zero), through `axeViolations` or `axeFor`: Firefox needs the older axe-core they give it (D-52). Add keyboard-only flows for every FR with a keyboard path.
 - E2E asserts no secret appears in the DOM, URL, storage dump or network log (other than signed provider requests).
 - Browser tests that call the S3 fixture serve their page from a real loopback server (`tests/e2e/connection-test.spec.ts`), not `page.route()`: Chromium blocks requests from a page it did not load from the network to loopback (OQ-35). Run the library code in the page by bundling an entry with `tests/e2e/bundle.ts`.
 - Every spec that needs the app shell calls `enterApp(page, route)` (`tests/e2e/helpers.ts`), which connects to the S3 fixture through the real onboarding screens. Sessions are memory-only, so a reload or `page.goto` drops the keys: change route with `goToRoute`. `global-setup.ts` creates the shared bucket `coffer-e2e-app` (CORS for `http://127.0.0.1:4173`) and the users.
