@@ -1,5 +1,6 @@
 import { type Page } from "@playwright/test";
 import { expect, expectConsole, test } from "./test";
+import { parseColor, ratio } from "../../scripts/contrast/wcag.ts";
 import { axeFor, cspViolations, enterApp, recordCspViolations } from "./helpers";
 
 // M5a and M5b: the preview viewer for images, video, audio, text and code, SVG, PDF,
@@ -341,5 +342,36 @@ test.describe("PDF, Markdown and HTML (M5b)", () => {
       expect(result.violations.filter((v) => v.impact === "serious" || v.impact === "critical"), name).toEqual([]);
       await closeViewer(page, name);
     }
+  });
+
+  for (const theme of ["light", "dark"] as const) {
+    test(`M11 the viewer chrome is dark and readable in ${theme}: icons 3:1, title and counter 4.5:1`, async ({ page }) => {
+      await page.emulateMedia({ colorScheme: theme });
+      await expect.poll(() => page.evaluate(() => document.documentElement.getAttribute("data-theme"))).toBe(theme);
+      await openFile(page, "code.ts");
+      const background = parseColor(await dialog(page).evaluate((element) => getComputedStyle(element).backgroundColor));
+      // The media layer is the darkest gray in both themes.
+      expect(ratio(background, parseColor("rgb(255, 255, 255)"))).toBeGreaterThan(15);
+      const header = dialog(page).locator("header");
+      for (const name of ["Back", "Download", "Share link", "Details", "More actions"]) {
+        const button = header.getByRole("button", { name, exact: true });
+        await expect(button).toBeVisible();
+        const icon = parseColor(await button.evaluate((element) => getComputedStyle(element).color));
+        expect(ratio(icon, background), name).toBeGreaterThanOrEqual(3);
+      }
+      for (const text of [header.getByRole("heading", { level: 1 }), header.getByRole("status")]) {
+        const color = parseColor(await text.evaluate((element) => getComputedStyle(element).color));
+        expect(ratio(color, background)).toBeGreaterThanOrEqual(4.5);
+      }
+    });
+  }
+
+  test("M11 the viewer's More menu opens on top of the viewer and its items work", async ({ page }) => {
+    await openFile(page, "code.ts");
+    await dialog(page).getByRole("button", { name: "More actions", exact: true }).click();
+    const next = page.getByRole("menuitem", { name: "Next file" });
+    await expect(next).toBeVisible();
+    await next.click();
+    await expect(dialog(page).getByRole("heading", { level: 1 })).toHaveText("hostile.html");
   });
 });

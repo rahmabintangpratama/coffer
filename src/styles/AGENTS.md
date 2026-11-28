@@ -19,5 +19,6 @@
 
 - Import only `tailwind.css` (and `fonts.css`) from `main.tsx`.
 - Component CSS lives next to the component and uses tokens only.
-- Do not redeclare `--cf-btn-*`, hover, active or tonal tokens; the `data-surface` scopes own them.
+- Do not redeclare `--cf-btn-*`, hover, active or tonal tokens; the `data-surface` scopes own them. The one hand-written scope is `data-surface="media"` in `components.css` (the dark viewer, DC-27).
+- `components.css` (hand-written): layer behavior utilities cannot express, and the media scope.
 - Keep container-query layout on `.cf-root` with `.cf-app` directly inside.

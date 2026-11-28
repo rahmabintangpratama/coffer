@@ -27,8 +27,13 @@ export interface MenuGroup {
   actions: MenuAction[];
 }
 
-// Portals mount inside .cf-root so container queries and the theme apply (D-25).
-const portalRoot = (): HTMLElement | undefined => document.querySelector<HTMLElement>(".cf-root") ?? undefined;
+// Portals mount inside .cf-root so container queries and the theme apply (D-25). With a modal
+// <dialog> open, everything outside it is inert and under the top layer, so a menu opened from
+// inside it (the viewer's More) mounts in the topmost open one.
+const portalRoot = (): HTMLElement | undefined => {
+  const modals = document.querySelectorAll<HTMLElement>("dialog.cf-modal[open]");
+  return modals[modals.length - 1] ?? document.querySelector<HTMLElement>(".cf-root") ?? undefined;
+};
 
 const itemClass = (action: MenuAction, focus: string) =>
   cn(
@@ -88,6 +93,8 @@ export function ActionMenu({ groups, triggerLabel, title, closeLabel, component,
   const layout = useLayout();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [opener, setOpener] = useState<HTMLButtonElement | null>(null);
+  // Chosen when the menu opens: a dialog opened after this component rendered still counts.
+  const [container, setContainer] = useState<HTMLElement | null>(null);
   // The button that opened the sheet is remembered from the click, so focus can return to it on close (Safari does not focus a clicked button).
   const open = (event: MouseEvent<HTMLButtonElement>) => {
     setOpener(event.currentTarget);
@@ -141,11 +148,11 @@ export function ActionMenu({ groups, triggerLabel, title, closeLabel, component,
   }
 
   return (
-    <Dropdown.Root modal={false}>
+    <Dropdown.Root modal={false} onOpenChange={(next) => { if (next) setContainer(portalRoot() ?? null); }}>
       <Dropdown.Trigger asChild>
         {customTrigger?.({}) ?? <Button variant="ghost" iconOnly aria-label={triggerLabel} icon={icon} className={className} />}
       </Dropdown.Trigger>
-      <Dropdown.Portal container={portalRoot() ?? null}>
+      <Dropdown.Portal container={container}>
         <Dropdown.Content align="end" sideOffset={4} data-surface="elevated" data-component={component} className={contentClass}>
           <Items groups={groups} kind={Dropdown} />
         </Dropdown.Content>
@@ -162,13 +169,14 @@ export function ActionMenu({ groups, triggerLabel, title, closeLabel, component,
  */
 export function ContextMenuArea({ groups, children, component, className }: { groups: MenuGroup[]; children: ReactNode; component: string; className?: string }) {
   const layout = useLayout();
+  const [container, setContainer] = useState<HTMLElement | null>(null);
   if (layout === "compact") return <div className={className}>{children}</div>;
   return (
-    <ContextMenu.Root modal={false}>
+    <ContextMenu.Root modal={false} onOpenChange={(next) => { if (next) setContainer(portalRoot() ?? null); }}>
       <ContextMenu.Trigger asChild>
         <div className={className}>{children}</div>
       </ContextMenu.Trigger>
-      <ContextMenu.Portal container={portalRoot() ?? null}>
+      <ContextMenu.Portal container={container}>
         <ContextMenu.Content data-surface="elevated" data-component={component} className={contentClass}>
           <Items groups={groups} kind={ContextMenu} />
         </ContextMenu.Content>

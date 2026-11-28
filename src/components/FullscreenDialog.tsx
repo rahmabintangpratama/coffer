@@ -4,7 +4,7 @@ import { type KeyboardEvent, type ReactNode, useLayoutEffect, useRef } from "rea
  * A full-screen modal on the native <dialog> (design: Preview). The browser gives
  * the focus trap, the inert page behind it, Escape and focus return to the
  * element that was focused when it opened. It is dark in both themes through the
- * inverse layer. Escape asks the owner to close it (so the address can follow);
+ * media layer (components.css). Escape asks the owner to close it (so the address can follow);
  * the owner unmounts it.
  */
 export function FullscreenDialog({ label, onClose, onClosed, onKeyDown, children }: { label: string; onClose: () => void; /** Called once the dialog has closed and the page is usable again: the place to move focus. */ onClosed?: () => void; onKeyDown?: (event: KeyboardEvent<HTMLDialogElement>) => void; children: ReactNode }) {
@@ -27,7 +27,7 @@ export function FullscreenDialog({ label, onClose, onClosed, onKeyDown, children
       ref={dialog}
       aria-label={label}
       data-component="Preview"
-      data-surface="inverse"
+      data-surface="media"
       className="cf-modal fixed inset-0 m-0 h-dvh max-h-none w-full max-w-none flex-col bg-(--cf-color-inverse-bg) p-0 text-(--cf-color-inverse-fg) open:flex"
       onCancel={(event) => {
         event.preventDefault();

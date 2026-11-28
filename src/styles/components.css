@@ -28,3 +28,34 @@ dialog.cf-modal[open] .cf-panel {
 dialog.cf-modal[data-placement="start"][open] .cf-panel {
   animation-name: cf-slide-in-start;
 }
+
+/* The viewer is dark in both themes (design: Preview, "full-screen dark viewer"),
+   but the generated inverse scope flips with the theme (DC-27). This media scope
+   pins the viewer to the media tokens and the dark inverse palette, and
+   re-declares only the ghost button tokens it uses, on the same element, so they
+   resolve against the pinned colors. Menus inside keep their own elevated scope. */
+[data-surface="media"] {
+  --cf-color-inverse-bg: var(--cf-color-media-bg);
+  --cf-color-inverse-fg: var(--cf-color-media-fg);
+  --cf-color-inverse-muted: var(--cf-gray-300);
+  --cf-color-inverse-border: var(--cf-gray-700);
+  --cf-color-inverse-hover: var(--cf-gray-850);
+  --cf-color-inverse-accent: var(--cf-teal-200);
+  --cf-color-border-focus: var(--cf-color-media-progress);
+  --cf-btn-ghost-bg: transparent;
+  --cf-btn-ghost-fg: var(--cf-color-media-fg);
+  --cf-btn-ghost-bg-hover: var(--cf-color-media-track);
+  --cf-btn-ghost-fg-hover: var(--cf-color-media-fg);
+  --cf-btn-ghost-bg-active: var(--cf-gray-700);
+  --cf-btn-ghost-fg-active: var(--cf-color-media-fg);
+  --cf-btn-ghost-border: transparent;
+  color-scheme: dark;
+}
+
+/* A menu opened inside the viewer is an elevated layer again: give it back the theme's focus ring. */
+[data-surface="media"] [data-surface="elevated"] {
+  --cf-color-border-focus: var(--cf-teal-600);
+}
+[data-theme="dark"] [data-surface="media"] [data-surface="elevated"] {
+  --cf-color-border-focus: var(--cf-teal-300);
+}
