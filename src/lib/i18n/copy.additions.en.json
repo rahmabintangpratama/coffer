@@ -9,7 +9,8 @@
     "restore": "Restore",
     "unstar": "Remove from starred",
     "retry": "Try again",
-    "lock": "Lock"
+    "lock": "Lock",
+    "save": "Save"
   },
   "app": {
     "loadError": {
@@ -57,7 +58,23 @@
     "blockedTitle": "Finish the unfinished moves first",
     "blockedBody": "{name} has {count, plural, one {a move that was cut off} other {# moves that were cut off}}. Removing it now would lose track of {count, plural, one {it} other {them}}. Resume or discard each one, then remove the connection.",
     "blockedEntry": "{name}: {done} of {total} done",
-    "blockedLive": "Still running. Try again when it finishes."
+    "blockedLive": "Still running. Try again when it finishes.",
+    "add": "Add connection",
+    "test": "Test connection",
+    "testTitle": "Test {name}",
+    "testPassed": "Connection works",
+    "testPassedBody": "Coffer reached the provider, listed, wrote, read and deleted a test file.",
+    "testFailed": "Connection test failed",
+    "testFailedBody": "The failed step says what went wrong. Check the provider’s CORS rule and the key’s permissions, then try again.",
+    "rename": "Rename",
+    "renameTitle": "Rename {name}",
+    "nameLabel": "Name",
+    "nameHint": "Shown in the switcher and here. The endpoint, region and bucket can’t be changed: add a new connection instead.",
+    "nameEmpty": "Enter a name.",
+    "renameFailed": "Couldn’t save the name. Unlock and try again.",
+    "renamed": "Renamed to {name}",
+    "encrypted": "Encrypted with your passphrase",
+    "subtitle": "{connection} · {state}"
   },
   "dlg": {
     "zip": {

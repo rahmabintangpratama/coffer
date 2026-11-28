@@ -181,6 +181,7 @@ The UI never hides these. Each one is surfaced where it affects the person.
 - AC-11.2 Given a locked connection is chosen, When selected, Then Unlock appears.
 - AC-11.3 Given `Add connection`, When chosen, Then onboarding starts without losing the current session.
 - AC-11.4 Given a connection is removed in Settings, Then only that connection's data in this browser is deleted: its keys, its transfers, its unfinished uploads and its Starred and Recent entries (AC-102.5 to AC-102.7). Bucket data and other connections are untouched.
+- AC-11.5 Given Settings → Connections, Then each row names the connection by provider and bucket and says whether it is encrypted with the passphrase or only in memory; the page offers `Add connection` (AC-11.3), and each row `Test connection` (the six onboarding steps against the saved keys, ending in "Connection works" or "Connection test failed" with the failed step) and, for a saved connection, `Rename` (the label only; see [OQ-38](open-questions.md#oq-38-editing-a-saved-connections-endpoint-region-or-bucket)).
 
 **States:** one connection, several, locked entries.
 **Screens:** `S37_ConnSwitch`

@@ -174,3 +174,25 @@ test("FR-120 Explore with sample files is not rendered: the demo is not in the M
   await expect(page.getByText(/Explore with sample files/i)).toHaveCount(0);
   await expect(page.getByRole("button", { name: /sample files|demo/i })).toHaveCount(0);
 });
+
+test.describe("M11 Settings → Connections", () => {
+  test("Test connection passes on the fixture; Rename changes the label; Add connection opens onboarding", async ({ page }) => {
+    await enterApp(page, "/settings/connections", { passphrase: PASS });
+    const list = page.getByRole("list", { name: "Connections" });
+    await expect(list.getByText(/· Encrypted with your passphrase$/)).toBeVisible();
+    await list.getByRole("button", { name: /^Test connection: / }).click();
+    const test = page.getByRole("dialog", { name: /^Test / });
+    await expect(test.getByText("Connection works")).toBeVisible({ timeout: 30_000 });
+    expect(await axeViolations(page)).toEqual([]);
+    await test.getByRole("button", { name: "Done" }).click();
+
+    await list.getByRole("button", { name: /^Rename: / }).click();
+    const rename = page.getByRole("dialog", { name: /^Rename / });
+    await rename.getByLabel("Name").fill("Team files");
+    await rename.getByRole("button", { name: "Save" }).click();
+    await expect(list.getByText("Team files", { exact: true })).toBeVisible();
+
+    await page.getByRole("button", { name: "Add connection" }).click();
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(/provider/i, { timeout: 10_000 });
+  });
+});

@@ -7,6 +7,7 @@ import { vault } from "@/lib/storage/vault";
 import type { ConnectionSummary, Settings } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { forgetThisDevice, lockNow } from "../lock";
+import { connectionTools } from "../connection-tools";
 import { connectionRemoval } from "../removal";
 import { useSession } from "../session";
 import { useSettings } from "../settings";
@@ -53,6 +54,11 @@ export function SettingsScreen({ connection, notify }: { connection: ConnectionS
             active={connection}
             saved={saved}
             removal={connectionRemoval}
+            tools={{ ...connectionTools, add: session.startAdding }}
+            onRenamed={(renamed) => {
+              session.setSaved(saved.map((entry) => (entry.id === renamed.id ? renamed : entry)));
+              if (renamed.id === connection.id) session.connect(renamed);
+            }}
             notify={notify}
             onRemoved={(removed) => {
               session.setSaved(saved.filter((entry) => entry.id !== removed.id));

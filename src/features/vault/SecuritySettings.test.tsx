@@ -29,7 +29,7 @@ function removalOf(over: Partial<ConnectionRemoval> = {}): ConnectionRemoval {
   return { inspect: vi.fn(() => Promise.resolve(emptyPlan)), resume: vi.fn(), discard: vi.fn(() => Promise.resolve()), remove: vi.fn(() => Promise.resolve({ aborted: 0, failed: 0 })), ...over };
 }
 function connectionProps(over: Partial<ConnectionsSettingsProps> = {}): ConnectionsSettingsProps {
-  return { active: one, saved: [one, two], removal: removalOf(), onRemoved: vi.fn(), notify: vi.fn(), ...over };
+  return { active: one, saved: [one, two], removal: removalOf(), tools: { add: vi.fn(), test: vi.fn(() => Promise.resolve({ steps: [] })), rename: vi.fn((connection: ConnectionSummary, name: string) => Promise.resolve({ ...connection, name })) }, onRenamed: vi.fn(), onRemoved: vi.fn(), notify: vi.fn(), ...over };
 }
 
 beforeEach(() => {
@@ -245,5 +245,52 @@ describe("FR-11 the switcher", () => {
     await userEvent.click(screen.getByRole("button", { name: /^Switch connection:/ }));
     await screen.findByRole("list", { name: "Connections" });
     expect(screen.queryByRole("button", { name: "Lock" })).toBeNull();
+  });
+});
+
+describe("M11 Connections: add, test, rename and the row subtitle", () => {
+  it("describes each connection by provider and bucket, and says how it is kept", () => {
+    render(<ConnectionsSettings {...connectionProps({ saved: [two] })} />);
+    const list = screen.getByRole("list", { name: "Connections" });
+    expect(within(list).getByText("Other S3-compatible · docs · Encrypted with your passphrase")).toBeInTheDocument();
+    expect(within(list).getByText("Other S3-compatible · photos · Not saved on this device")).toBeInTheDocument();
+    expect(screen.queryByText(/1 connection ·/)).toBeNull();
+  });
+
+  it("Add connection starts onboarding", async () => {
+    const p = connectionProps();
+    render(<ConnectionsSettings {...p} />);
+    await userEvent.click(screen.getByRole("button", { name: "Add connection" }));
+    expect(p.tools.add).toHaveBeenCalled();
+  });
+
+  it("Test connection runs the steps and says it works, or that it failed", async () => {
+    const steps = (status: "pass" | "fail") => (["reach", "cors", "list", "write", "read", "clean"] as const).map((id) => ({ id, status: id === "write" ? status : ("pass" as const) }));
+    const test = vi.fn().mockResolvedValueOnce({ steps: steps("pass") }).mockResolvedValueOnce({ steps: steps("fail") });
+    const p = connectionProps();
+    render(<ConnectionsSettings {...p} tools={{ ...p.tools, test }} />);
+    await userEvent.click(screen.getByRole("button", { name: `Test connection: ${one.name}` }));
+    const dialog = await screen.findByRole("dialog", { name: `Test ${one.name}` });
+    expect(await within(dialog).findByText("Connection works")).toBeInTheDocument();
+    await userEvent.click(within(dialog).getByRole("button", { name: "Try again" }));
+    expect(await within(dialog).findByText("Connection test failed")).toBeInTheDocument();
+    expect(test).toHaveBeenCalledTimes(2);
+    expect(await axe(dialog)).toHaveNoViolations();
+  });
+
+  it("Rename saves the new label for a saved connection only, and refuses an empty one", async () => {
+    const p = connectionProps({ saved: [two] });
+    render(<ConnectionsSettings {...p} />);
+    expect(screen.queryByRole("button", { name: `Rename: ${one.name}` })).toBeNull(); // only in memory
+    await userEvent.click(screen.getByRole("button", { name: `Rename: ${two.name}` }));
+    const dialog = await screen.findByRole("dialog", { name: `Rename ${two.name}` });
+    const field = within(dialog).getByLabelText("Name");
+    await userEvent.clear(field);
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect(within(dialog).getByText("Enter a name.")).toBeInTheDocument();
+    await userEvent.type(field, "Team docs");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    await vi.waitFor(() => { expect(p.onRenamed).toHaveBeenCalledWith(expect.objectContaining({ id: "docs", name: "Team docs" })); });
+    expect(p.notify).toHaveBeenCalledWith("Renamed to Team docs");
   });
 });

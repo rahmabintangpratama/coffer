@@ -72,6 +72,13 @@ Answered by the project owner. The **From** column gives the question that was o
 
 ## Open questions
 
+### OQ-38: Editing a saved connection's endpoint, region or bucket
+- **Owner:** Product, Security
+- **Status:** Open (M11 QA asked for Edit with label, endpoint and region, re-tested before save).
+- **Question:** A sealed record's AAD binds the profile id to its endpoint, region, addressing style, bucket and prefix ([D-49](#decisions-made-on-the-owners-behalf)), so a record does not open if the stored destination was changed. Editing the destination therefore means a new sealed record under the same id, after a passing connection test, while transfers, journal entries, uploads, stars and recent items of the old destination still carry the old endpoint and bucket. Should an edit move those rows, block while any exist (like Remove, C-55), or should a changed destination always be a new connection?
+- **Recommended:** Treat a changed endpoint, region or bucket as a new connection: Add connection (prefilled from this one) and then Remove the old one, which already handles its rows. M11 ships Rename (label only) and Test connection; the name is outside the binding, so a rename re-seals the same record.
+- **Affects:** FR-11, AC-11.5, `lib/storage/vault.ts` (`bindingOf`), `features/vault/ConnectionTools.tsx`
+
 ### OQ-37: What "Remove connection" deletes
 - **Owner:** Product, Security
 - **Status:** Closed by [C-55](#owner-confirmed-decisions) (found by the M10 security audit, S-7 in [security-audit-0.1.0.md](security-audit-0.1.0.md)).

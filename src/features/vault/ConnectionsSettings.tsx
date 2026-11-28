@@ -1,9 +1,11 @@
 import { useRef, useState } from "react";
 import { Button } from "@/components/Button";
 import { Dialog } from "@/components/Dialog";
+import { getPreset } from "@/lib/providers";
 import { t } from "@/lib/i18n";
 import { nameOfEntry } from "@/lib/storage/journal";
 import type { ConnectionSummary, JournalEntry } from "@/lib/types";
+import { type ConnectionTools, RenameConnectionDialog, TestConnectionDialog } from "./ConnectionTools";
 import { RevealDialog } from "./RevealDialog";
 
 /** What Remove needs from the app (OQ-37, C-55); the page owns only the dialogs. */
@@ -29,6 +31,10 @@ export interface ConnectionsSettingsProps {
   active: ConnectionSummary;
   saved: readonly ConnectionSummary[];
   removal: ConnectionRemoval;
+  /** Add, Test and Rename (M11). */
+  tools: ConnectionTools;
+  /** A saved connection was renamed here; the app updates its list. */
+  onRenamed: (connection: ConnectionSummary) => void;
   /** A saved connection was removed here; the app drops it from its list (and leaves the session when it was the active one). */
   onRemoved: (connection: ConnectionSummary) => void;
   notify: (message: string) => void;
@@ -37,7 +43,9 @@ export interface ConnectionsSettingsProps {
 type Step = { kind: "blocked"; connection: ConnectionSummary; plan: RemovalPlan } | { kind: "confirm"; connection: ConnectionSummary; plan: RemovalPlan };
 
 /** The Connections page (FR-11, FR-102): each connection with Show secret key and Remove. */
-export function ConnectionsSettings({ active, saved, removal, onRemoved, notify }: ConnectionsSettingsProps) {
+export function ConnectionsSettings({ active, saved, removal, tools, onRenamed, onRemoved, notify }: ConnectionsSettingsProps) {
+  const [testing, setTesting] = useState<ConnectionSummary | null>(null);
+  const [renaming, setRenaming] = useState<ConnectionSummary | null>(null);
   const [revealing, setRevealing] = useState<ConnectionSummary | null>(null);
   const [step, setStep] = useState<Step | null>(null);
   const [busy, setBusy] = useState(false);
@@ -85,15 +93,31 @@ export function ConnectionsSettings({ active, saved, removal, onRemoved, notify 
   return (
     <section data-component="ConnectionsSettings" aria-labelledby="connections-title">
       <h2 id="connections-title" className="text-lg font-semibold">{t("set.connectionsLabel")}</h2>
-      <p className="text-sm text-fg-muted">{t("set.connections.sub", { count: connections.length })}</p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm text-fg-muted">{t("set.connections.sub", { count: connections.length })}</p>
+        <Button size="sm" variant="secondary" onClick={tools.add}>{t("conn.add")}</Button>
+      </div>
       <ul aria-label={t("conn.listLabel")} className="mt-2 flex flex-col divide-y divide-line">
         {connections.map((connection) => (
           <li key={connection.id} className="flex flex-col gap-2 py-3">
             <div className="min-w-0">
               <p className="truncate text-base">{connection.name}</p>
-              <p className="truncate text-sm text-fg-muted">{isSaved(connection) ? t("stored.creds.sub", { count: 1 }) : t("conn.notSaved")}</p>
+              <p className="truncate text-sm text-fg-muted">
+                {t("conn.subtitle", {
+                  connection: connection.bucket === undefined ? getPreset(connection.providerId).displayName : t("conn.name", { provider: getPreset(connection.providerId).displayName, bucket: connection.bucket }),
+                  state: isSaved(connection) ? t("conn.encrypted") : t("conn.notSaved"),
+                })}
+              </p>
             </div>
             <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="secondary" aria-label={`${t("conn.test")}: ${connection.name}`} onClick={() => { setTesting(connection); }}>
+                {t("conn.test")}
+              </Button>
+              {isSaved(connection) && (
+                <Button size="sm" variant="secondary" aria-label={`${t("conn.rename")}: ${connection.name}`} onClick={() => { setRenaming(connection); }}>
+                  {t("conn.rename")}
+                </Button>
+              )}
               <Button
                 size="sm"
                 variant="secondary"
@@ -114,6 +138,13 @@ export function ConnectionsSettings({ active, saved, removal, onRemoved, notify 
         ))}
       </ul>
 
+      <TestConnectionDialog connection={testing} tools={tools} onClose={() => { setTesting(null); }} />
+      <RenameConnectionDialog
+        connection={renaming}
+        tools={tools}
+        onClose={() => { setRenaming(null); }}
+        onRenamed={(next) => { onRenamed(next); notify(t("conn.renamed", { name: next.name })); }}
+      />
       <RevealDialog connection={revealing} onClose={() => { setRevealing(null); }} notify={notify} returnFocusRef={revealReturn} />
 
       <Dialog open={blocked !== null} onClose={() => { setStep(null); }} title={t("conn.blockedTitle")} closeLabel={t("act.close")}>
