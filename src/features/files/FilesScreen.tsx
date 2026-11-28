@@ -19,6 +19,7 @@ import { candidatesFromDrop, useTransfers, useUpload } from "@/features/transfer
 import { actionsFor, type ActionHandlers } from "./actions";
 import { Breadcrumb } from "./Breadcrumb";
 import { DetailsPanel } from "./DetailsPanel";
+import { EmptyActions } from "./EmptyActions";
 import { downloadItems } from "./download";
 import { FileGrid } from "./FileGrid";
 import { FileList } from "./FileList";
@@ -362,7 +363,9 @@ function Folder({ connection, relative, root, settings, onSettings, notify, onUs
     body = (
       <div role="status" data-component="EmptyState" className="py-12 text-center">
         <h2 className="text-lg font-semibold">{relative === "" ? t("files.emptyBucket.title", { bucket }) : t("files.emptyFolder.title")}</h2>
-        <p className="mt-2 text-fg-muted">{relative === "" ? t("files.emptyBucket.body") : t("files.emptyFolder.body")}</p>
+        {/* From 768 px the body says files can be dropped here; a phone has no drag and drop. */}
+        <p className="mt-2 text-fg-muted">{layout === "compact" ? t("files.emptyFolder.bodyPhone") : relative === "" ? t("files.emptyBucket.body") : t("files.emptyFolder.body")}</p>
+        {writable && <EmptyActions onFiles={(candidates) => void upload(candidates)} onNewFolder={() => { setNewFolderOpen(true); }} />}
       </div>
     );
   } else if (visible.length === 0) {

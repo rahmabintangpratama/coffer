@@ -161,6 +161,10 @@
     "download": {
       "multi": "Downloads start one after another. Your browser may ask to allow multiple downloads.",
       "error": "Couldn’t start the download. Try again."
+    },
+    "emptyFolder": {
+      "bodyPhone": "Upload files or a folder, or create a folder.",
+      "actions": "Add to this folder"
     }
   },
   "form": {

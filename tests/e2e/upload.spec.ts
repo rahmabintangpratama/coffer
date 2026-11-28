@@ -75,6 +75,22 @@ test.describe("upload", () => {
     expect(await body.Body?.transformToString()).toBe("alpha");
   });
 
+  test("AC-35.4 an empty folder offers Upload files, Upload folder and New folder, and its Upload files works", async ({ page }, testInfo) => {
+    const actions = page.getByRole("group", { name: "Add to this folder" });
+    await expect(actions.getByRole("button", { name: "Upload files" })).toBeVisible();
+    await expect(actions.getByRole("button", { name: "Upload folder" })).toBeVisible();
+    if (layoutFor(testInfo) !== "compact") await expect(page.getByText("Drag files here", { exact: false })).toBeVisible();
+    else await expect(page.getByText("Upload files or a folder, or create a folder.")).toBeVisible();
+    await page.getByTestId("empty-upload-files-input").setInputFiles([{ name: "first.txt", mimeType: "text/plain", buffer: Buffer.from("1") }]);
+    await expect(page.locator('[data-component="FileRow"], [data-component="FileTile"]').filter({ hasText: "first.txt" }).first()).toBeVisible({ timeout: 30_000 });
+    expect(await keysUnder(`${folder}/`)).toEqual([`${folder}/first.txt`]);
+  });
+
+  test("AC-35.4 New folder in the empty state opens the dialog", async ({ page }) => {
+    await page.getByRole("group", { name: "Add to this folder" }).getByRole("button", { name: "New folder" }).click();
+    await expect(page.getByRole("dialog", { name: "New folder" })).toBeVisible();
+  });
+
   test("AC-40.1 a folder upload keeps its nested structure", async ({ page }) => {
     const root = mkdtempSync(join(tmpdir(), "coffer-up-"));
     mkdirSync(join(root, "photos", "2026"), { recursive: true });

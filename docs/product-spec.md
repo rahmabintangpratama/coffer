@@ -372,6 +372,7 @@ The UI never hides these. Each one is surfaced where it affects the person.
 - AC-35.1 Given `New → New folder`, When a valid name is entered, Then a zero-byte placeholder object `prefix/name/` is written and the folder appears.
 - AC-35.2 Given a name with `/` or one that exists, Then an inline error explains.
 - AC-35.3 Given a read-only connection, Then New is disabled or hidden (FR-111).
+- AC-35.4 Given an empty folder on a writable connection, Then its empty state offers `Upload files`, `Upload folder` and `New folder`; from 768 px its text says files can be dropped here, on a phone it does not (M11).
 
 **Edge cases:** the placeholder decision is [C-18](open-questions.md#owner-confirmed-decisions); `files.emptyBucket.body` is overridden in the copy additions so it no longer says folders exist only from file paths. **Screens:** `S17_NewMenu`, `T12_Dialogs`
 
