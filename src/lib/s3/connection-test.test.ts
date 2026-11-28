@@ -274,6 +274,19 @@ describe("a key that cannot write", () => {
     expect(run.readVerified).toBe(false);
   });
 
+  it("AC-110.4 an empty first object, such as a folder placeholder, still proves reading", async () => {
+    // No byte range can be served from an empty object, and the server only says so to a key that may read it.
+    const { client } = fake({
+      ...ok,
+      ListObjectsV2Command: () => ({ Contents: [{ Key: "photos/" }] }),
+      PutObjectCommand: () => { throw service("AccessDenied", 403); },
+      GetObjectCommand: () => { throw service("InvalidRange", 416); },
+    });
+    const run = await runConnectionTest({ ...base, client });
+    expect(run).toMatchObject({ outcome: "readOnly", readVerified: true });
+    expect(statuses(run).read).toBe("skipped");
+  });
+
   it("AC-110.3 an object that is gone before it is read leaves reading unverified, not failed", async () => {
     // Another session's test file is listed first and deleted before the read.
     const { client } = fake({

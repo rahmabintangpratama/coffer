@@ -225,8 +225,11 @@ export async function runConnectionTest(options: ConnectionTestOptions): Promise
       return finish("readOnly", { readVerified: true });
     } catch (readError) {
       checkAbort();
+      const failed = toAppError(readError);
+      // An empty object has no first byte to serve; only a key that may read it is told so.
+      if (failed.status === 416) return finish("readOnly", { readVerified: true });
       // Deleted since the listing (another session's test file, for one): nothing says reading is denied.
-      if (toAppError(readError).code === "noSuchKey") return finish("readOnly", { readVerified: false });
+      if (failed.code === "noSuchKey") return finish("readOnly", { readVerified: false });
       update("read", { status: "fail", failure: failureFor(toAppError(readError)) });
       return finish("failed");
     }
