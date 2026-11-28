@@ -170,6 +170,62 @@ jobs:
           if-no-files-found: ignore
           retention-days: 30
 
+  # ADR-010: the header, CSP and asset specs against dist/ served by the generated nginx and Caddy configurations, and
+  # the GitHub Pages build served with no headers; each at the root and under a path.
+  deploy-hosts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        host: [nginx, caddy, github-pages]
+
+    services:
+      s3:
+        image: rustfs/rustfs@sha256:ee717072290bec9b11abfc0365f8310b00df1cd9b3639943edae47bdef05044a # 1.0.6
+        ports:
+          - 9000:9000
+        env:
+          RUSTFS_ACCESS_KEY: coffer-test-key
+          RUSTFS_SECRET_KEY: coffer-test-secret-not-real
+          RUSTFS_CONSOLE_ENABLE: "false"
+        options: >-
+          --health-cmd "curl -fsS http://127.0.0.1:9000/health"
+          --health-interval 3s
+          --health-timeout 3s
+          --health-retries 20
+
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Install browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Served at the root (${{ matrix.host }})
+        run: pnpm test:deploy
+        env:
+          COFFER_DEPLOY_HOST: ${{ matrix.host }}
+
+      - name: Served under a path (${{ matrix.host }})
+        run: pnpm test:deploy && pnpm dist:check && pnpm size:check
+        env:
+          COFFER_DEPLOY_HOST: ${{ matrix.host }}
+          COFFER_BASE: /coffer/
+
   # Lighthouse against the production build served gzip-compressed with its real _headers, on a mobile profile.
   # Budgets are in scripts/lighthouse/budgets.ts (technical-spec 14); a page over budget fails the job.
   lighthouse:

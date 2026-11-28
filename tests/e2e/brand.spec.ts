@@ -6,7 +6,8 @@ import { collectErrors, enterApp } from "./helpers";
 const types: Record<string, string> = {
   svg: "image/svg+xml",
   png: "image/png",
-  ico: "image/vnd.microsoft.icon",
+  // Servers differ on the name of the .ico type.
+  ico: "icon",
 };
 
 test.describe("Brand assets", () => {

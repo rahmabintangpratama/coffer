@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { checkHeaders, parseHeaders } from "../headers/check.ts";
 import { normalizeBase } from "./base.ts";
 import { drift } from "./generate.ts";
+import { dockerArgs, IMAGES } from "./serve.ts";
 import { cspValue, metaTags, readConfig, renderCaddy, renderHeadersFile, renderNginx, renderVercel } from "./render.ts";
 
 // ADR-010: one source for the headers, rendered for each host.
@@ -62,5 +63,18 @@ describe("COFFER_BASE", () => {
 
   it("refuses anything but a plain absolute path", () => {
     for (const value of ["coffer", "https://example.test/x", "/a/../b", "/a b/", '/a"/', "//"]) expect(() => normalizeBase(value)).toThrow("COFFER_BASE");
+  });
+});
+
+describe("serving the generated configurations in a container", () => {
+  it("mounts dist below the base and publishes on loopback only", () => {
+    const args = dockerArgs("nginx", "/repo/dist", "/tmp/x/config", "/coffer/", 4173).join(" ");
+    expect(args).toContain("-p 127.0.0.1:4173:8080");
+    expect(args).toContain("-v /repo/dist:/usr/share/nginx/html/coffer:ro");
+    expect(dockerArgs("caddy", "/repo/dist", "/c", "/", 4173).join(" ")).toContain("-v /repo/dist:/srv:ro");
+  });
+
+  it("pins each image by digest", () => {
+    for (const image of Object.values(IMAGES)) expect(image).toMatch(/@sha256:[0-9a-f]{64}$/);
   });
 });

@@ -24,9 +24,10 @@
 	# Only a file that exists gets its cache rule: a missing asset must not be cached for a year.
 	@cache1 {
 		file
-		path / /index.html /theme-init.js
+		path /index.html /theme-init.js
 	}
 	header @cache1 Cache-Control "no-cache"
+	header / Cache-Control "no-cache"
 
 	@webmanifest path *.webmanifest
 	header @webmanifest Content-Type application/manifest+json

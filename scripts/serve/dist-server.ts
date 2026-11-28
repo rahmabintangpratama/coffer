@@ -42,10 +42,11 @@ const COMPRESSIBLE = new Set([".html", ".js", ".mjs", ".css", ".json", ".webmani
  * `gzip` answers like the host does: text is sent gzip-compressed to a browser that accepts it. The Lighthouse run turns it on so
  * its transfer sizes are what a visitor downloads; the e2e run leaves it off.
  */
-export function startServer(dir: string, port: number, options: { gzip?: boolean; base?: string } = {}): Promise<Server> {
+export function startServer(dir: string, port: number, options: { gzip?: boolean; base?: string; headers?: boolean } = {}): Promise<Server> {
   const base = options.base ?? "/";
   const root = resolve(dir);
-  const rules = parseHeaders(readFileSync(join(root, "_headers"), "utf8"));
+  // `headers: false` stands for a host that sends none (GitHub Pages).
+  const rules = options.headers === false ? {} : parseHeaders(readFileSync(join(root, "_headers"), "utf8"));
 
   const server = createServer((request, response) => {
     void (async () => {
@@ -97,7 +98,7 @@ function main(): void {
   const dir = option("--dir", join(repo, "dist"));
   const port = Number(option("--port", "4173"));
   const base = normalizeBase(option("--base", process.env.COFFER_BASE ?? "/"));
-  void startServer(dir, port, { gzip: args.includes("--gzip"), base }).then(() => {
+  void startServer(dir, port, { gzip: args.includes("--gzip"), base, headers: !args.includes("--no-headers") }).then(() => {
     console.log(`Serving ${dir} with its _headers on http://127.0.0.1:${port}${base}`);
   });
 }

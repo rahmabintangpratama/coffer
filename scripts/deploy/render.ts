@@ -88,12 +88,17 @@ ${globalHeaders(config).map(([name, value]) => `    add_header ${name} ${quoted(
 
 /** A Caddyfile. With a domain in COFFER_SITE, Caddy obtains the certificate itself. */
 export function renderCaddy(config: HeaderConfig, base = "/"): string {
-  const rules = config.cache.map(({ value, paths }, index) => `	# Only a file that exists gets its cache rule: a missing asset must not be cached for a year.
+  const rules = config.cache.map(({ value, paths }, index) => {
+    // The folder itself is not a file to the matcher, so it has a line of its own.
+    const files = paths.filter((path) => path !== "/").map((path) => under(base, path));
+    const folder = paths.includes("/") ? [`	header ${under(base, "/")} Cache-Control ${quoted(value)}`] : [];
+    return [`	# Only a file that exists gets its cache rule: a missing asset must not be cached for a year.
 	@cache${String(index)} {
 		file
-		path ${paths.map((path) => under(base, path)).join(" ")}
+		path ${files.join(" ")}
 	}
-	header @cache${String(index)} Cache-Control ${quoted(value)}`);
+	header @cache${String(index)} Cache-Control ${quoted(value)}`, ...folder].join("\n");
+  });
   return `# ${notice}
 # Put the files of dist/ in COFFER_ROOT${base === "/" ? "" : ` (under ${base.slice(1)})`}. Set COFFER_SITE to your domain for HTTPS.
 

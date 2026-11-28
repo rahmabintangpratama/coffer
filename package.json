@@ -28,6 +28,7 @@
     "copy:check": "node scripts/copy/check.ts",
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:e2e": "playwright test",
+    "test:deploy": "playwright test -c playwright.deploy.config.ts",
     "prepare": "node scripts/hooks/prepare.ts",
     "commitlint": "commitlint",
     "demo:presets": "COFFER_DEMO=1 vitest run src/lib/providers/providers.test.ts -t \"prints endpoint\" --silent=false",
