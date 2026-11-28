@@ -182,7 +182,7 @@ test("FR-120 Explore with sample files is not rendered: the demo is not in the M
 });
 
 test.describe("M11 Settings → Connections", () => {
-  test("Test connection passes on the fixture; Rename changes the label; Add connection opens onboarding", async ({ page }) => {
+  test("Test connection passes on the fixture; Add connection opens onboarding", async ({ page }) => {
     await enterApp(page, "/settings/connections", { passphrase: PASS });
     const list = page.getByRole("list", { name: "Connections" });
     await expect(list.getByText(/· Encrypted with your passphrase$/)).toBeVisible();
@@ -192,13 +192,59 @@ test.describe("M11 Settings → Connections", () => {
     expect(await axeViolations(page)).toEqual([]);
     await test.getByRole("button", { name: "Done" }).click();
 
-    await list.getByRole("button", { name: /^Rename: / }).click();
-    const rename = page.getByRole("dialog", { name: /^Rename / });
-    await rename.getByLabel("Name").fill("Team files");
-    await rename.getByRole("button", { name: "Save" }).click();
-    await expect(list.getByText("Team files", { exact: true })).toBeVisible();
-
     await page.getByRole("button", { name: "Add connection" }).click();
     await expect(page.getByRole("heading", { level: 1 })).toContainText(/provider/i, { timeout: 10_000 });
+  });
+
+  test("AC-11.6 Edit connection saves only after a passing test, keeps unchanged keys, and replaces on a new start folder", async ({ page }) => {
+    test.setTimeout(90_000);
+    const folder = `e2e-edit/${Date.now().toString(36)}`;
+    await s3.send(new PutObjectCommand({ Bucket: E2E_BUCKET, Key: `${folder}/inside.txt`, Body: "x" }));
+    await enterApp(page, "/settings/connections", { passphrase: PASS });
+    const list = page.getByRole("list", { name: "Connections" });
+    const openEdit = async () => {
+      await list.getByRole("button", { name: /^Edit: / }).click();
+      await expect(page.getByRole("heading", { level: 1, name: /^Edit / })).toBeVisible({ timeout: 10_000 });
+    };
+
+    // A wrong secret fails the test, and cancelling leaves the saved connection as it was.
+    await openEdit();
+    await expect(page.getByLabel("Secret Access Key")).toHaveValue("");
+    await expect(page.getByLabel("Bucket", { exact: true })).toHaveValue(E2E_BUCKET);
+    expect(serious(await axeViolations(page))).toEqual([]);
+    await page.getByLabel("Name", { exact: true }).fill("Never saved");
+    await page.getByLabel("Secret Access Key").fill("coffer-wrong-secret-not-real");
+    await page.getByRole("button", { name: "Test connection" }).click();
+    await expect(page.getByText("The signature didn’t match")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole("button", { name: "Save changes" })).toHaveCount(0);
+    await page.getByRole("button", { name: "Back" }).click();
+    await page.getByRole("button", { name: "Back" }).click();
+    await expect(list.getByText("Never saved")).toHaveCount(0);
+
+    // Same destination: a new name, the keys left empty.
+    await openEdit();
+    await page.getByLabel("Name", { exact: true }).fill("Team files");
+    await page.getByRole("button", { name: "Test connection" }).click();
+    await page.getByRole("button", { name: "Save changes" }).click({ timeout: 30_000 });
+    await expect(list.getByText("Team files", { exact: true })).toBeVisible({ timeout: 15_000 });
+    await expect(list.getByRole("listitem")).toHaveCount(1);
+
+    // A new start folder is a new destination: it asks, then replaces the old record.
+    await openEdit();
+    await page.getByText("Advanced options").click();
+    await page.getByLabel("Start in folder").fill(folder);
+    await page.getByRole("button", { name: "Test connection" }).click();
+    await page.getByRole("button", { name: "Save changes" }).click({ timeout: 30_000 });
+    await expect(page.getByRole("heading", { level: 1, name: "Point to a different place?" })).toBeVisible();
+    expect(serious(await axeViolations(page))).toEqual([]);
+    await page.getByRole("button", { name: "Save changes" }).click();
+    await expect(list.getByText("Team files", { exact: true })).toBeVisible({ timeout: 15_000 });
+    await expect(list.getByRole("listitem")).toHaveCount(1);
+
+    // The new record is what a fresh session opens, with the keys that were never typed again.
+    await page.reload();
+    await unlock(page);
+    await goToRoute(page, "/files");
+    await expect(page.getByText("inside.txt").first()).toBeVisible({ timeout: 15_000 });
   });
 });

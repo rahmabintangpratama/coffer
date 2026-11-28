@@ -54,10 +54,14 @@ export function SettingsScreen({ connection, notify }: { connection: ConnectionS
             active={connection}
             saved={saved}
             removal={connectionRemoval}
-            tools={{ ...connectionTools, add: session.startAdding }}
-            onRenamed={(renamed) => {
-              session.setSaved(saved.map((entry) => (entry.id === renamed.id ? renamed : entry)));
-              if (renamed.id === connection.id) session.connect(renamed);
+            tools={{
+              ...connectionTools,
+              add: session.startAdding,
+              // Editing needs the saved keys: a locked connection is unlocked first.
+              edit: (target) => {
+                if (vault.has(target.id)) session.startEditing(target);
+                else session.lock({ reason: "start", connectionId: target.id });
+              },
             }}
             notify={notify}
             onRemoved={(removed) => {

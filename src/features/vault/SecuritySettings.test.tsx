@@ -29,7 +29,7 @@ function removalOf(over: Partial<ConnectionRemoval> = {}): ConnectionRemoval {
   return { inspect: vi.fn(() => Promise.resolve(emptyPlan)), resume: vi.fn(), discard: vi.fn(() => Promise.resolve()), remove: vi.fn(() => Promise.resolve({ aborted: 0, failed: 0 })), ...over };
 }
 function connectionProps(over: Partial<ConnectionsSettingsProps> = {}): ConnectionsSettingsProps {
-  return { active: one, saved: [one, two], removal: removalOf(), tools: { providerName: () => "Other S3-compatible", add: vi.fn(), test: vi.fn(() => Promise.resolve({ steps: [] })), rename: vi.fn((connection: ConnectionSummary, name: string) => Promise.resolve({ ...connection, name })) }, onRenamed: vi.fn(), onRemoved: vi.fn(), notify: vi.fn(), ...over };
+  return { active: one, saved: [one, two], removal: removalOf(), tools: { providerName: () => "Other S3-compatible", add: vi.fn(), test: vi.fn(() => Promise.resolve({ steps: [] })), edit: vi.fn() }, onRemoved: vi.fn(), notify: vi.fn(), ...over };
 }
 
 beforeEach(() => {
@@ -248,7 +248,7 @@ describe("FR-11 the switcher", () => {
   });
 });
 
-describe("M11 Connections: add, test, rename and the row subtitle", () => {
+describe("M11 Connections: add, test, edit and the row subtitle", () => {
   it("describes each connection by provider and bucket, and says how it is kept", () => {
     render(<ConnectionsSettings {...connectionProps({ saved: [two] })} />);
     const list = screen.getByRole("list", { name: "Connections" });
@@ -278,19 +278,11 @@ describe("M11 Connections: add, test, rename and the row subtitle", () => {
     expect(await axe(dialog)).toHaveNoViolations();
   });
 
-  it("Rename saves the new label for a saved connection only, and refuses an empty one", async () => {
+  it("AC-11.6 Edit is offered for a saved connection only", async () => {
     const p = connectionProps({ saved: [two] });
     render(<ConnectionsSettings {...p} />);
-    expect(screen.queryByRole("button", { name: `Rename: ${one.name}` })).toBeNull(); // only in memory
-    await userEvent.click(screen.getByRole("button", { name: `Rename: ${two.name}` }));
-    const dialog = await screen.findByRole("dialog", { name: `Rename ${two.name}` });
-    const field = within(dialog).getByLabelText("Name");
-    await userEvent.clear(field);
-    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
-    expect(within(dialog).getByText("Enter a name.")).toBeInTheDocument();
-    await userEvent.type(field, "Team docs");
-    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
-    await vi.waitFor(() => { expect(p.onRenamed).toHaveBeenCalledWith(expect.objectContaining({ id: "docs", name: "Team docs" })); });
-    expect(p.notify).toHaveBeenCalledWith("Renamed to Team docs");
+    expect(screen.queryByRole("button", { name: `Edit: ${one.name}` })).toBeNull(); // only in memory
+    await userEvent.click(screen.getByRole("button", { name: `Edit: ${two.name}` }));
+    expect(p.tools.edit).toHaveBeenCalledWith(two);
   });
 });

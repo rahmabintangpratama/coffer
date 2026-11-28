@@ -6,7 +6,7 @@ import { nameOfEntry } from "@/lib/storage/journal";
 import type { ConnectionSummary, JournalEntry } from "@/lib/types";
 import type { ConnectionTools } from "./connection-tools-types";
 
-const ConnectionToolDialogs = lazy(() => import("./ConnectionTools"));
+const TestConnectionDialog = lazy(() => import("./ConnectionTools"));
 import { RevealDialog } from "./RevealDialog";
 
 /** What Remove needs from the app (OQ-37, C-55); the page owns only the dialogs. */
@@ -32,10 +32,8 @@ export interface ConnectionsSettingsProps {
   active: ConnectionSummary;
   saved: readonly ConnectionSummary[];
   removal: ConnectionRemoval;
-  /** Add, Test and Rename (M11). */
+  /** Add, Test and Edit (M11). */
   tools: ConnectionTools;
-  /** A saved connection was renamed here; the app updates its list. */
-  onRenamed: (connection: ConnectionSummary) => void;
   /** A saved connection was removed here; the app drops it from its list (and leaves the session when it was the active one). */
   onRemoved: (connection: ConnectionSummary) => void;
   notify: (message: string) => void;
@@ -44,9 +42,8 @@ export interface ConnectionsSettingsProps {
 type Step = { kind: "blocked"; connection: ConnectionSummary; plan: RemovalPlan } | { kind: "confirm"; connection: ConnectionSummary; plan: RemovalPlan };
 
 /** The Connections page (FR-11, FR-102): each connection with Show secret key and Remove. */
-export function ConnectionsSettings({ active, saved, removal, tools, onRenamed, onRemoved, notify }: ConnectionsSettingsProps) {
+export function ConnectionsSettings({ active, saved, removal, tools, onRemoved, notify }: ConnectionsSettingsProps) {
   const [testing, setTesting] = useState<ConnectionSummary | null>(null);
-  const [renaming, setRenaming] = useState<ConnectionSummary | null>(null);
   const [revealing, setRevealing] = useState<ConnectionSummary | null>(null);
   const [step, setStep] = useState<Step | null>(null);
   const [busy, setBusy] = useState(false);
@@ -115,8 +112,8 @@ export function ConnectionsSettings({ active, saved, removal, tools, onRenamed, 
                 {t("conn.test")}
               </Button>
               {isSaved(connection) && (
-                <Button size="sm" variant="secondary" aria-label={`${t("conn.rename")}: ${connection.name}`} onClick={() => { setRenaming(connection); }}>
-                  {t("conn.rename")}
+                <Button size="sm" variant="secondary" aria-label={`${t("act.edit")}: ${connection.name}`} onClick={() => { tools.edit(connection); }}>
+                  {t("act.edit")}
                 </Button>
               )}
               <Button
@@ -139,16 +136,9 @@ export function ConnectionsSettings({ active, saved, removal, tools, onRenamed, 
         ))}
       </ul>
 
-      {(testing !== null || renaming !== null) && (
+      {testing !== null && (
         <Suspense fallback={null}>
-          <ConnectionToolDialogs
-            testing={testing}
-            renaming={renaming}
-            tools={tools}
-            onCloseTest={() => { setTesting(null); }}
-            onCloseRename={() => { setRenaming(null); }}
-            onRenamed={(next) => { onRenamed(next); notify(t("conn.renamed", { name: next.name })); }}
-          />
+          <TestConnectionDialog connection={testing} tools={tools} onClose={() => { setTesting(null); }} />
         </Suspense>
       )}
       <RevealDialog connection={revealing} onClose={() => { setRevealing(null); }} notify={notify} returnFocusRef={revealReturn} />

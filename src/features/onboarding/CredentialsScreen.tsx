@@ -15,10 +15,11 @@ import {
   resolveConnection,
   resolveRegion,
   visibleFields,
+  withKeptCredentials,
 } from "@/lib/providers";
 import { vault } from "@/lib/storage/vault";
 import type { AddressingStyle, ProviderField, ProviderPreset } from "@/lib/types";
-import { type ConnectionPlan, describeProblems, type FieldProblem, optionLabel, planOf, withoutSecrets } from "./form-model";
+import { type ConnectionPlan, describeProblems, type FieldProblem, isSecretField, optionLabel, planOf, withoutSecrets } from "./form-model";
 import { StepFrame } from "./StepFrame";
 
 export interface CredentialsSubmit {
@@ -28,6 +29,8 @@ export interface CredentialsSubmit {
   plan: ConnectionPlan;
   /** The keys are already in the vault under this id. */
   connectionId: string;
+  /** The connection's name, when the form edits one. */
+  name?: string;
 }
 
 interface CredentialsScreenProps {
@@ -37,13 +40,16 @@ interface CredentialsScreenProps {
   initialBucket?: string;
   onBack: () => void;
   onSubmit: (result: CredentialsSubmit) => void;
+  /** Edit a saved connection (AC-11.6): a name field, a required bucket, and empty key fields keep the saved keys. */
+  edit?: { connectionId: string; name: string };
 }
 
 const ADDRESSING: readonly AddressingStyle[] = ["auto", "path", "virtual"];
 const hasTemplate = (preset: ProviderPreset) => preset.endpointTemplate !== null;
 
 /** O30 to O35: the connection form for one provider. */
-export function CredentialsScreen({ preset, initialValues, initialBucket = "", onBack, onSubmit }: CredentialsScreenProps) {
+export function CredentialsScreen({ preset, initialValues, initialBucket = "", onBack, onSubmit, edit }: CredentialsScreenProps) {
+  const [name, setName] = useState(edit?.name ?? "");
   const form = useRef<HTMLFormElement>(null);
   const [values, setValues] = useState<Record<string, string>>(() => {
     const { endpoint, ...rest } = initialValues ?? {};
@@ -113,17 +119,32 @@ export function CredentialsScreen({ preset, initialValues, initialBucket = "", o
 
   const submit = (event: SubmitEvent) => {
     event.preventDefault();
+    if (!edit) {
+      run(values);
+      return;
+    }
+    // The saved keys are read for this one submit and never put in the form's state.
+    vault.credentialsFor(edit.connectionId).then(
+      (saved) => { run(withKeptCredentials(preset, values, saved)); },
+      () => { setProblems([{ target: "name", text: t("conn.editLocked") }]); },
+    );
+  };
+
+  const run = (formValues: Record<string, string>) => {
     const effective: ProviderPreset =
       endpointOverride === null ? preset : { ...preset, endpointTemplate: null, endpointTemplateByField: {} };
-    const runValues = endpointOverride === null ? values : { ...values, endpoint: endpointOverride };
+    const runValues = endpointOverride === null ? formValues : { ...formValues, endpoint: endpointOverride };
     const style = runValues[ADVANCED_FIELDS.addressingStyle];
     const addressingStyle = ADDRESSING.find((candidate) => candidate === style);
     const result = resolveConnection(effective, runValues, {
       bucket,
       ...(addressingStyle === undefined ? {} : { addressingStyle }),
     });
-    if (!result.ok) {
-      setProblems(describeProblems(preset, result.problems));
+    const own: FieldProblem[] = [];
+    if (edit && name.trim() === "") own.push({ target: "name", text: t("conn.nameEmpty") });
+    if (edit && bucket.trim() === "") own.push({ target: "bucket", text: t("form.error.required", { field: t("form.bucketLabel") }) });
+    if (!result.ok || own.length > 0) {
+      setProblems([...own, ...(result.ok ? [] : describeProblems(preset, result.problems))]);
       return;
     }
     setProblems([]);
@@ -134,6 +155,7 @@ export function CredentialsScreen({ preset, initialValues, initialBucket = "", o
       bucket: bucket.trim(),
       plan: planOf(result.value),
       connectionId,
+      ...(edit ? { name: name.trim() } : {}),
     });
   };
 
@@ -143,7 +165,7 @@ export function CredentialsScreen({ preset, initialValues, initialBucket = "", o
     const value = values[field.id] ?? "";
     const common = {
       value,
-      placeholder: field.placeholder,
+      placeholder: edit && isSecretField(field) ? t("conn.editKept") : field.placeholder,
       autoComplete: "off",
       autoCapitalize: "none",
       autoCorrect: "off",
@@ -181,7 +203,7 @@ export function CredentialsScreen({ preset, initialValues, initialBucket = "", o
   const advancedHasProblem = problems.some((problem) => problem.target === ADVANCED_FIELDS.prefix);
 
   return (
-    <StepFrame title={t("ob.cred.title", { provider: preset.displayName })} onBack={onBack}>
+    <StepFrame title={edit ? t("conn.editTitle", { name: edit.name }) : t("ob.cred.title", { provider: preset.displayName })} onBack={onBack}>
       {browserWarning ? <Banner tone="warning">{t("ob.cred.browserWarn", { provider: preset.displayName })}</Banner> : null}
 
       <HelpInline summary={t("ob.pasteLabel")}>
@@ -231,6 +253,15 @@ export function CredentialsScreen({ preset, initialValues, initialBucket = "", o
           </Banner>
         ) : null}
 
+        {edit ? (
+          <>
+            <p className="text-sm text-fg-muted">{t("conn.editKeysHint")}</p>
+            <Field label={t("conn.nameLabel")} hint={t("conn.nameHint")} error={problemFor("name")}>
+              <TextInput value={name} autoComplete="off" spellCheck={false} maxLength={80} onChange={(event) => { setName(event.target.value); }} />
+            </Field>
+          </>
+        ) : null}
+
         {fields.map((field) => {
           if (field.control === "segmented") {
             return (
@@ -246,13 +277,15 @@ export function CredentialsScreen({ preset, initialValues, initialBucket = "", o
               />
             );
           }
+          // While editing, an empty key field keeps the saved key.
+          const keeps = edit !== undefined && isSecretField(field);
           const isRegion = field.id === "region" && !field.required && regionDefault !== undefined;
           return (
             <Field
               key={field.id}
               label={field.label}
               caption={field.generic !== undefined && field.generic !== field.label ? field.generic : undefined}
-              optionalLabel={field.required ? undefined : t("form.optional")}
+              optionalLabel={field.required && !keeps ? undefined : t("form.optional")}
               marker={marker(field.id)}
               hint={isRegion ? t("form.regionHint", { region: regionDefault }) : undefined}
               error={problemFor(field.id)}
@@ -278,7 +311,8 @@ export function CredentialsScreen({ preset, initialValues, initialBucket = "", o
 
         <Field
           label={t("form.bucketLabel")}
-          optionalLabel={t("form.optional")}
+          optionalLabel={edit ? undefined : t("form.optional")}
+          error={problemFor("bucket")}
           hint={preset.bucketSuffix ? `${t("form.bucket.hint")} ${t("form.bucket.tencent")}` : t("form.bucket.hint")}
         >
           <TextInput
@@ -367,7 +401,7 @@ export function CredentialsScreen({ preset, initialValues, initialBucket = "", o
 
         <div className="flex flex-col gap-2">
           <Button type="submit" variant="primary" size="lg" block>
-            {t("ob.cred.cta")}
+            {edit ? t("conn.test") : t("ob.cred.cta")}
           </Button>
           <p className="text-center text-sm text-fg-muted">{t("ob.cred.foot")}</p>
         </div>

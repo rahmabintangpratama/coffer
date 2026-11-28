@@ -12,6 +12,7 @@ export {
   resolveConnection,
   resolveRegion,
   sessionTokenExpiry,
+  withKeptCredentials,
   type Credentials,
   type Problem,
   type ResolvedConnection,

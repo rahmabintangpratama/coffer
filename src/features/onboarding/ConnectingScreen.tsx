@@ -28,6 +28,8 @@ interface ConnectingScreenProps {
   connectionId: string;
   /** Back to the form. */
   onEdit: () => void;
+  /** The button after a pass, when it is not opening the bucket (Edit connection saves). */
+  passLabel?: string;
   onConnected: (result: ConnectedResult) => void;
   /** For tests: the page origin shown in the CORS help. Default: window.location.origin. */
   origin?: string;
@@ -42,7 +44,7 @@ type Phase =
   | { kind: "error" };
 
 /** O40 to O44: runs the six checks and shows what to do with the outcome (FR-5, FR-6, FR-110). */
-export function ConnectingScreen({ preset, plan, connectionId, onEdit, onConnected, origin, pageHost = window.location.hostname }: ConnectingScreenProps) {
+export function ConnectingScreen({ preset, plan, connectionId, onEdit, onConnected, passLabel, origin, pageHost = window.location.hostname }: ConnectingScreenProps) {
   const [region, setRegion] = useState(plan.region);
   const [attempt, setAttempt] = useState(0);
   // The person confirmed the local network pre-prompt, so the next request may trigger the browser's own.
@@ -196,7 +198,7 @@ export function ConnectingScreen({ preset, plan, connectionId, onEdit, onConnect
             finish("readWrite", cannotListBuckets ? null : (run.buckets ?? []));
           }}
         >
-          {bucket === undefined ? t("ob.pass.cta") : t("ob.pick.cta")}
+          {passLabel ?? (bucket === undefined ? t("ob.pass.cta") : t("ob.pick.cta"))}
         </Button>
       </StepFrame>
     );

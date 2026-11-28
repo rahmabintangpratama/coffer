@@ -11,6 +11,8 @@ const onboardingGroups = ["ob"] as const;
 const UnlockScreen = lazy(() => import("@/features/onboarding/UnlockScreen").then((module) => ({ default: module.UnlockScreen })));
 const LockedMemoryScreen = lazy(() => import("@/features/onboarding/LockedMemoryScreen").then((module) => ({ default: module.LockedMemoryScreen })));
 const unlockGroups = ["ob", "forget"] as const;
+const EditConnectionScreen = lazy(() => import("./EditConnectionScreen"));
+const editGroups = ["ob", "form", "conn"] as const;
 // The connected app (shell, routes, query client, transfers) loads after the connection exists, not before the first paint.
 const ConnectedApp = lazy(() => import("./ConnectedApp"));
 
@@ -25,6 +27,7 @@ export function App() {
   const locked = useSession((state) => state.locked);
   const adding = useSession((state) => state.adding);
   const resuming = useSession((state) => state.resuming);
+  const editing = useSession((state) => state.editing);
 
   // Lock and Forget in another tab reach this one (FR-9, FR-10).
   useEffect(() => {
@@ -103,6 +106,16 @@ export function App() {
             onStopTransfers={() => { void import("./lock").then((module) => { module.stopTransfersAndLock(); }); }}
             onForget={() => import("./lock").then((module) => module.forgetThisDevice())}
           />
+        </Suspense>
+      </CopyBoundary>
+    );
+  }
+
+  if (editing) {
+    return (
+      <CopyBoundary groups={editGroups} fallback={blank} errorFallback={<LoadError />}>
+        <Suspense fallback={blank}>
+          <EditConnectionScreen connection={editing} />
         </Suspense>
       </CopyBoundary>
     );

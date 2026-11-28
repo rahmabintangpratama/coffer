@@ -184,9 +184,10 @@ export const vault = {
   /**
    * Save a connection that is in memory. The first save sets the passphrase. Later saves reuse the cached key while
    * unlocked; when locked the passphrase must open the existing records first, so one passphrase protects all.
+   * `from` names the in-memory keys to seal when they are held under another id than the record's.
    */
-  async save(summary: ConnectionSummary, passphrase?: string): Promise<void> {
-    const credentials = secrets.get(summary.id);
+  async save(summary: ConnectionSummary, passphrase?: string, from: string = summary.id): Promise<void> {
+    const credentials = secrets.get(from);
     if (!credentials) throw new LockedError();
     const started = lockEpoch;
     let key = cachedKey;
@@ -216,6 +217,12 @@ export const vault = {
     const profile: ConnectionProfile = { ...summary, lastUsedAt: new Date().toISOString(), credentials: { storage: "encrypted", ...sealed } };
     await connectionStore.put(profile);
     setSavedHint(true);
+    // Keys tested under another id (Edit connection) take this id only once the record is written: a failed save changes nothing.
+    if (from !== summary.id) {
+      assertNotLocked(started);
+      secrets.set(summary.id, copy(credentials));
+      secrets.delete(from);
+    }
   },
 
   /**

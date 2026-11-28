@@ -117,6 +117,27 @@ export function credentialsFromValues(preset: ProviderPreset, values: FieldValue
   };
 }
 
+/**
+ * Fill the key fields the person left empty while editing a saved connection (AC-11.6) with the saved keys, so only
+ * what changed is typed again. A session token belongs to its key pair: it is kept only when neither the access key
+ * id nor the secret was typed again.
+ */
+export function withKeptCredentials(preset: ProviderPreset, values: FieldValues, saved: Credentials): Record<string, string> {
+  const next: Record<string, string> = { ...values };
+  const typed = credentialsFromValues(preset, values);
+  const fill = (role: Role, value: string) => {
+    const matching = preset.fields.filter((field) => field.role === role && isVisible(field, next) && (!field.roleWhen || (next[field.roleWhen.field] ?? "") === field.roleWhen.equals));
+    const own = preset.fields.find((field) => field.id === role && isVisible(field, next));
+    const target = matching[0]?.id ?? own?.id ?? (role === "sessionToken" && preset.sessionToken ? ADVANCED_FIELDS.sessionToken : undefined);
+    if (target !== undefined) next[target] = value;
+  };
+  const samePair = typed.accessKeyId === "" && typed.secretAccessKey === "";
+  if (typed.accessKeyId === "") fill("accessKeyId", saved.accessKeyId);
+  if (typed.secretAccessKey === "") fill("secretAccessKey", saved.secretAccessKey);
+  if (samePair && saved.sessionToken !== undefined && (typed.sessionToken ?? "") === "") fill("sessionToken", saved.sessionToken);
+  return next;
+}
+
 /** The expiry (`exp`) of a JWT as an ISO time, or undefined if the token is not a readable JWT. */
 export function jwtExpiry(token: string): string | undefined {
   const payload = token.split(".")[1];

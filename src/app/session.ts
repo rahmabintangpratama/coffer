@@ -24,6 +24,10 @@ interface SessionState {
   adding: boolean;
   /** Onboarding opens at the form for this memory-only connection, with its non-secret values kept. */
   resuming: ConnectionSummary | null;
+  /** "Edit connection": the saved connection being edited, over the current session. */
+  editing: ConnectionSummary | null;
+  startEditing: (connection: ConnectionSummary) => void;
+  stopEditing: () => void;
   connect: (connection: ConnectionSummary) => void;
   disconnect: () => void;
   setSaved: (saved: ConnectionSummary[]) => void;
@@ -46,6 +50,13 @@ export const useSession = create<SessionState>((set) => ({
   locked: savedHint() ? { reason: "start" } : null,
   adding: false,
   resuming: null,
+  editing: null,
+  startEditing: (connection) => {
+    set({ editing: connection });
+  },
+  stopEditing: () => {
+    set({ editing: null });
+  },
   connect: (connection) => {
     set({ connection, adding: false, resuming: null, locked: null });
   },
@@ -57,13 +68,13 @@ export const useSession = create<SessionState>((set) => ({
   },
   // A tab that is adding a connection keeps its onboarding open: the form clears its own keys, and the lock shows when it ends.
   lock: (locked) => {
-    set({ locked });
+    set({ locked, editing: null });
   },
   unlocked: (connection, saved) => {
     set({ connection, saved, locked: null, adding: false, resuming: null });
   },
   leaveLock: () => {
-    set({ locked: null, connection: null, adding: false, resuming: null });
+    set({ locked: null, connection: null, adding: false, resuming: null, editing: null });
   },
   startAdding: () => {
     set({ adding: true });

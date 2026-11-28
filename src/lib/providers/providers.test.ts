@@ -6,6 +6,7 @@ import {
   ADVANCED_FIELDS,
   buildEndpoint,
   credentialsFromValues,
+  defaultValues,
   getPreset,
   addressSpaceOf,
   hostLooksRight,
@@ -19,6 +20,7 @@ import {
   validateFields,
   validateProvidersFile,
   visibleFields,
+  withKeptCredentials,
 } from "./index";
 
 const jwt = (payload: object) =>
@@ -294,5 +296,30 @@ describe("credentials and the session token", () => {
   it("rejects a start folder with a relative segment", () => {
     const result = resolveConnection(getPreset("custom"), { endpoint: "https://s3.example.com", accessKeyId: "a", secretAccessKey: "b", [ADVANCED_FIELDS.prefix]: "../x" });
     expect(result).toMatchObject({ ok: false, problems: [{ kind: "prefix" }] });
+  });
+});
+
+describe("AC-11.6 keeping saved keys while editing", () => {
+  const saved = { accessKeyId: "saved-example-access-id", secretAccessKey: "saved-example-secret-not-real", sessionToken: "saved-example-token" };
+  const preset = getPreset("custom");
+  const resolved = (typed: Record<string, string>) => credentialsFromValues(preset, withKeptCredentials(preset, typed, saved));
+
+  it("keeps every saved key when none was typed", () => {
+    expect(resolved({})).toEqual(saved);
+  });
+
+  it("uses a typed secret and keeps the access key id; the old session token does not follow", () => {
+    expect(resolved({ secretAccessKey: "typed-example-secret" })).toEqual({ accessKeyId: saved.accessKeyId, secretAccessKey: "typed-example-secret" });
+  });
+
+  it("uses a typed session token with the saved key pair", () => {
+    expect(resolved({ sessionToken: "typed-example-token" })).toEqual({ ...saved, sessionToken: "typed-example-token" });
+  });
+
+  it("fills the fields of every preset, so a saved key always satisfies the form", () => {
+    for (const candidate of providersFile.providers) {
+      const filled = credentialsFromValues(candidate, withKeptCredentials(candidate, defaultValues(candidate), { accessKeyId: saved.accessKeyId, secretAccessKey: saved.secretAccessKey }));
+      expect([candidate.id, filled.accessKeyId, filled.secretAccessKey]).toEqual([candidate.id, saved.accessKeyId, saved.secretAccessKey]);
+    }
   });
 });

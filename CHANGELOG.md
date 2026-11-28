@@ -11,7 +11,7 @@ All notable changes to Coffer are listed here. The format follows [Keep a Change
 - **Search all of the bucket.** From a search in the current folder, scan the whole bucket by name, with each match's folder.
 - **Keyboard shortcuts.** F2, M, S, I, Delete on the list, `/` and Ctrl/⌘+K for search, `?` for the shortcut sheet; hints in the menus.
 - **Grid thumbnails** for images.
-- **Connections.** Add, test and rename connections in Settings.
+- **Connections.** Add, test and edit connections in Settings. Editing tests the connection first and keeps the keys you leave empty.
 - **Shell.** New at the top of the sidebar, a Details toggle in Files, the Files link reopens the last folder, Upload and New folder in an empty folder, an Open item for folders, a link to the source on About.
 
 ### Fixed
