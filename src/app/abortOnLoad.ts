@@ -1,4 +1,5 @@
 import { addInterruptedUploads, useTransfers } from "@/features/transfers";
+import { heldUploadIds } from "@/lib/storage/locks";
 import type { ConnectionSummary } from "@/lib/types";
 
 /** A few short rounds, not a loop that never ends: this is for a lock that is still being released, or an abort the provider refused once. */
@@ -26,7 +27,7 @@ export interface AbortOptions {
  */
 export async function abortInterruptedUploads(connection: ConnectionSummary, options: AbortOptions = {}): Promise<void> {
   const sleep = options.sleep ?? ((ms: number) => new Promise<void>((resolve) => { setTimeout(resolve, ms); }));
-  const [{ uploadStore }, { heldUploadIds }] = await Promise.all([import("@/lib/storage/uploads"), import("@/lib/storage/locks")]);
+  const { uploadStore } = await import("@/lib/storage/uploads");
   const bucket = connection.bucket ?? "";
 
   const candidates = async () => {

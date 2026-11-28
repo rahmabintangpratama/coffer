@@ -1,5 +1,6 @@
 import { useTransfers } from "@/features/transfers";
 import { t } from "@/lib/i18n";
+import { tryOperationLock, withOperationLock } from "@/lib/storage/locks";
 import type { ConnectionSummary, JournalEntry, OperationKind } from "@/lib/types";
 import { canWrite } from "@/features/readonly";
 import { useOperations } from "./state";
@@ -49,7 +50,7 @@ export function enqueue(job: () => Promise<void>, hooks: RunHooks): Promise<void
 
 /** Create each entry in turn, under its own lock, write-ahead, and run it. Stops at the first one that is cut off. */
 async function runEntries(specs: readonly StartInput[], hooks: RunHooks): Promise<JournalEntry[]> {
-  const [{ startEntry }, { journalStore }, { withOperationLock }] = await Promise.all([import("@/lib/storage/journal"), import("@/lib/storage/journal-store"), import("@/lib/storage/locks")]);
+  const [{ startEntry }, { journalStore }] = await Promise.all([import("@/lib/storage/journal"), import("@/lib/storage/journal-store")]);
   const finals: JournalEntry[] = [];
   for (const input of specs) {
     const entry = startEntry({
@@ -140,7 +141,7 @@ export function resumeOperation(connection: ConnectionSummary, entry: JournalEnt
   useOperations.getState().removeInterrupted(entry.id);
   void (async () => {
     try {
-      const [{ journalStore }, { resume }, { tryOperationLock }] = await Promise.all([import("@/lib/storage/journal-store"), import("@/lib/storage/journal"), import("@/lib/storage/locks")]);
+      const [{ journalStore }, { resume }] = await Promise.all([import("@/lib/storage/journal-store"), import("@/lib/storage/journal")]);
       const outcome = await tryOperationLock(entry.id, () =>
         enqueue(async () => {
           // The banner's copy may be old: another tab may have finished or discarded the entry since.

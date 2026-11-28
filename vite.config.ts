@@ -29,5 +29,13 @@ export default defineConfig({
   build: {
     target: "es2022",
     sourcemap: false,
+    // A dynamic import of a module that is also imported statically splits nothing: the intent and the bundle differ,
+    // so the build fails instead of warning.
+    rolldownOptions: {
+      onLog(level, log, handler) {
+        if (log.code === "INEFFECTIVE_DYNAMIC_IMPORT") handler("error", log);
+        else handler(level, log);
+      },
+    },
   },
 });

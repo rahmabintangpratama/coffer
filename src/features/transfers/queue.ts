@@ -1,5 +1,6 @@
 import { canWrite } from "@/features/readonly";
 import type { RequestPool } from "@/lib/s3";
+import { withUploadLock } from "@/lib/storage/locks";
 import { LockedError, vault } from "@/lib/storage/vault";
 import type { UploadBody } from "@/lib/s3/upload";
 import type { ConnectionSummary } from "@/lib/types";
@@ -53,11 +54,7 @@ async function run(id: string, job: Job): Promise<void> {
   job.controller = controller;
   store.patch(id, { status: "running", bytesDone: 0 });
   try {
-    const [s3, { uploadStore }, { withUploadLock }] = await Promise.all([
-      import("@/lib/s3"),
-      import("@/lib/storage/uploads"),
-      import("@/lib/storage/locks"),
-    ]);
+    const [s3, { uploadStore }] = await Promise.all([import("@/lib/s3"), import("@/lib/storage/uploads")]);
     const shared = (pool ??= new s3.RequestPool(() => getConcurrency()));
     // The upload runs on a lease: a private copy of the keys and its own client, so a lock lets it finish (C-27) and
     // "Stop transfers and lock" aborts it. The lock below is taken before the record is written and kept until the upload ends,
