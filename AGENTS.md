@@ -100,7 +100,8 @@ Package manager: **pnpm** 12 with Node 22 only (`engines` is `>=22 <23` and `eng
 ## Working efficiently
 
 - CI is the source of truth for the full gate set. Do not re-run all gates in a clean clone locally.
-- Locally, run only what the change touches: affected unit tests (`vitest related` or `--changed`) and every affected e2e spec in one browser at one viewport, before pushing. Changing a shared component, menu or copy means its consumers' specs are affected (a new menu item affects every spec that opens that menu). The full e2e matrix runs in CI only.
+- Locally, run only what the change touches: affected unit tests (`vitest related` or `--changed`) and the affected e2e specs, before pushing. Changing a shared component, menu or copy means its consumers' specs are affected (a new menu item affects every spec that opens that menu).
+- **Never run the full e2e suite locally.** Run only the affected specs, in one browser at one viewport. The full suite and the browser matrix run in CI only.
 - The pre-push hook runs `pnpm gates`. Do not repeat it by hand right before pushing.
 - After pushing, wait for CI with this procedure, once per push, and never poll in loops:
   1. Get the run ID of the exact commit: `gh run list --commit <sha> --limit 1 --json databaseId -q '.[0].databaseId'`. The run can take a few seconds to appear; repeat only that command until it prints an ID.
