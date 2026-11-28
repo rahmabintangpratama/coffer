@@ -581,7 +581,7 @@ The UI never hides these. Each one is surfaced where it affects the person.
 
 ## 9. Storage usage
 
-#### FR-90 Calculate usage (v1)
+#### FR-90 Calculate usage (v1, built in M11)
 **Story:** As a user, I want to know where my space goes.
 **Acceptance**
 - AC-90.1 Given Storage, Then nothing is calculated until the person taps `Calculate usage`, with the cost note `stor.idle.body` and an estimated request count (about one request per 1,000 objects; for a repeat run, based on the last object count).

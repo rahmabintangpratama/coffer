@@ -12,7 +12,6 @@ import { LoadError } from "./LoadError";
 import { queryClient } from "./query";
 import { routes } from "./routes";
 import { NotFoundScreen } from "./screens/NotFoundScreen";
-import { PlaceholderScreen } from "./screens/PlaceholderScreen";
 import { SettingsScreen } from "./screens/SettingsScreen";
 import { useSettings } from "./settings";
 import { Shell } from "./Shell";
@@ -22,9 +21,11 @@ import { useAutoLock } from "./useAutoLock";
 const FilesRoute = lazy(() => import("./screens/FilesRoute"));
 const TrashRoute = lazy(() => import("./screens/TrashRoute"));
 const StarredRoute = lazy(() => import("./screens/StarredRoute"));
+const StorageScreen = lazy(() => import("@/features/storage").then((module) => ({ default: module.StorageScreen })));
 const HomeScreen = lazy(() => import("@/features/files").then((module) => ({ default: module.HomeScreen })));
 const filesGroups = ["files", "det", "filter", "search", "sel", "kind", "col", "view", "sort", "row", "menu", "home", "type", "dlg", "conf", "upl", "drop", "pv", "op", "ro", "share"] as const;
 const starredGroups = ["star"] as const;
+const storageGroups = ["stor"] as const;
 const trashGroups = ["trash", "del", "sel", "conf", "op", "ro"] as const;
 const settingsGroups = ["sec", "stored", "forget", "reveal", "conn", "ob", "beh", "about", "op"] as const;
 
@@ -93,7 +94,11 @@ export default function ConnectedApp({ connection }: { connection: ConnectionSum
               </CopyBoundary>
             </Route>
             <Route path={routes.storage}>
-              <PlaceholderScreen titleKey="nav.storage" />
+              <CopyBoundary groups={storageGroups} fallback={screenFallback} errorFallback={<LoadError />}>
+                <Suspense fallback={screenFallback}>
+                  <StorageScreen connection={connection} />
+                </Suspense>
+              </CopyBoundary>
             </Route>
             <Route path={`${routes.settings}/*?`}>
               <CopyBoundary groups={settingsGroups} fallback={screenFallback} errorFallback={<LoadError />}>
