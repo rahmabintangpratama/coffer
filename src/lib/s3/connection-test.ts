@@ -225,6 +225,8 @@ export async function runConnectionTest(options: ConnectionTestOptions): Promise
       return finish("readOnly", { readVerified: true });
     } catch (readError) {
       checkAbort();
+      // Deleted since the listing (another session's test file, for one): nothing says reading is denied.
+      if (toAppError(readError).code === "noSuchKey") return finish("readOnly", { readVerified: false });
       update("read", { status: "fail", failure: failureFor(toAppError(readError)) });
       return finish("failed");
     }

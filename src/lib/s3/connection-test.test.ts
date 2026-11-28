@@ -274,6 +274,19 @@ describe("a key that cannot write", () => {
     expect(run.readVerified).toBe(false);
   });
 
+  it("AC-110.3 an object that is gone before it is read leaves reading unverified, not failed", async () => {
+    // Another session's test file is listed first and deleted before the read.
+    const { client } = fake({
+      ...ok,
+      ListObjectsV2Command: () => ({ Contents: [{ Key: ".coffer-test-ffffffffffffffff.txt" }] }),
+      PutObjectCommand: () => { throw service("AccessDenied", 403); },
+      GetObjectCommand: () => { throw service("NoSuchKey", 404); },
+    });
+    const run = await runConnectionTest({ ...base, client });
+    expect(run).toMatchObject({ outcome: "readOnly", readVerified: false });
+    expect(statuses(run).read).toBe("skipped");
+  });
+
   it("fails when even the read is denied", async () => {
     const { client } = fake({ ...denied, GetObjectCommand: () => Promise.reject(service("AccessDenied", 403)) });
     const run = await runConnectionTest({ ...base, client });
