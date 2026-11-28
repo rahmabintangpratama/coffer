@@ -32,7 +32,7 @@ const modifiedLabel: Record<ModifiedFilter, CopyKey> = {
  */
 export default function FilesAppBar({ menuButton, brand, trailing }: { menuButton: ReactNode; brand: ReactNode; trailing?: ReactNode }) {
   const layout = useLayout();
-  const { folderLabel, filters, setFilters, selectedCount, selectionActions } = useFilesChrome();
+  const { searchPlaceholder, filters, setFilters, selectedCount, selectionActions } = useFilesChrome();
   const clear = useSelection((state) => state.clear);
   const selecting = selectedCount > 0;
 
@@ -73,7 +73,7 @@ export default function FilesAppBar({ menuButton, brand, trailing }: { menuButto
           <>
             {menuButton}
             {layout !== "compact" && brand}
-            <SearchPill value={filters.query} onChange={(query) => { setFilters({ ...filters, query }); }} placeholder={t("search.placeholderFolder", { folder: folderLabel })} clearLabel={t("search.clear")} />
+            <SearchPill value={filters.query} onChange={(query) => { setFilters({ ...filters, query }); }} placeholder={searchPlaceholder} clearLabel={t("search.clear")} />
             {trailing}
           </>
         )}

@@ -291,7 +291,7 @@ Total: 35 days plus buffer. Every MVP FR in the product spec appears in at least
 
 **Status:** In progress (2026-11-28). The owner tested against a real Cloudflare R2 bucket at about 1050 px (dark) and 486 px and asked for the findings to be fixed, pulling some v1 features forward ([D-51](open-questions.md#decisions-made-on-the-owners-behalf)).
 
-**Pulled forward from v1:** Starred (FR-80), Recent (FR-81) and Storage usage (FR-90).
+**Pulled forward from v1:** Starred (FR-80), Recent (FR-81), Storage usage (FR-90) and Search all of {bucket} (AC-23.6).
 
 **Deliverables and checks**
 - Every fix has a regression test named after its AC; new behavior gets an AC in the product spec.

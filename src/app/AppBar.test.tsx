@@ -58,11 +58,11 @@ describe("the app bar is route-aware (components.md: SearchPill, FilterChips, Se
     expect(screen.getByText("Coffer")).toBeInTheDocument();
   });
 
-  it("on Files the pill reads Search in {folder} and the filter chips sit under it, in the app bar", async () => {
+  it("on Files the pill names what it searches (the top of the bucket here) and the filter chips sit under it, in the app bar", async () => {
     listPage.mockResolvedValue(files(["a.txt"]));
     renderApp(true);
     const bar = screen.getByRole("banner");
-    expect(await within(bar).findByRole("searchbox", { name: "Search in photos" })).toBeInTheDocument();
+    expect(await within(bar).findByRole("searchbox", { name: "Search names at the top of photos" })).toBeInTheDocument();
     expect(within(bar).getByRole("group", { name: "Filters" })).toBeInTheDocument();
     expect(within(bar).getByRole("button", { name: "Type" })).toHaveAttribute("aria-pressed", "false");
     // On a phone the pill is the bar: the menu button and the pill, not the brand.

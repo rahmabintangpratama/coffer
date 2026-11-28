@@ -295,11 +295,28 @@
   "search": {
     "all": "Search all of {bucket}",
     "none": {
-      "bodyFolder": "Search looks at names in {folder}. Try a shorter word or remove a filter."
+      "bodyFolder": "Only names in {folder} were searched, not the folders inside it. Try a shorter word, remove a filter or search all of the bucket.",
+      "bodyRoot": "Only names at the top of {bucket} were searched, not the folders inside it. Try a shorter word, remove a filter or search all of the bucket."
     },
-    "placeholderFolder": "Search in {folder}",
+    "placeholderFolder": "Search names in {folder}",
     "scope": {
       "partial": "Results cover the {count} items loaded so far."
+    },
+    "placeholderRoot": "Search names at the top of {bucket}",
+    "everywhere": {
+      "title": "Results in all of {bucket}",
+      "running": "Searching… {count} names checked.",
+      "done": "Searched all {count} names in {bucket}.",
+      "capped": "Searched the first {count} names in {bucket}. Results may be incomplete.",
+      "error": "The search stopped after {count} names because the provider didn’t answer. Try again.",
+      "cancelled": "Search stopped after {count} names.",
+      "matches": "{count, plural, =0 {No matches} one {# match} other {# matches}}",
+      "none": "No names in {bucket} contain “{q}”.",
+      "back": "Back to this folder",
+      "loadMore": "Show more results",
+      "listLabel": "Matches in all of {bucket}",
+      "inFolder": "In {folder}",
+      "hint": "Hidden files and the trash are not searched. Turn on hidden files in Settings to include them."
     }
   },
   "share": {

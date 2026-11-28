@@ -11,11 +11,12 @@ import { type Filters, noFilters } from "./model";
 interface FilesChromeState {
   /** The Files route is showing and the app bar should carry its controls. */
   active: boolean;
-  folderLabel: string;
+  /** The search pill's placeholder: it names exactly what the pill searches (the folder, or the top of the bucket). */
+  searchPlaceholder: string;
   filters: Filters;
   selectedCount: number;
   selectionActions: SelectionAction[];
-  activate: (folderLabel: string) => void;
+  activate: (searchPlaceholder: string) => void;
   deactivate: () => void;
   setFilters: (filters: Filters) => void;
   setSelection: (count: number, actions: SelectionAction[]) => void;
@@ -23,11 +24,11 @@ interface FilesChromeState {
 
 export const useFilesChrome = create<FilesChromeState>((set) => ({
   active: false,
-  folderLabel: "",
+  searchPlaceholder: "",
   filters: noFilters,
   selectedCount: 0,
   selectionActions: [],
-  activate: (folderLabel) => { set({ active: true, folderLabel }); },
+  activate: (searchPlaceholder) => { set({ active: true, searchPlaceholder }); },
   // Leaving a folder drops its search and filters, as the screen's state always did.
   deactivate: () => { set({ active: false, filters: noFilters, selectedCount: 0, selectionActions: [] }); },
   setFilters: (filters) => { set({ filters }); },

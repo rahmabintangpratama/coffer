@@ -32,6 +32,8 @@ import { useFilesChrome } from "./chrome";
 
 // The viewer is its own chunk, loaded the first time a file is opened.
 const Preview = lazy(() => import("@/features/preview").then((module) => ({ default: module.Preview })));
+// "Search all of {bucket}" is its own chunk too, loaded when asked for (AC-23.6).
+const BucketSearch = lazy(() => import("./BucketSearch"));
 import { useListing } from "./useListing";
 import { usePullToRefresh } from "./usePullToRefresh";
 import { useSelection } from "./selection";
@@ -110,10 +112,20 @@ function Folder({ connection, relative, root, settings, onSettings, notify, onUs
   const deactivate = useFilesChrome((state) => state.deactivate);
   const setSelection = useFilesChrome((state) => state.setSelection);
   // The app bar shows this folder's search and chips for as long as the screen is mounted.
+  const searchPlaceholder = relative === "" ? t("search.placeholderRoot", { bucket }) : t("search.placeholderFolder", { folder: folderLabel });
   useEffect(() => {
-    activate(folderLabel);
+    activate(searchPlaceholder);
     return deactivate;
-  }, [activate, deactivate, folderLabel]);
+  }, [activate, deactivate, searchPlaceholder]);
+  // The bucket-wide search runs for the pill's text; it closes when the text is cleared.
+  const [everywhereAsked, setEverywhere] = useState(false);
+  const searching = filters.query.trim() !== "";
+  // Clearing the pill closes it; typing again starts from this folder's results.
+  if (!searching && everywhereAsked) setEverywhere(false);
+  const everywhere = everywhereAsked && searching;
+  const searchAll = searching && !everywhere ? (
+    <Button variant="link" onClick={() => { setEverywhere(true); }}>{t("search.all", { bucket })}</Button>
+  ) : null;
   const detailsFile = useMemo<FileItem | null>(() => {
     const found = listing.items.find((item) => item.key === detailsKey);
     return found?.kind === "file" ? found : null;
@@ -309,8 +321,11 @@ function Folder({ connection, relative, root, settings, onSettings, notify, onUs
     body = (
       <div role="status" data-component="EmptyState" className="py-12 text-center">
         <h2 className="text-lg font-semibold">{t("search.none.title", { q: filters.query })}</h2>
-        <p className="mt-2 text-fg-muted">{t("search.none.bodyFolder", { folder: folderLabel })}</p>
-        <Button className="mt-4" onClick={() => { setFilters(noFilters); }}>{t("search.clearFilters")}</Button>
+        <p className="mt-2 text-fg-muted">{relative === "" ? t("search.none.bodyRoot", { bucket }) : t("search.none.bodyFolder", { folder: folderLabel })}</p>
+        <div className="mt-4 flex flex-wrap justify-center gap-2">
+          {searchAll && <Button variant="primary" onClick={() => { setEverywhere(true); }}>{t("search.all", { bucket })}</Button>}
+          <Button onClick={() => { setFilters(noFilters); }}>{t("search.clearFilters")}</Button>
+        </div>
       </div>
     );
   } else {
@@ -346,7 +361,16 @@ function Folder({ connection, relative, root, settings, onSettings, notify, onUs
             onRetryPage={listing.retryPage}
           />
         )}
-        {body}
+        {everywhere ? (
+          <Suspense fallback={<Skeleton className="h-12" />}>
+            <BucketSearch connection={connection} root={root} query={filters.query} showHidden={settings.showHiddenFiles} onBack={() => { setEverywhere(false); }} />
+          </Suspense>
+        ) : (
+          <>
+            {visible.length > 0 && searchAll && <div className="flex justify-end">{searchAll}</div>}
+            {body}
+          </>
+        )}
       </div>
       {conflictDialog}
       {operationDialogs}

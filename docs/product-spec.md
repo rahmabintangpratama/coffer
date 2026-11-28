@@ -258,10 +258,10 @@ The UI never hides these. Each one is surfaced where it affects the person.
 - AC-23.3 Given no match, Then `search.none.*` shows with `Clear filters`.
 - AC-23.4 Given `/` is pressed with the list focused, Then the pill gets focus; Esc clears then blurs.
 - AC-23.5 Given a partial listing, When search runs, Then the app says results cover loaded items only and offers `Load all`.
-- AC-23.6 (v1) Given the no-results state, When the person taps `Search all of {bucket}`, Then a bounded, cancellable scan of the bucket (no delimiter, up to 100,000 keys, names only) runs with a progress count and shows matches with their folder; reaching the cap shows the same incompleteness message as Load all.
+- AC-23.6 (v1, built in M11) Given a search in the pill (the no-results state, or a link above the results), When the person taps `Search all of {bucket}`, Then a bounded, cancellable scan of the bucket (no delimiter, up to 100,000 keys, names only) runs with a progress count and shows matches with their folder; reaching the cap shows the same incompleteness message as Load all.
 
 **States:** idle, results, no results, partial scope.
-**Edge cases:** the design copy says "Search in {bucket}"; MVP behavior is the current folder, so the placeholder and no-results copy name the folder (additions file, [C-10](open-questions.md#owner-confirmed-decisions)).
+**Edge cases:** the design copy says "Search in {bucket}"; the pill searches the current folder, so the placeholder and no-results copy name exactly what was searched: "Search names in {folder}", or "at the top of {bucket}" at the root, and say that folders inside were not searched (additions file, [C-10](open-questions.md#owner-confirmed-decisions)). The bucket-wide scan leaves out hidden names and `.coffer-trash/` unless hidden files are shown, shows matches 50 at a time, filters what it scanned as the person types (no new requests), and each match links to itself and to its folder.
 **Screens:** `S12_FilesSearch`
 
 #### FR-24 Home (MVP, Recent section in FR-81)
