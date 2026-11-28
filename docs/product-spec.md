@@ -605,7 +605,7 @@ The UI never hides these. Each one is surfaced where it affects the person.
 **Acceptance**
 - AC-100.1 Given Settings, Then Appearance (Theme System/Light/Dark, Density), Behavior (confirm trash, hidden files, parallel upload parts), Connections, Security and About are available; mobile shows a list that opens detail pages and 768 and above a section nav plus detail.
 - AC-100.2 Given Theme is `System`, Then the app follows `prefers-color-scheme` and updates live; Light and Dark override it and persist across reloads.
-- AC-100.3 Given About, Then it shows the version, the origin, the MIT license text and the IBM Plex (OFL) credit.
+- AC-100.3 Given About, Then it shows the version (from `package.json` at build time), the origin, a link to the source repository (`repository` in `package.json`), the MIT license text behind `View license` and the IBM Plex (OFL) credit.
 
 **Screens:** `S50_SettingsList`, `T50_SettingsPages`, `T50b_SettingsPages`
 

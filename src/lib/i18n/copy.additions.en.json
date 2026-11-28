@@ -3,7 +3,9 @@
     "fonts": "IBM Plex Sans and Mono, licensed under the SIL Open Font License.",
     "licenseText": "MIT License. Copyright (c) 2026 Coffer contributors.",
     "licenseLabel": "License",
-    "fontsLabel": "Fonts"
+    "fontsLabel": "Fonts",
+    "sourceLabel": "Source code",
+    "viewLicense": "View license (MIT)"
   },
   "act": {
     "restore": "Restore",

@@ -135,6 +135,9 @@ describe("AC-100.3 About", () => {
     expect(screen.getByText(/Free and open source/)).toBeInTheDocument();
     expect(await screen.findByText(/Permission is hereby granted, free of charge/)).toBeInTheDocument();
     expect(screen.getByText(/^MIT License/)).toBeInTheDocument();
+    // M11: closed behind View license, with a link to the source.
+    expect(screen.getByText(/^MIT License/).closest("details")).not.toHaveAttribute("open");
+    expect(screen.getByRole("link", { name: "github.com/rahmabintangpratama/coffer" })).toHaveAttribute("href", "https://github.com/rahmabintangpratama/coffer");
     expect(screen.getByText(/IBM Plex Sans and Mono, licensed under the SIL Open Font License/)).toBeInTheDocument();
     expect(await axe(container)).toHaveNoViolations();
   });

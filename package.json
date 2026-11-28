@@ -4,6 +4,10 @@
   "private": true,
   "description": "Browser-only, mobile-first file manager for S3-compatible object storage.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rahmabintangpratama/coffer"
+  },
   "type": "module",
   "engines": {
     "node": ">=22 <23"

@@ -163,6 +163,12 @@ test.describe("About (AC-100.3)", () => {
     await enterApp(page, "/settings/about");
     await expect(page.getByText(/^Coffer \d+\.\d+\.\d+/)).toBeVisible();
     await expect(page.getByText("http://127.0.0.1:4173")).toBeVisible();
+    // M11: a link to the source, and the license text closed until asked for.
+    const source = page.getByRole("link", { name: "github.com/rahmabintangpratama/coffer" });
+    await expect(source).toHaveAttribute("href", "https://github.com/rahmabintangpratama/coffer");
+    await expect(source).toHaveAttribute("rel", "noopener noreferrer");
+    await expect(page.getByText(/Permission is hereby granted, free of charge/)).toBeHidden();
+    await page.getByText("View license (MIT)").click();
     await expect(page.getByText(/Permission is hereby granted, free of charge/)).toBeVisible();
     await expect(page.getByText("IBM Plex Sans and Mono, licensed under the SIL Open Font License.")).toBeVisible();
   });

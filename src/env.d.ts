@@ -9,3 +9,5 @@ declare const __PROVIDER_COUNT__: number;
 
 /** The version in package.json, defined at build time (scripts/vite/app-version.ts). */
 declare const __APP_VERSION__: string;
+/** The source repository from package.json, or "" (scripts/vite/app-version.ts). */
+declare const __SOURCE_URL__: string;
