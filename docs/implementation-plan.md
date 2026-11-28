@@ -299,11 +299,24 @@ Total: 35 days plus buffer. Every MVP FR in the product spec appears in at least
 
 ---
 
+## M12: Resume after reload (v1, about 3 days)
+
+**Requirements:** FR-42 (AC-42.1 to AC-42.4). Not started; not part of MVP or M11.
+
+**Deliverables and estimate**
+- Orchestrator resume path in `lib/s3/upload.ts`: `ListParts` reconciliation (paged, the provider is the source of truth), upload the missing parts, complete; `NoSuchUpload` restarts from zero (technical-spec 7). 1 day.
+- Replace abort-on-load (C-43) with a `needsFile` task: "Upload paused when the page reloaded" with `Choose file` and `Discard`, the name, size and modified-time match with a refusal on a mismatch, after unlock, under the upload's Web Lock. The `uploads` record keeps `size` but not the modified time: add `lastModified` as an optional field (a record without it can only be discarded). Remove connection and Forget keep aborting stored uploads. 1 day.
+- Unit tests with a fake client, integration against the fixture (resume a part-way upload, changed file, aborted at the provider), e2e for reload, resume and Discard, axe on the panel; spec, technical-spec 7, C-43 and README updates. 1 day.
+
+**Risks:** providers that page or order `ListParts` differently (add to the compatibility matrix); a CORS rule without `ETag` exposed.
+
+---
+
 ## Buffer and ordering notes
 
 - **Buffer:** 4 days for review fixes, provider quirks found in M10 and any milestone that overruns. If a milestone overruns by more than a day, stop and re-plan instead of absorbing it silently.
 - **Why this order:** the connection flow (M2) comes before browse because everything needs a working client; upload (M4) before preview and moves so test data is easy to create; the journal (M6a) before trash because trash is a move; the vault (M8) late because earlier milestones run on memory-only keys and the lease design needs real transfers to test.
-- **Not in this plan (v1):** demo workspace, coach tips, command palette, drag-to-move, folder zip, resume after reload, change passphrase. Starred, Recent, Storage usage, Search all of {bucket} and the shortcuts sheet were pulled into M11.
+- **Not in this plan (v1):** demo workspace, coach tips, command palette, drag-to-move, folder zip, change passphrase; resume after reload has its own milestone, M12. Starred, Recent, Storage usage, Search all of {bucket} and the shortcuts sheet were pulled into M11.
 
 ## Working agreements for every milestone
 
