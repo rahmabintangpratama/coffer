@@ -32,9 +32,10 @@ export default defineConfig({
     // A dynamic import of a module that is also imported statically splits nothing: the intent and the bundle differ,
     // so the build fails instead of warning.
     rolldownOptions: {
+      // Thrown here: vite 8 only prints a log the handler is asked to raise to an error.
       onLog(level, log, handler) {
-        if (log.code === "INEFFECTIVE_DYNAMIC_IMPORT") handler("error", log);
-        else handler(level, log);
+        if (log.code === "INEFFECTIVE_DYNAMIC_IMPORT") throw new Error(log.message);
+        handler(level, log);
       },
     },
   },
