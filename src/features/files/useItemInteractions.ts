@@ -24,7 +24,7 @@ export interface InteractionOptions {
 /**
  * Click, keyboard and long-press behavior shared by the list and the grid
  * (FR-30, AC-20.5). Pointer: click selects, Ctrl/Cmd toggles, Shift ranges,
- * double-click opens a folder. Touch: a long press starts selection mode, then
+ * double-click opens a folder or previews a file. Touch: a long press starts selection mode, then
  * taps toggle; outside it a tap opens a folder or the details of a file.
  */
 export function useItemInteractions(options: InteractionOptions) {
@@ -145,7 +145,12 @@ export function useItemInteractions(options: InteractionOptions) {
       tabIndex: index === clampedFocus ? 0 : -1,
       "data-index": index,
       onClick: (event: MouseEvent) => { click(event, item); },
-      onDoubleClick: () => { if (item.kind === "folder") onOpenFolder(item); },
+      // Double-click opens, like Enter: a folder navigates, a file previews. A touch tap already opens on a phone.
+      onDoubleClick: () => {
+        if (layout === "compact") return;
+        if (item.kind === "folder") onOpenFolder(item);
+        else onActivateFile(item);
+      },
       onKeyDown: (event: KeyboardEvent) => { keyDown(event, item, index); },
       onFocus: () => { setFocused(index); },
       onPointerDown: (event: PointerEvent) => { pointerDown(event, item); },
@@ -154,7 +159,7 @@ export function useItemInteractions(options: InteractionOptions) {
       onPointerCancel: pointerEnd,
       onContextMenu: (event: MouseEvent) => { contextMenu(event, item); },
     }),
-    [clampedFocus, click, contextMenu, keyDown, onOpenFolder, pointerDown, pointerEnd],
+    [clampedFocus, click, contextMenu, keyDown, layout, onActivateFile, onOpenFolder, pointerDown, pointerEnd],
   );
 
   return { itemProps };

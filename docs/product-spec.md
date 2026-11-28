@@ -313,6 +313,7 @@ The UI never hides these. Each one is surfaced where it affects the person.
 - AC-30.3 Given a selection, Then the selection bar shows count (live region), and actions that don't apply are disabled (`Share link` disabled for multiple items and folders).
 - AC-30.4 Given navigation, Esc, or a completed action, Then the selection clears.
 - AC-30.5 Given a selected row, Then it shows `bg.selected`, a filled checkbox and a 2 px leading accent edge (never color alone).
+- AC-30.6 Given desktop, When an item is double-clicked, Then it opens like `Enter`: a folder navigates and a file opens in Preview. On a phone a tap opens (outside selection mode).
 
 **States:** none, one, many, read-only (FR-111).
 **Screens:** `S15_Selection`, `S39_TrashSelect`, `S42_ReadOnlyMenu`

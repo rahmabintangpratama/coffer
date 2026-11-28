@@ -414,4 +414,10 @@ test.describe("PDF, Markdown and HTML (M5b)", () => {
     await expect(row(page, "hostile.html")).toBeFocused();
     if (wide) await expect(target).toHaveAttribute("aria-selected", "true");
   });
+
+  test("AC-30.6 a double-click on a file opens the preview", async ({ page }) => {
+    test.skip((page.viewportSize()?.width ?? 0) < 768, "a tap opens on a phone");
+    await row(page, "code.ts").dblclick();
+    await expect(page.getByRole("dialog", { name: "Preview of code.ts" })).toBeVisible();
+  });
 });
