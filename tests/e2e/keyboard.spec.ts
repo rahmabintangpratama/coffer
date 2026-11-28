@@ -222,7 +222,7 @@ test.describe("keyboard only", () => {
     await tabTo(page, moveHere);
     await expect(moveHere).toBeEnabled();
     await page.keyboard.press("Enter");
-    await expect(page.locator('[data-component="Toast"]').filter({ hasText: "Moved mover.txt" }).first()).toBeVisible({ timeout: 20_000 });
+    await expect(page.locator('[data-component="Toast"]').filter({ hasText: "Moved 1 item to target" }).first()).toBeVisible({ timeout: 20_000 });
   });
 
   test("Share link: the choices are radios (arrows), Create and Copy link are reached by Tab, Escape closes", async ({ page }, testInfo) => {
@@ -233,7 +233,7 @@ test.describe("keyboard only", () => {
     await expect(row(page, "shared.txt")).toBeVisible({ timeout: 15_000 });
     await openRowMenu(page, "shared.txt");
     await chooseWithKeys(page, layout, /^Share link/);
-    const dialog = page.getByRole("dialog", { name: "Share link" });
+    const dialog = page.getByRole("dialog", { name: /^Share “/ });
     await expect(dialog).toBeVisible();
     const oneDay = dialog.getByRole("radio", { name: "1 day" });
     await tabTo(page, oneDay);

@@ -22,8 +22,9 @@ export function SelectionBar({ count, countLabel, toolbarLabel, clearLabel, onCl
       <Button variant="ghost" iconOnly aria-label={clearLabel} icon={<X aria-hidden="true" className="size-5" />} onClick={onClear} />
       <p role="status" className="flex-1 font-semibold">{countLabel}</p>
       {actions.map((action) => (
-        <Button key={action.id} variant="ghost" icon={action.icon} disabled={action.disabled ?? false} onClick={action.onSelect}>
-          {action.label}
+        // Below 1280 px the bar has no room for every label: the icon shows and the label stays the button's name.
+        <Button key={action.id} variant="ghost" icon={action.icon} disabled={action.disabled ?? false} onClick={action.onSelect} title={action.label}>
+          <span className="sr-only @xl:not-sr-only">{action.label}</span>
         </Button>
       ))}
     </div>

@@ -192,7 +192,7 @@ test.describe("axe on every screen and state", () => {
 
     await menuOf(page, layout, "a.txt");
     await chooseItem(page, layout, /^Share link/);
-    const share = page.getByRole("dialog", { name: "Share link" });
+    const share = page.getByRole("dialog", { name: /^Share “/ });
     await expect(share.getByRole("radio", { name: "1 day" })).toBeChecked();
     await check(page, "Share link, choose", failures);
     await share.getByRole("button", { name: /^Create link/ }).click();
