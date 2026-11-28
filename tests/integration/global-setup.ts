@@ -1,4 +1,4 @@
-import { bucketNames, deleteBucket } from "./cleanup";
+import { assertTestFixture, bucketNames, deleteBucket } from "./cleanup";
 import { createClient } from "./client";
 import { admin, s3Fixture } from "./config";
 import { provisionTestUsers } from "./provision";
@@ -23,6 +23,8 @@ async function waitForFixture(): Promise<void> {
 }
 
 export default async function setup(): Promise<void> {
+  // Before anything is written or deleted: this setup creates users and removes buckets.
+  assertTestFixture();
   await waitForFixture();
   await provisionTestUsers();
   await removeLeftovers();

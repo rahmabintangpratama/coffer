@@ -1,5 +1,5 @@
 import { CreateBucketCommand, ListObjectsV2Command, PutBucketCorsCommand, PutObjectCommand, type S3Client } from "@aws-sdk/client-s3";
-import { assertLocalFixture, bucketNames, deleteBucket, emptyBucket } from "../integration/cleanup";
+import { assertTestFixture, bucketNames, deleteBucket, emptyBucket } from "../integration/cleanup";
 import { createBucket, createClient } from "../integration/client";
 import { admin } from "../integration/config";
 import { readdirSync, readFileSync } from "node:fs";
@@ -38,7 +38,7 @@ export const bareBucket = (client: S3Client): Promise<string> => createBucket(cl
  * and the big read-only bucket keeps its seed, which takes long to write, without any trash.
  */
 export async function resetFixture(): Promise<void> {
-  assertLocalFixture();
+  assertTestFixture();
   const client = createClient(admin);
   try {
     for (const bucket of await bucketNames(client)) {

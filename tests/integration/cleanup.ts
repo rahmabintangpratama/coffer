@@ -1,16 +1,31 @@
 import { AbortMultipartUploadCommand, DeleteBucketCommand, DeleteObjectCommand, DeleteObjectsCommand, ListBucketsCommand, ListMultipartUploadsCommand, ListObjectsV2Command, type S3Client } from "@aws-sdk/client-s3";
+import { readFileSync } from "node:fs";
 import { decodeS3Key } from "../../src/lib/s3/keys";
 import { s3Fixture } from "./config";
 
 // Removing what tests leave in the S3 fixture, so a run never starts from the state of the one before it. Everything
-// here deletes, so it only ever runs against a server on this machine.
+// here deletes, so it only ever runs against a server on this machine, signed with the fixture's own key.
 
 const LOCAL_HOSTS = new Set(["127.0.0.1", "localhost", "[::1]"]);
+const COMPOSE = "tests/integration/docker-compose.yml";
 
-/** Refuses any endpoint that is not on this machine (`COFFER_TEST_S3_ENDPOINT` can point the tests elsewhere). */
-export function assertLocalFixture(endpoint: string = s3Fixture.endpoint): void {
+/** The access key the fixture is started with, read from the compose file so the two cannot drift apart. */
+function composeAccessKey(): string {
+  const compose = readFileSync(new URL("./docker-compose.yml", import.meta.url), "utf8");
+  const key = /^\s*RUSTFS_ACCESS_KEY:\s*(\S+)\s*$/m.exec(compose)?.[1];
+  if (key === undefined) throw new Error(`Refusing to delete test data: ${COMPOSE} names no RUSTFS_ACCESS_KEY.`);
+  return key;
+}
+
+/**
+ * Refuses unless the endpoint is on this machine (`COFFER_TEST_S3_ENDPOINT` can point the tests elsewhere) and the
+ * configured access key is the fixture's: a server on a loopback address may still be a tunnel to real storage. The
+ * configured key is never put in the message.
+ */
+export function assertTestFixture(endpoint: string = s3Fixture.endpoint, accessKeyId: string = s3Fixture.accessKeyId): void {
   const host = new URL(endpoint).hostname;
   if (!LOCAL_HOSTS.has(host)) throw new Error(`Refusing to delete test data on ${host}: only a fixture on this machine is ever emptied.`);
+  if (accessKeyId !== composeAccessKey()) throw new Error(`Refusing to delete test data: the configured access key is not the fixture key in ${COMPOSE}. Only the test fixture is ever emptied.`);
 }
 
 export async function listKeys(client: S3Client, bucket: string, prefix = ""): Promise<string[]> {
@@ -25,7 +40,7 @@ export async function listKeys(client: S3Client, bucket: string, prefix = ""): P
 }
 
 async function deleteKeys(client: S3Client, bucket: string, keys: readonly string[]): Promise<void> {
-  assertLocalFixture();
+  assertTestFixture();
   for (let start = 0; start < keys.length; start += 1000) {
     const batch = keys.slice(start, start + 1000);
     const result = await client.send(new DeleteObjectsCommand({ Bucket: bucket, Delete: { Objects: batch.map((Key) => ({ Key })), Quiet: true } }));
@@ -35,7 +50,7 @@ async function deleteKeys(client: S3Client, bucket: string, keys: readonly strin
 }
 
 async function abortUploads(client: S3Client, bucket: string, prefix = ""): Promise<void> {
-  assertLocalFixture();
+  assertTestFixture();
   const open = await client.send(new ListMultipartUploadsCommand({ Bucket: bucket, Prefix: prefix }));
   for (const upload of open.Uploads ?? []) await client.send(new AbortMultipartUploadCommand({ Bucket: bucket, Key: upload.Key, UploadId: upload.UploadId }));
 }
