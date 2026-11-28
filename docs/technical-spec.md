@@ -397,9 +397,9 @@ Implemented in `src/lib/storage/vault.ts`. See [ADR-005](adr/ADR-005-encrypted-l
 
 Trust boundaries and threats are in [`design/SECURITY-DESIGN.md`](../design/SECURITY-DESIGN.md) sections 1 to 3 and are not repeated here. Summary: **untrusted** are bucket file names and contents and share-link recipients; **partly trusted** are browser storage and the provider endpoint; **trusted** are the person and the app origin while headers hold. Out of scope: malware or extensions on the device, a compromised provider, a leaked passphrase.
 
-### 11.2 `public/_headers`
+### 11.2 Response headers
 
-Spec for the file Cloudflare Pages serves (from the design proposal, with cache rules added):
+`deploy/headers.json` is the one source; `pnpm deploy:build` renders it for each host, and `pnpm deploy:check` fails on a difference ([ADR-010](adr/ADR-010-deploy-portability.md)). This is `public/_headers`, read by Cloudflare Pages and Netlify (from the design proposal, with cache rules added; `/icons/*` and `/favicon.svg` are cached like `/assets/*`):
 
 ```
 /*
@@ -414,6 +414,12 @@ Spec for the file Cloudflare Pages serves (from the design proposal, with cache 
   Cache-Control: public, max-age=31536000, immutable
 
 /fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/icons/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/favicon.svg
   Cache-Control: public, max-age=31536000, immutable
 
 /
@@ -431,7 +437,7 @@ Notes:
 - `script-src 'self'` forbids inline scripts, so there is no inline theme script; `public/theme-init.js` is a small blocking file ([C-22](open-questions.md#owner-confirmed-decisions)). `style-src 'self'` forbids `<style>` tags and `style=""` attributes in HTML; React sets styles through the CSSOM, which is allowed. Radix, Vaul and TanStack Virtual set positions through React props, which works; this must be verified in a real browser (console shows no CSP violations) ([C-31](open-questions.md#owner-confirmed-decisions)).
 - `frame-src 'none'`: the sandbox HTML preview is an `<iframe sandbox="" srcdoc>`, which `frame-src` does not govern ([D-39](open-questions.md#decisions-made-on-the-owners-behalf)), so nothing needs a frame source. A `blob:` frame would not render in Safari anyway. `worker-src 'self' blob:` is for the bundled pdf.js worker. `img-src https:` and `media-src https:` serve presigned previews.
 - HSTS `preload` from the design proposal is omitted: preloading is a deliberate, hard-to-reverse choice for a domain the project controls ([C-32](open-questions.md#owner-confirmed-decisions)).
-- A `<meta http-equiv>` CSP cannot replace `frame-ancestors`; the header is the source of truth. A CI check fetches the built `_headers`, parses it and asserts every directive above.
+- A `<meta http-equiv>` CSP cannot replace `frame-ancestors`; the header is the source of truth. Only the GitHub Pages build adds a `meta` policy, because that host sends no headers ([what is lost](deploy/github-pages.md)). A CI check fetches the built `_headers`, parses it and asserts every directive above.
 - Optional hardening (v1): `require-trusted-types-for 'script'` in Report-Only first.
 
 ### 11.3 Untrusted names and contents
@@ -605,7 +611,8 @@ Design contrast numbers are computed from tokens, not observed. Before release, 
 ## 16. Deployment
 
 - **Origin:** production uses the Cloudflare `pages.dev` address until a domain is chosen ([C-30](open-questions.md#owner-confirmed-decisions)); the design's `coffer.pages.dev` is a stand-in and the real subdomain is whatever Pages assigns. A custom domain is a later decision and triggers a review of HSTS.
-- **Host:** Cloudflare Pages, static output from `pnpm build` (`dist/`), build image Node 22 LTS, no Functions, no environment secrets.
+- **Host:** any static host that can send the headers of 11.2; Cloudflare Pages is the reference target. Static output from `pnpm build` (`dist/`), built with Node 22 LTS, no Functions, no environment secrets. Targets and tiers: [deploy guides](deploy/README.md).
+- **Base path:** `COFFER_BASE` (default `/`) prefixes every asset address and the paths in `dist/_headers`. Routes are in the fragment. There is no service worker. `COFFER_TARGET=github-pages` builds the degraded tier.
 - **Preview deployments:** every PR gets a preview URL. Each distinct origin needs its own CORS entry; the helper always uses `window.location.origin`, so this works but preview URLs change per deployment. The preview banner (`X-Robots-Tag: noindex` is set by Pages) tells testers to use throwaway buckets.
 - **Config:** none secret. Build-time values only: `VITE_APP_VERSION` (from `package.json`) and `VITE_COMMIT` (from `CF_PAGES_COMMIT_SHA`), shown in About. The CSP does not need a nonce because there are no inline scripts.
 - **SPA routing:** hash routing needs no rewrite rules. There is no `404.html`, so Pages serves `index.html` for unknown paths.
@@ -628,5 +635,6 @@ Design contrast numbers are computed from tokens, not observed. Before release, 
 | [ADR-007](adr/ADR-007-local-data-placement.md) | Local data placement (IndexedDB versus localStorage) |
 | [ADR-008](adr/ADR-008-token-generator.md) | In-repo DTCG to CSS token generator |
 | [ADR-009](adr/ADR-009-own-multipart-orchestrator.md) | Own multipart upload orchestrator instead of `lib-storage` |
+| [ADR-010](adr/ADR-010-deploy-portability.md) | Any static host, one source for the headers |
 
 Owner decisions, open questions, decisions made on the owner's behalf and design conflicts are in [open-questions.md](open-questions.md).

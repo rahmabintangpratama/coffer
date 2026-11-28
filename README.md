@@ -10,11 +10,11 @@ Everything below describes what Coffer is planned to do, not what it does today.
 
 ## How it works
 
-Coffer is a static site hosted on Cloudflare Pages. It talks directly to the S3 API of your bucket, signing each request in the browser with the keys you enter. There is no backend, no database and no accounts.
+Coffer is a static site that any static host can serve; Cloudflare Pages is the reference target. It talks directly to the S3 API of your bucket, signing each request in the browser with the keys you enter. There is no backend, no database and no accounts.
 
 ```mermaid
 flowchart LR
-  CF["Cloudflare Pages<br/>static files"] -- "app code" --> B["Your browser<br/>Coffer"]
+  CF["Static host<br/>static files and headers"] -- "app code" --> B["Your browser<br/>Coffer"]
   B -- "signed S3 requests" --> S["Your bucket<br/>S3-compatible provider"]
 ```
 
@@ -104,6 +104,10 @@ Prerequisites: Node 22 (`>=22 <23`; run `nvm use` or `fnm use` to read `.nvmrc`;
 | Check that copy keys used in code exist | `pnpm copy:check` |
 | Print what each provider preset resolves to | `pnpm demo:presets` |
 | Check the security headers file | `pnpm headers:check` (after `pnpm build` it also checks `dist`) |
+
+## Deploy
+
+`pnpm build`, then serve `dist/` with the headers from `deploy/headers.json`. Ready-made configurations cover Cloudflare Pages, Netlify, Vercel, nginx and Caddy; GitHub Pages works with weaker protection. See the [deploy guides](docs/deploy/README.md). Whatever the host, add its address to your bucket's CORS rule; connections saved in the browser belong to that one address.
 
 ## Brand
 

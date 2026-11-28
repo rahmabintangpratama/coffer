@@ -4,7 +4,7 @@ Static files copied as-is to the site root. Rules from [../AGENTS.md](../AGENTS.
 
 ## Allowed contents
 
-- `_headers`: CSP and security headers plus cache rules. The spec is [technical-spec](../docs/technical-spec.md) section 11.2.
+- `_headers`: CSP and security headers plus cache rules, generated from `../deploy/headers.json` (`pnpm deploy:build`, ADR-010); do not edit it. The spec is [technical-spec](../docs/technical-spec.md) section 11.2.
 - `fonts/`: self-hosted IBM Plex Sans and Mono (`woff2`, Latin subset, OFL license file).
 - `theme-init.js`: tiny blocking script that sets `data-theme` before first paint (no inline scripts are allowed).
 - `manifest.webmanifest`, `favicon.svg` and `icons/`: the brand kit from `design/brand/` ([C-53](../docs/open-questions.md#owner-confirmed-decisions)). `icons/` holds `favicon-16x16.png`, `favicon-32x32.png`, `favicon-48x48.png`, `favicon.ico` (linked explicitly), `apple-touch-icon.png`, `android-chrome-192x192.png`, `android-chrome-512x512.png`, `android-chrome-maskable-512x512.png`, `coffer-maskable.svg`, `coffer-mark.svg` and `coffer-logo.svg`. Do not copy `previews/` or `source/`, and do not add the kit's `site.webmanifest`.

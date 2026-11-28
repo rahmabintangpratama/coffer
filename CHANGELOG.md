@@ -11,6 +11,7 @@ All notable changes to Coffer are listed here. The format follows [Keep a Change
 - **Search all of the bucket.** From a search in the current folder, scan the whole bucket by name, with each match's folder.
 - **Keyboard shortcuts.** F2, M, S, I, Delete on the list, `/` and Ctrl/⌘+K for search, `?` for the shortcut sheet; hints in the menus.
 - **Grid thumbnails** for images.
+- **Any static host.** Generated configurations for Cloudflare Pages, Netlify, Vercel, nginx and Caddy from one header file, hosting under a path, and GitHub Pages as a documented weaker option.
 - **Connections.** Add, test and edit connections in Settings. Editing tests the connection first and keeps the keys you leave empty.
 - **Shell.** New at the top of the sidebar, a Details toggle in Files, the Files link reopens the last folder, Upload and New folder in an empty folder, an Open item for folders, a link to the source on About.
 
@@ -18,6 +19,7 @@ All notable changes to Coffer are listed here. The format follows [Keep a Change
 
 - The viewer's buttons were invisible in the dark theme, its More menu did not open, Details opened behind it with the previous file, and its Back button could land on the bucket root.
 - What's stored counted finished operations as interrupted moves.
+- Editing a connection to another server never uses the saved keys there.
 - Double-click on a file now opens it.
 - Toasts: Undo closes the toast and says what was restored, moves name their folder, and toasts no longer cover the sidebar.
 - Trash shows a trashed folder as one entry.

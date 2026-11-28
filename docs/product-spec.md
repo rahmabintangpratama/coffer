@@ -688,7 +688,7 @@ The UI never hides these. Each one is surfaced where it affects the person.
 | ID | Requirement | Verified by |
 |---|---|---|
 | NFR-1 | Secrets (access key ID, secret, session token, passphrase, derived key) never appear in logs, URLs, errors, toasts, `localStorage`, unencrypted IndexedDB or network requests other than SigV4-signed requests to the provider endpoint. | Unit tests, storage-dump e2e, security audit |
-| NFR-2 | The site is served with the CSP and headers in the technical spec; no third-party scripts, fonts, analytics. | Header test in CI, browser console check |
+| NFR-2 | The site is served with the CSP and headers in the technical spec; no third-party scripts, fonts, analytics. It can be deployed to any static host, also under a path; a host that cannot send headers is a documented degraded tier ([ADR-010](adr/ADR-010-deploy-portability.md)). | Header test in CI, also behind nginx and Caddy; `headers:check --url`; browser console check |
 | NFR-3 | All bucket data (names, contents, metadata) is untrusted: text only, HTML as source, SVG as `<img>`, sanitised Markdown. | Unit and e2e XSS fixtures |
 | NFR-4 | Performance: initial JS and TTI budgets, and list virtualization, as in the technical spec. | Lighthouse CI, bundle-size check |
 | NFR-5 | WCAG 2.2 AA, including 44 px targets on mobile, visible focus and reduced motion. | axe in CI, manual keyboard and screen reader pass |

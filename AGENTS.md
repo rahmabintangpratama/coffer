@@ -1,11 +1,11 @@
 # Coffer: agent instructions
 
-Coffer is a browser-only, mobile-first file manager for S3-compatible object storage. It is a static site on Cloudflare Pages. The browser signs S3 requests with keys the user enters and talks directly to the provider.
+Coffer is a browser-only, mobile-first file manager for S3-compatible object storage. It is a static site. The browser signs S3 requests with keys the user enters and talks directly to the provider.
 
 **Hard constraints (never change without an ADR):**
 - No backend, no database, no accounts, no server-side search, no sync client.
 - Keys never leave the browser except as SigV4-signed requests to the user's own provider endpoint.
-- Static hosting on Cloudflare Pages, no Functions, no secrets in config.
+- Static hosting on any static host; Cloudflare Pages is the reference target ([ADR-010](docs/adr/ADR-010-deploy-portability.md)). No Functions, no secrets in config.
 
 Status: docs and agent context exist; the app is not scaffolded yet. See [docs/product-brief.md](docs/product-brief.md).
 
@@ -25,7 +25,8 @@ Status: docs and agent context exist; the app is not scaffolded yet. See [docs/p
 | `src/lib/i18n/` | Copy loader and ICU formatting. |
 | `src/styles/` | Generated token CSS and Tailwind mapping. |
 | `scripts/` | Build tooling, including the token generator (`scripts/tokens/`). |
-| `public/` | `_headers` (CSP), self-hosted fonts and a few static assets. |
+| `public/` | `_headers` (CSP, generated), self-hosted fonts and a few static assets. |
+| `deploy/` | `headers.json`, the one source of the response headers, and the generated nginx and Caddy files (ADR-010). |
 | `tests/` | Integration, e2e and shared fixtures. |
 
 **Read order for docs:** [product-brief](docs/product-brief.md), then [product-spec](docs/product-spec.md), then [technical-spec](docs/technical-spec.md), then [implementation-plan](docs/implementation-plan.md) (milestones, exit checks), then [open-questions](docs/open-questions.md). ADRs are in [docs/adr/](docs/adr/). Start from [design/HANDOFF.md](design/HANDOFF.md) for design.
@@ -59,7 +60,10 @@ Package manager: **pnpm** 12 with Node 22 only (`engines` is `>=22 <23` and `eng
 | Check the bundle budgets and that the lazy libraries (pdf.js, Markdown, DOMPurify) are outside the initial bundle, and the entry limit of 90 KiB (after `pnpm build`; the first-screen total is in `tests/e2e/first-load.spec.ts`) | `pnpm size:check` |
 | Break the initial bundle down by package and folder (writes `bundle-stats.json`, which is ignored) | `pnpm size:analyze` |
 | Check that `dist/` holds only the C-22 allowlist, `index.html` and hashed `assets/` (after `pnpm build`) | `pnpm dist:check` |
-| Check `public/_headers` against a live deployment | `pnpm headers:check --url <deployed-url>` |
+| Check a live deployment on any host against the header spec (give the path of a subpath deployment) | `pnpm headers:check --url <deployed-url>` |
+| Write the host configurations from `deploy/headers.json` | `pnpm deploy:build` |
+| Check the committed host configurations match `deploy/headers.json` | `pnpm deploy:check` |
+| Header and app specs against `dist/` behind nginx, Caddy or a header-less server (`COFFER_DEPLOY_HOST`, `COFFER_BASE`; needs Docker and the S3 fixture) | `pnpm test:deploy` |
 | Lighthouse (mobile profile) on Welcome, Unlock and Files against the budgets in `scripts/lighthouse/budgets.ts`; builds and serves `dist/` itself on port 4173 with gzip; needs the S3 fixture and Chromium | `pnpm lighthouse` |
 | Write `docs/contrast-report.md` from the real-browser contrast run (run `tests/e2e/contrast.spec.ts` in each engine first) | `pnpm contrast:report` |
 
@@ -79,7 +83,7 @@ Package manager: **pnpm** 12 with Node 22 only (`engines` is `>=22 <23` and `eng
 - Never log, display, store unencrypted or put in a URL: access keys, secret keys, session tokens, passphrases, derived keys or presigned URLs. The one exception is the Share link dialog, which shows the link it just made, once, from component state (FR-60, D-46).
 - Never render bucket data (names, contents, metadata) as HTML. HTML is shown as source, SVG as `<img>`, Markdown sanitized.
 - No third-party scripts, fonts, analytics, CDNs or error-reporting SDKs. Self-host fonts.
-- Keep the CSP in `public/_headers` valid; do not add inline scripts, `unsafe-eval` or new origins to loosen it.
+- Change headers only in `deploy/headers.json`, then `pnpm deploy:build`. Keep the CSP valid; do not add inline scripts, `unsafe-eval` or new origins to loosen it.
 - Treat all file names and file contents as untrusted input.
 - Tests and fixtures never use real cloud credentials.
 - New storage locations must be added to "Forget this device" and its inventory test in the same change.
@@ -143,4 +147,4 @@ A gate is lint, typecheck, test, e2e, build or the size check.
 - Run the antislop rules for UI and copy work (`antislop`, `antislop-ui`, `antislop-copywriting`, `antislop-human`).
 - Run the Cloudflare `security-audit` skill on the codebase (full audit mode) and resolve or record every finding.
 - Run the real-browser contrast pass and the provider compatibility matrix ([technical-spec](docs/technical-spec.md) sections 15.5 and 15.7).
-- Run `pnpm headers:check --url <deployed-url>` against the live deployment ([deploy-cloudflare-pages](docs/deploy-cloudflare-pages.md)).
+- Run `pnpm headers:check --url <deployed-url>` against the live deployment ([deploy guides](docs/deploy/README.md)).

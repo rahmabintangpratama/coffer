@@ -43,7 +43,7 @@ People who have used Google Drive for years expect a familiar model: a left rail
 | G-5 | Destructive actions are recoverable: Trash, Undo, and an operation journal for interrupted multi-object work. |
 | G-6 | One responsive layout works at 375, 768 and 1440 px and meets WCAG 2.2 AA. |
 | G-7 | New S3-compatible providers are added as data (a preset), not as code. |
-| G-8 | Zero-ops hosting: a static site on Cloudflare Pages. |
+| G-8 | Zero-ops hosting: a static site on any static host, with Cloudflare Pages as the reference target ([ADR-010](adr/ADR-010-deploy-portability.md)). |
 
 ## Non-goals
 

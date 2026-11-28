@@ -1,10 +1,10 @@
-# Deploy Coffer to Cloudflare Pages
+# Deploy Coffer to Cloudflare Pages (reference target)
 
 - **Purpose:** the exact steps to host Coffer on Cloudflare Pages, and how to prove the live site sends the headers the spec requires.
 - **Status:** Draft (the steps are written from the repo's build and from Cloudflare's documented Pages settings; the owner confirms them on first deploy, and any difference is noted in section 8).
-- **Last updated:** 2026-11-22
-- **Source files:** `public/_headers`, `package.json`, `.nvmrc`, `scripts/headers/check.ts`
-- **Related:** [technical-spec.md](technical-spec.md) sections 11.2 and 16, [release-checklist.md](release-checklist.md), [manual-test-plan.md](manual-test-plan.md)
+- **Last updated:** 2026-11-28
+- **Source files:** `deploy/headers.json`, `public/_headers`, `package.json`, `.nvmrc`, `scripts/headers/check.ts`
+- **Related:** [all targets](README.md), [technical-spec.md](../technical-spec.md) sections 11.2 and 16, [release-checklist.md](../release-checklist.md), [manual-test-plan.md](../manual-test-plan.md)
 
 Coffer is a static site. There is no server code, no Functions, no database and no secret. Cloudflare Pages only serves the files in `dist/` and applies `_headers`.
 
@@ -19,7 +19,7 @@ Coffer is a static site. There is no server code, no Functions, no database and 
 | Package manager | pnpm 12, pinned in `package.json` (`packageManager`). `corepack enable` makes the pinned version run. |
 | Environment variables | `NODE_VERSION=22` only. No secrets. No `VITE_*` values are needed. |
 | Functions | None. Do not add a `functions/` directory. |
-| Headers | `public/_headers` is copied to `dist/_headers` by the build and applied by Pages. |
+| Headers | The build writes `dist/_headers`, applied by Pages. It and `public/_headers` are generated from `deploy/headers.json` (`pnpm deploy:build`). |
 
 `pnpm build` runs `tsc --noEmit && vite build`, so a type error fails the deployment before anything is published.
 
@@ -51,7 +51,7 @@ Settings, **Builds & deployments**:
 - Keep **Preview deployments** on for **All non-production branches**.
 - Preview deployments get `X-Robots-Tag: noindex` from Pages; the spec relies on that. Check it in section 5.
 
-**Each address is its own origin.** A bucket's CORS rule must list the address you use. Coffer's connection helper always shows the rule with the current address, so copy it from the screen. Preview addresses change per deployment; use the stable branch address (`https://<branch>.<project>.pages.dev`) for tests, and use throwaway buckets.
+**Each address is its own origin.** Saved connections belong to it: at a new address, save them again. A bucket's CORS rule must list the address you use. Coffer's connection helper always shows the rule with the current address, so copy it from the screen. Preview addresses change per deployment; use the stable branch address (`https://<branch>.<project>.pages.dev`) for tests, and use throwaway buckets.
 
 ## 4. Do not change these settings
 
@@ -96,7 +96,7 @@ The first release uses the `pages.dev` address (C-30). A custom domain is a late
 
 1. **Custom domains**, **Set up a custom domain**. Cloudflare creates the DNS record and the certificate.
 2. Every bucket's CORS rule must now list the new origin; old rules for the `pages.dev` address keep working only as long as you keep using that address.
-3. Re-read the HSTS line in `public/_headers` (`includeSubDomains`, no `preload`, C-32) before the domain is used: HSTS tells browsers to refuse plain http for the whole domain and its subdomains for two years. Do not add `preload` until the domain is final and owned.
+3. Re-read the HSTS line in `deploy/headers.json` (`includeSubDomains`, no `preload`, C-32) before the domain is used: HSTS tells browsers to refuse plain http for the whole domain and its subdomains for two years. Do not add `preload` until the domain is final and owned.
 4. Run section 5 against the new address.
 
 ## 8. Things to confirm on the first deploy

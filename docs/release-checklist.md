@@ -4,7 +4,7 @@
 - **Status:** Draft (automated items are done and pushed; items marked "Owner" wait for phase B).
 - **Last updated:** 2026-11-22
 - **Source files in `design/`:** none
-- **Related:** [technical-spec.md](technical-spec.md) section 16 (release gate), [implementation-plan.md](implementation-plan.md) (M10), [manual-test-plan.md](manual-test-plan.md), [deploy-cloudflare-pages.md](deploy-cloudflare-pages.md), [security-audit-0.1.0.md](security-audit-0.1.0.md), [contrast-report.md](contrast-report.md), [../CHANGELOG.md](../CHANGELOG.md), [release-notes-0.1.0.md](release-notes-0.1.0.md)
+- **Related:** [technical-spec.md](technical-spec.md) section 16 (release gate), [implementation-plan.md](implementation-plan.md) (M10), [manual-test-plan.md](manual-test-plan.md), [deploy/cloudflare-pages.md](deploy/cloudflare-pages.md), [security-audit-0.1.0.md](security-audit-0.1.0.md), [contrast-report.md](contrast-report.md), [../CHANGELOG.md](../CHANGELOG.md), [release-notes-0.1.0.md](release-notes-0.1.0.md)
 
 **Status words:** Done (a machine checked it and the evidence is linked), Owner (needs your account, device or decision), Open (a known gap, with the entry that tracks it).
 
@@ -14,7 +14,7 @@
 
 | # | Gate | Status | Evidence |
 |---|---|---|---|
-| G-1 | Headers verified on the preview deployment | Owner | Run `pnpm headers:check --url <preview-url>` ([deploy guide](deploy-cloudflare-pages.md) section 5). The same check on `dist/_headers` runs in CI (`pnpm headers:check`) and every e2e test runs under the real `_headers`. |
+| G-1 | Headers verified on the preview deployment | Owner | Run `pnpm headers:check --url <preview-url>` ([deploy guide](deploy/cloudflare-pages.md) section 5). The same check on `dist/_headers` runs in CI (`pnpm headers:check`) and every e2e test runs under the real `_headers`. |
 | G-2 | Bundle budgets met | Done | `pnpm size:check` and `tests/e2e/first-load.spec.ts` in CI. First route 100.0 KB gzip, entry 81.6 KiB. Welcome and Unlock are both inside the 120 KiB first-screen limit in `first-load.spec.ts`. |
 | G-3 | Security audit done | Done, with 4 checks for the owner | [security-audit-0.1.0.md](security-audit-0.1.0.md): 3 findings fixed, 4 leads need a provider or browser fact (S-4, S-5, S-9, S-11), 3 recorded for a decision. The audit ran without Claude Code's sandbox, so no target code was executed (section 1 of the report). |
 | G-4 | Provider compatibility matrix run | Owner | [manual-test-plan.md](manual-test-plan.md) section B. |
@@ -39,7 +39,7 @@
 | H-10 | Provider compatibility matrix for the Popular presets and custom | Owner | [manual-test-plan.md](manual-test-plan.md) section B. |
 | H-11 | Temporary credentials (AWS STS, R2) | Owner | [manual-test-plan.md](manual-test-plan.md) section C. |
 | H-12 | antislop over UI and copy | Done | Copy keys: no em dashes, no buzzwords, no generic call-to-action labels, no fabricated numbers. Code: no `outline: none` without a replacement focus ring; every selected-row and dialog issue above came from this pass. The icon set (Lucide) and the selected-row stripe are from the approved design. |
-| H-13 | Documentation updated; `LICENSE` present | Done | This file, [deploy guide](deploy-cloudflare-pages.md), [manual test plan](manual-test-plan.md), D-49, D-50, OQ-37. |
+| H-13 | Documentation updated; `LICENSE` present | Done | This file, [deploy guide](deploy/cloudflare-pages.md), [manual test plan](manual-test-plan.md), D-49, D-50, OQ-37. |
 
 ## 3. Known gaps carried into 0.1.0
 

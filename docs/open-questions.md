@@ -84,6 +84,13 @@ Answered by the project owner. The **From** column gives the question that was o
 - **Recommended:** Add Ctrl+K on Windows and Linux desktop browsers to the manual compatibility matrix. Until then `tests/e2e/shortcuts.spec.ts` runs the Ctrl+K check as `fixme` off macOS; `/` remains the documented search key on every platform.
 - **Affects:** FR-26, AC-26.4, `features/files/FilesScreen.tsx`
 
+### OQ-41: Forget this device on a shared origin
+- **Owner:** Product, Security
+- **Status:** Open (found while documenting subpath hosting, ADR-010).
+- **Question:** Forget this device clears `sessionStorage`, every Cache Storage entry and every service worker of the origin. Coffer creates none of them itself. On an origin it shares with other apps (a path such as `/coffer/`, or a GitHub Pages project site), this removes theirs. Its IndexedDB database `coffer` and `coffer:` keys are also readable by those apps.
+- **Recommended:** Keep asking for an origin of its own (as the guides do), and stop clearing storage Coffer never writes, which FR-10 would need to allow.
+- **Affects:** FR-10, technical-spec 9, `lib/storage/forget.ts`, [deploy guides](deploy/README.md)
+
 ### OQ-40: Editing a saved connection's endpoint, region or bucket
 - **Owner:** Product, Security
 - **Status:** Closed by [C-56](#owner-confirmed-decisions) and [C-58](#owner-confirmed-decisions). Numbered OQ-38 at first, which an older entry already had.

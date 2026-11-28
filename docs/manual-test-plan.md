@@ -4,7 +4,7 @@
 - **Status:** Draft (filled in during M10 phase B).
 - **Last updated:** 2026-11-22
 - **Source files in `design/`:** none (derived from [technical-spec.md](technical-spec.md) sections 15.5, 15.6 and 15.7 and `design/providers.json`).
-- **Related:** [release-checklist.md](release-checklist.md), [deploy-cloudflare-pages.md](deploy-cloudflare-pages.md), [technical-spec.md](technical-spec.md), [implementation-plan.md](implementation-plan.md) (M10)
+- **Related:** [release-checklist.md](release-checklist.md), [deploy/cloudflare-pages.md](deploy/cloudflare-pages.md), [technical-spec.md](technical-spec.md), [implementation-plan.md](implementation-plan.md) (M10)
 
 This is the list of checks that only the owner can do: they need real accounts, real devices or a screen reader. You do not need to know the code. Follow each step, compare what you see with **Expected**, and write **Pass** or **Fail** and a note in the last two columns. Copy this file, or fill it in place and commit it.
 
@@ -32,7 +32,7 @@ Record at the top of your copy:
 
 You need:
 
-- The deployed preview or production URL from [deploy-cloudflare-pages.md](deploy-cloudflare-pages.md). Open it once in a normal window and check that Welcome loads.
+- The deployed preview or production URL from [deploy/cloudflare-pages.md](deploy/cloudflare-pages.md). Open it once in a normal window and check that Welcome loads.
 - A terminal with `curl` and either the AWS CLI or the `mc` MinIO client (only for sections C and D).
 - Test files. Create them once in an empty folder called `coffer-testdata`:
 
