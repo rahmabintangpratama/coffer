@@ -327,10 +327,11 @@ test("D-41 Resume clicked in two tabs runs the operation once, and the result ha
   await Promise.all(tabs.map((tab) => tab.locator('[data-component="InterruptedBanner"]').getByRole("button", { name: "Resume" }).click()));
   await expect.poll(async () => (await keysUnder(`${folder}/src/`)).length, { timeout: 120_000 }).toBe(0);
 
-  // Exactly one tab ran it; the other said so and copied nothing.
-  const messages = await Promise.all(tabs.map((tab) => tab.evaluate(() => (window as unknown as { __toasts: string[] }).__toasts)));
-  expect(messages.flat().filter((text) => text.includes("Moved 1 item to dst"))).toHaveLength(1);
-  expect(messages.flat().some((text) => /running in another tab|already finished or was discarded/.test(text))).toBe(true);
+  // Exactly one tab ran it; the other said so and copied nothing. The source is empty as soon as the provider deleted the
+  // last object, before the tab that ran the move has its answer and shows the toast, so the toasts are waited for.
+  const messages = async () => (await Promise.all(tabs.map((tab) => tab.evaluate(() => (window as unknown as { __toasts: string[] }).__toasts)))).flat();
+  await expect.poll(async () => (await messages()).filter((text) => text.includes("Moved 1 item to dst")).length, { timeout: 30_000 }).toBe(1);
+  await expect.poll(async () => (await messages()).some((text) => /running in another tab|already finished or was discarded/.test(text)), { timeout: 30_000 }).toBe(true);
   expect([...copies.values()].every((count) => count === 1)).toBe(true);
   expect(await keysUnder(`${folder}/dst/src/`)).toEqual(original.map((key) => key.replace("/src/", "/dst/src/")));
 });
