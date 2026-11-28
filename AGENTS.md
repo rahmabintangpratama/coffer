@@ -119,6 +119,7 @@ A gate is lint, typecheck, test, e2e, build or the size check.
 - Chain gates, and every other step whose failure must stop the work, with `&&`, in scripts, hooks and by hand. Never join them with `;`.
 - Check the exit code before committing or pushing.
 - A gate whose failure was hidden counts as a failed gate: fix it and run it again.
+- Show that every new guard, check script or CI gate fails on a known-bad input before committing it, and name that input in the commit body.
 
 ## Git
 
