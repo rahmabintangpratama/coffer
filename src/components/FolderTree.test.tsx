@@ -58,4 +58,11 @@ describe("FolderTree", () => {
     await waitFor(() => { expect(screen.getByRole("treeitem", { name: "a Current location" })).toBeInTheDocument(); });
     expect(await axe(container)).toHaveNoViolations();
   });
+
+  it("M11 sorts folders like the file list: numbers by value, case ignored", async () => {
+    const load = vi.fn(() => Promise.resolve([{ prefix: "b/", name: "b" }, { prefix: "folder10/", name: "folder10" }, { prefix: "A/", name: "A" }, { prefix: "folder2/", name: "folder2" }]));
+    render(<FolderTree {...props(load)} />);
+    await vi.waitFor(() => { expect(screen.getAllByRole("treeitem").length).toBeGreaterThan(4); });
+    expect(screen.getAllByRole("treeitem").slice(1).map((item) => item.textContent.trim().split(/\s/)[0])).toEqual(["A", "b", "folder2", "folder10"]);
+  });
 });

@@ -2,6 +2,8 @@ import { ChevronDown, ChevronRight, Folder, LoaderCircle } from "lucide-react";
 import { type KeyboardEvent, Fragment, useEffect, useId, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
+const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+
 export interface TreeFolder {
   /** The folder's prefix: "" for the root, otherwise ending in "/". */
   prefix: string;
@@ -75,7 +77,12 @@ export function FolderTree(props: FolderTreeProps) {
       if (prefix in loads || inflight.current.has(prefix)) continue;
       inflight.current.add(prefix);
       loadChildren(prefix).then(
-        (folders) => { inflight.current.delete(prefix); setLoads((current) => ({ ...current, [prefix]: { state: "ready", folders } })); },
+        (folders) => {
+          inflight.current.delete(prefix);
+          // The same order as the file list: by name, numbers by value, case ignored (S3 lists in byte order).
+          const sorted = [...folders].sort((a, b) => collator.compare(a.name, b.name));
+          setLoads((current) => ({ ...current, [prefix]: { state: "ready", folders: sorted } }));
+        },
         () => { inflight.current.delete(prefix); setLoads((current) => ({ ...current, [prefix]: { state: "error" } })); },
       );
     }
