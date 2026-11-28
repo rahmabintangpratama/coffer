@@ -85,7 +85,7 @@ describe("AC-10.3 and AC-10.4 Forget this device", () => {
     (globalThis as { window?: unknown }).window = { localStorage: local, sessionStorage: session };
 
     const handle = await sharedDb();
-    await handle.put("journal", { id: "j1" } as never);
+    await handle.put("journal", { id: "j1", status: "interrupted" } as never);
     await handle.put("uploads", { id: "u1" } as never);
     await handle.put("starred", { connectionId: "c", bucket: "b", key: "k" });
     await handle.put("recent", { connectionId: "c", bucket: "b", key: "k" });

@@ -1,5 +1,7 @@
 import { closeSharedDb, sealDb, sharedDb } from "./db";
 import { DATABASE_NAME, LOCAL_STORAGE_PREFIX } from "./inventory";
+import { isUnfinished } from "./journal";
+import { heldOperationIds } from "./locks";
 import { vault } from "./vault";
 
 export interface ForgetDeps {
@@ -90,6 +92,7 @@ export async function releaseStorage(): Promise<void> {
 
 export interface StoredReport {
   connections: number;
+  /** Interrupted operations only (the copy says "interrupted moves"); finished entries kept for Undo are not counted. */
   journal: number;
   starred: number;
   recent: number;
@@ -99,12 +102,14 @@ export interface StoredReport {
 /** Counts for "What's stored on this device" (AC-101.2), read from the database. */
 export async function storedReport(): Promise<StoredReport> {
   const handle = await sharedDb();
-  const [connections, journal, starred, recent, uploads] = await Promise.all([
+  const [connections, entries, held, starred, recent, uploads] = await Promise.all([
     handle.count("connections"),
-    handle.count("journal"),
+    handle.getAll("journal"),
+    heldOperationIds(),
     handle.count("starred"),
     handle.count("recent"),
     handle.count("uploads"),
   ]);
+  const journal = entries.filter((entry) => isUnfinished(entry, held)).length;
   return { connections, journal, starred, recent, uploads };
 }

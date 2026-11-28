@@ -606,7 +606,7 @@ The UI never hides these. Each one is surfaced where it affects the person.
 **Story:** As a user, I want to see and control what's stored.
 **Acceptance**
 - AC-101.1 Given Security, Then auto-lock choices (5, 15, 30, 60 minutes and Never with a warning), Lock now, `What's stored on this device` and `Forget this device` show.
-- AC-101.2 Given `What's stored`, Then it lists saved connections, the journal, starred and recent with counts, and states that Coffer sends nothing except to the provider. `Forget this device` is the only action that removes all of it; removing one connection deletes only that connection's rows (AC-102.5).
+- AC-101.2 Given `What's stored`, Then it lists saved connections, the journal (counting only interrupted operations: interrupted, paused, or running with no live lock; finished entries kept for the Undo window are not counted), starred and recent with counts, and states that Coffer sends nothing except to the provider. `Forget this device` is the only action that removes all of it; removing one connection deletes only that connection's rows (AC-102.5).
 - AC-101.3 Given `Change passphrase` (v1), Then the old passphrase is required, the new one must be at least 12 characters, and every saved connection is re-encrypted before the old key is dropped.
 
 **Screens:** `S50_SettingsList`, `S51_SettingsSecurity`

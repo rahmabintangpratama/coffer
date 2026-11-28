@@ -111,6 +111,17 @@ export function canUndo(entry: JournalEntry, now: Date = new Date()): boolean {
   return reversed(entry, "probe", now) !== null && !isExpired(entry, now);
 }
 
+/**
+ * Whether an entry is an operation that stopped before it finished: interrupted or paused, or
+ * still `running` with no live lock (the tab that ran it is gone). Finished, discarded and
+ * Undo entries are kept for the Undo window but are not interrupted. `held` is null when the
+ * lock state cannot be read; a running entry then counts as alive.
+ */
+export function isUnfinished(entry: JournalEntry, held: ReadonlySet<string> | null): boolean {
+  if (entry.status === "interrupted" || entry.status === "paused") return true;
+  return entry.status === "running" && held !== null && !held.has(entry.id);
+}
+
 /** The name shown for an entry: its last path segment. */
 export function nameOfEntry(entry: JournalEntry): string {
   const trimmed = entry.source.endsWith("/") ? entry.source.slice(0, -1) : entry.source;

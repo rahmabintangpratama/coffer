@@ -5,7 +5,7 @@ import { createClient } from "../integration/client";
 import { admin } from "../integration/config";
 import { putMany } from "../integration/seed";
 import { E2E_BUCKET } from "./fixture";
-import { axeViolations, enterApp, layoutFor, type Layout } from "./helpers";
+import { axeViolations, enterApp, goToRoute, layoutFor, type Layout } from "./helpers";
 
 // M6a: Rename, Make a copy, Move, the journal and the interrupted banner (FR-32, FR-33, FR-34, FR-45).
 const s3 = createClient(admin);
@@ -65,6 +65,19 @@ test.describe("rename, copy and move", () => {
     expect(await read(`${folder}/renamed.txt`)).toBe("alpha");
     await toast(page).getByRole("button", { name: "Undo" }).click();
     await expect.poll(() => keysUnder(`${folder}/`), { timeout: 20_000 }).toEqual([`${folder}/a.txt`, `${folder}/b.txt`]);
+  });
+
+  test("M11 AC-101.2 finished operations and their Undo are not counted as interrupted", async ({ page }, testInfo) => {
+    const layout = layoutFor(testInfo);
+    await chooseFromMenu(page, layout, "a.txt", "Rename");
+    const dialog = page.getByRole("dialog", { name: "Rename" });
+    await dialog.getByLabel("Name").fill("renamed.txt");
+    await dialog.getByRole("button", { name: "Rename" }).click();
+    await expect(toast(page)).toContainText("Renamed to renamed.txt", { timeout: 20_000 });
+    await toast(page).getByRole("button", { name: "Undo" }).click();
+    await expect.poll(() => keysUnder(`${folder}/`), { timeout: 20_000 }).toEqual([`${folder}/a.txt`, `${folder}/b.txt`]);
+    await goToRoute(page, "/settings/security");
+    await expect(page.getByText("0 interrupted moves")).toBeVisible({ timeout: 15_000 });
   });
 
   test("AC-32.2 a name with a slash is refused and nothing starts", async ({ page }, testInfo) => {
