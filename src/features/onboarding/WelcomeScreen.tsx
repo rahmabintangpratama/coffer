@@ -2,6 +2,7 @@ import { Cloud, KeyRound, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/Button";
 import { CofferLogo } from "@/components/CofferLogo";
 import { t } from "@/lib/i18n";
+import { SharedOriginWarning } from "./SharedOriginWarning";
 import { StepFrame } from "./StepFrame";
 
 /**
@@ -21,6 +22,7 @@ export function WelcomeScreen({ onConnect }: { onConnect: () => void }) {
   ];
   return (
     <StepFrame title={t("ob.welcome.title")} focusHeading={false} lead={<CofferLogo width={24} label={t("app.name")} className="self-start" />}>
+      <SharedOriginWarning />
       <p className="text-md text-fg-muted">{t("ob.welcome.body")}</p>
       <ul aria-label={t("ob.welcome.factsLabel")} className="flex flex-col gap-3">
         {facts.map(({ icon: Icon, text }) => (

@@ -75,6 +75,7 @@ Answered by the project owner. The **From** column gives the question that was o
 | C-59 | C-58 | **Session token on a host change.** The saved credentials are never read when the server changes. The access key ID and the secret are required; the session token is optional, and an empty one means static keys. | FR-11, AC-11.6 |
 | C-60 | n/a | **Deploy portability.** Coffer deploys to any static host without weakening security where the host sends headers; Cloudflare Pages is the reference target. One source for the headers, a configurable base path, and GitHub Pages as a documented degraded tier ([ADR-010](adr/ADR-010-deploy-portability.md)). | ADR-010 |
 | C-61 | OQ-41 | **Forget this device removes only what Coffer owns**, on any origin: its named database, storage keys and caches with the `coffer:` prefix, and only the service worker registration whose scope is Coffer's base. No origin-wide clear. Every key Coffer writes already had the prefix, so nothing needed to be migrated. | FR-10, AC-10.6 |
+| C-62 | OQ-41 | **Shared-origin warning and GitHub Pages.** Under a base path, or under a path of a `*.github.io` host, Welcome and Unlock show a persistent warning with a link to the deploy guides (copy: `ob.shared.*` in the additions file, C-15). GitHub Pages is supported only on an origin of Coffer's own: a custom domain, or a `<user>.github.io` repository that hosts only Coffer; a project-site path is not recommended. | FR-1, ADR-010 |
 
 ## Open questions
 

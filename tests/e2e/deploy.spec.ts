@@ -31,8 +31,12 @@ test("the app, its fonts, its icons and the PDF worker load from this path witho
   await recordCspViolations(page);
   const errors = collectErrors(page);
   await page.goto("./");
+  // AC-1.4: under a path the first screen warns that the address is shared; at the root it says nothing.
+  await expect(page.getByRole("button", { name: "Connect a bucket" })).toBeVisible();
+  const underPath = new URL(baseURL ?? "").pathname !== "/";
+  await expect(page.locator('[data-component="SharedOriginWarning"]')).toHaveCount(underPath ? 1 : 0);
   await connectCustom(page);
-  await openBucket(page);
+  await openBucket(page, "correct horse battery staple");
   await expect(page.getByRole("navigation", { name: "Main navigation" })).toBeVisible();
   await goToRoute(page, "/files/preview");
   await page.locator('[data-component="FileRow"], [data-component="FileTile"]').filter({ hasText: ".pdf" }).first().dblclick();
@@ -41,6 +45,10 @@ test("the app, its fonts, its icons and the PDF worker load from this path witho
   const manifest = await page.locator('link[rel="manifest"]').getAttribute("href");
   expect((await page.request.get(manifest ?? "")).status()).toBe(200);
   expect(await cspViolations(page)).toEqual([]);
+  // Unlock, after a reload, says the same.
+  await page.reload();
+  await expect(page.getByRole("heading", { level: 1, name: "Unlock your connections" })).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator('[data-component="SharedOriginWarning"]')).toHaveCount(underPath ? 1 : 0);
   expect(errors).toEqual([]);
   expect(failed).toEqual([]);
 });

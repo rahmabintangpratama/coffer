@@ -43,6 +43,7 @@ The UI never hides these. Each one is surfaced where it affects the person.
 - AC-1.1 Given no saved connections, When the app opens, Then the Welcome screen shows the headline, three facts and `Connect a bucket`. `Explore with sample files` appears from v1 (FR-120) and is hidden in MVP.
 - AC-1.2 Given saved connections exist, When the app opens, Then the person lands on Unlock (FR-9), not Welcome.
 - AC-1.3 Given a 1440 px viewport, When Welcome is shown, Then a sample file list appears at the right; at 375 px it does not and no horizontal scroll occurs at 360 px. (The list is not built in the MVP, [D-30](open-questions.md#decisions-made-on-the-owners-behalf); the no-scroll part applies.)
+- AC-1.4 Given the app is served under a path, or under a path of a `*.github.io` host, Then Welcome and Unlock show a warning that cannot be dismissed: other sites on the address can read the encrypted data Coffer saves, with a link to the deploy guide ([C-62](open-questions.md#owner-confirmed-decisions)).
 
 **States:** success only.
 **Edge cases:** the provider count in `ob.factProviders` comes from the number of presets in `providers.json`.

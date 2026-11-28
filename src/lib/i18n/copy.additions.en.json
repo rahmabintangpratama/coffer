@@ -325,6 +325,11 @@
       "working": "Unlocking…",
       "wait": "Too many tries. Wait {seconds, plural, one {# second} other {# seconds}} before trying again.",
       "failed": "Couldn’t open the saved connections. Reload the page and try again. If it keeps happening, forget this device and add the connection again."
+    },
+    "shared": {
+      "title": "This address is shared with other sites",
+      "body": "Other sites on this address can read the encrypted data Coffer saves in this browser, and can act on it while Coffer is open. Give Coffer an address of its own, or don’t save connections here.",
+      "link": "How to give Coffer its own address"
     }
   },
   "search": {

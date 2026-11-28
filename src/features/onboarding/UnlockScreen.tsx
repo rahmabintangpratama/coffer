@@ -5,6 +5,7 @@ import { Field, PasswordOwner, TextInput } from "@/components/Field";
 import { t } from "@/lib/i18n";
 import { vault, WrongPassphraseError } from "@/lib/storage/vault";
 import type { ConnectionSummary } from "@/lib/types";
+import { SharedOriginWarning } from "./SharedOriginWarning";
 import { StepFrame } from "./StepFrame";
 
 export interface UnlockScreenProps {
@@ -144,6 +145,7 @@ export function UnlockScreen({ reason, minutes, previousId, onUnlocked, onUseOth
     <div className="cf-root min-h-dvh">
       <div className="cf-app flex min-h-dvh flex-col bg-app text-fg">
         <StepFrame title={title}>
+          <SharedOriginWarning />
           <p className="text-md text-fg-muted">{body}</p>
           {transfers > 0 && (
             <Banner tone="info" actions={<Button variant="secondary" onClick={onStopTransfers}>{t("ob.locked.stop")}</Button>}>
