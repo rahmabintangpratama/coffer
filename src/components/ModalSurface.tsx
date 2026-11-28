@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { type HTMLAttributes, type ReactNode, type RefObject, useEffect, useId, useRef } from "react";
+import { type HTMLAttributes, type ReactNode, type RefObject, useId, useLayoutEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "./Button";
 
@@ -47,27 +47,40 @@ const panelByPlacement: Record<Placement, string> = {
  * trigger. It needs no script-injected styles, which the CSP forbids (a Radix
  * Dialog would inject one for scroll locking). It stays inside .cf-root, so
  * container queries and the theme apply to it.
+ *
+ * The element is in the document only while the layer is open, and is put on the
+ * top layer once. Password managers watch for dialogs entering the page and for
+ * top-layer changes, and Bitwarden turns its inline menu off on a page that
+ * makes many of them.
  */
 export function ModalSurface(props: ModalSurfaceProps) {
-  const { open, onClose, title, titleIcon, closeLabel, placement, component, children, panelProps, className, returnFocusRef } = props;
+  return props.open ? <OpenSurface {...props} /> : null;
+}
+
+function OpenSurface(props: ModalSurfaceProps) {
+  const { onClose, title, titleIcon, closeLabel, placement, component, children, panelProps, className, returnFocusRef } = props;
   const dialog = useRef<HTMLDialogElement>(null);
-  const openRef = useRef(open);
+  const returnTo = useRef(returnFocusRef);
   const titleId = useId();
 
-  useEffect(() => {
-    openRef.current = open;
+  useLayoutEffect(() => {
+    returnTo.current = returnFocusRef;
+  }, [returnFocusRef]);
+
+  // A layout effect, so the cleanup runs while the dialog is still in the page: closing a detached dialog cannot give focus back.
+  useLayoutEffect(() => {
     const element = dialog.current;
-    if (!element) return;
-    if (open && !element.open) {
-      element.showModal();
-      // showModal() focuses the first control (the Close button). A field that asked for focus gets it, so the person can type at once.
-      element.querySelector<HTMLElement>("[data-autofocus]:not(:disabled)")?.focus();
-    }
-    if (!open && element.open) {
+    if (!element || element.open) return;
+    element.showModal();
+    // showModal() focuses the first control (the Close button). A field that asked for focus gets it, so the person can type at once.
+    element.querySelector<HTMLElement>("[data-autofocus]:not(:disabled)")?.focus();
+    return () => {
+      // Closed already means the person closed it, and onClose has handled that.
+      if (!element.open) return;
       element.close();
-      returnFocusRef?.current?.focus();
-    }
-  }, [open, returnFocusRef]);
+      returnTo.current?.current?.focus();
+    };
+  }, []);
 
   const { className: panelClassName, ...otherPanelProps } = panelProps ?? {};
 
@@ -83,9 +96,10 @@ export function ModalSurface(props: ModalSurfaceProps) {
         "open:grid backdrop:bg-overlay",
         className,
       )}
-      // Escape and the dialog's own close() both end here; only report it if the parent still thinks it is open.
-      onClose={() => {
-        if (!openRef.current) return;
+      // Escape and the dialog's own close() both end here. The event is queued, so a dialog that was opened again since
+      // (React runs effects twice in development) is not reported as closed.
+      onClose={(event) => {
+        if (event.currentTarget.open) return;
         onClose();
         returnFocusRef?.current?.focus();
       }}

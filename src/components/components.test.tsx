@@ -120,19 +120,30 @@ describe.each([
 ] as const)("%s", (_name, side) => {
   it("opens on the native dialog, is named by its title and sits on the elevated surface", () => {
     const { container } = render(<Harness side={side} />);
-    const dialog = container.querySelector("dialog");
-    expect(dialog).not.toHaveAttribute("open");
+    // Not in the document until it opens: nothing for a password manager to watch.
+    expect(container.querySelector("dialog")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Open" }));
+    const dialog = container.querySelector("dialog");
     expect(dialog).toHaveAttribute("open");
     expect(dialog).toHaveAttribute("data-surface", "elevated");
     expect(screen.getByRole("dialog", { name: "Panel title" })).toBeInTheDocument();
   });
 
-  it("closes with the close button", () => {
+  it("is put on the top layer once, however often it renders while open", () => {
+    const shown = vi.spyOn(HTMLDialogElement.prototype, "showModal");
+    const { rerender } = render(<Harness side={side} />);
+    fireEvent.click(screen.getByRole("button", { name: "Open" }));
+    rerender(<Harness side={side} />);
+    rerender(<Harness side={side} />);
+    expect(shown).toHaveBeenCalledTimes(1);
+    shown.mockRestore();
+  });
+
+  it("closes with the close button and leaves the document", () => {
     const { container } = render(<Harness side={side} />);
     fireEvent.click(screen.getByRole("button", { name: "Open" }));
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
-    expect(container.querySelector("dialog")).not.toHaveAttribute("open");
+    expect(container.querySelector("dialog")).toBeNull();
   });
 
   it("closes when the browser reports a close, as it does for Escape", () => {
@@ -140,8 +151,10 @@ describe.each([
     fireEvent.click(screen.getByRole("button", { name: "Open" }));
     const dialog = container.querySelector("dialog");
     if (!dialog) throw new Error("no dialog");
+    // The browser closes the element and then queues the event.
+    dialog.removeAttribute("open");
     fireEvent(dialog, new Event("close"));
-    expect(dialog).not.toHaveAttribute("open");
+    expect(container.querySelector("dialog")).toBeNull();
   });
 
   it("closes on a click outside the panel but not inside it", () => {
@@ -152,7 +165,7 @@ describe.each([
     const dialog = container.querySelector("dialog");
     if (!dialog) throw new Error("no dialog");
     fireEvent.click(dialog);
-    expect(dialog).not.toHaveAttribute("open");
+    expect(container.querySelector("dialog")).toBeNull();
   });
 });
 
