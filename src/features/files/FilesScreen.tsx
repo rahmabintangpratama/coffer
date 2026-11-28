@@ -343,7 +343,9 @@ function Folder({ connection, relative, root, settings, onSettings, notify, onUs
               if (next) stepPreview(next.key);
             }}
             onDownload={(file) => { void downloadItems(connection, [file], notify); }}
-            onDetails={(file) => { setDetailsKey(file.key); }}
+            renderDetails={(file, close) => (
+              <DetailsPanel inViewer layout={layout} connection={connection} file={file} folder={relative === "" ? "/" : relative} onClose={close} onCopyKey={() => { handlers.copyKey(file); }} />
+            )}
             onCopyKey={handlers.copyKey}
             onShare={(file) => { handlers.share(file); }}
           />

@@ -73,13 +73,23 @@ function Body({ connection, file, folder, onCopyKey }: { connection: ConnectionS
 
 /**
  * File details (FR-27): a bottom sheet below 768 px, a 360 px overlay at 768 and
- * an in-layout panel from 1024 px. The file name and key are text nodes.
+ * an in-layout panel from 1024 px. The file name and key are text nodes. In the
+ * viewer the same panel sits beside the file and shows whichever file is on screen.
  */
-export function DetailsPanel({ layout, connection, file, folder, onClose, onCopyKey }: { layout: LayoutMode; connection: ConnectionSummary; file: FileItem | null; folder: string; onClose: () => void; onCopyKey: () => void }) {
+export function DetailsPanel({ layout, connection, file, folder, onClose, onCopyKey, inViewer = false }: { layout: LayoutMode; connection: ConnectionSummary; file: FileItem | null; folder: string; onClose: () => void; onCopyKey: () => void; /** Inside the dark viewer: an elevated side panel of full height instead of a card in the page. */ inViewer?: boolean }) {
   if (layout === "sidebar") {
     if (!file) return null;
     return (
-      <aside data-component="DetailsPanel" aria-label={t("det.label")} className="w-(--cf-size-details-width) shrink-0 self-start rounded-md border border-line bg-surface p-4">
+      <aside
+        data-component="DetailsPanel"
+        aria-label={t("det.label")}
+        {...(inViewer ? { "data-surface": "elevated" } : {})}
+        className={
+          inViewer
+            ? "w-(--cf-size-details-width) shrink-0 overflow-y-auto border-l border-line bg-elevated p-4 text-fg"
+            : "w-(--cf-size-details-width) shrink-0 self-start rounded-md border border-line bg-surface p-4"
+        }
+      >
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-semibold">{t("det.label")}</h2>
           <Button variant="ghost" iconOnly aria-label={t("act.close")} icon={<X aria-hidden="true" className="size-5" />} onClick={onClose} />

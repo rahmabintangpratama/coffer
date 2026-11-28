@@ -369,9 +369,49 @@ test.describe("PDF, Markdown and HTML (M5b)", () => {
   test("M11 the viewer's More menu opens on top of the viewer and its items work", async ({ page }) => {
     await openFile(page, "code.ts");
     await dialog(page).getByRole("button", { name: "More actions", exact: true }).click();
-    const next = page.getByRole("menuitem", { name: "Next file" });
+    // A menu from 768 px, a sheet of buttons below it; the on-screen arrows are hidden there.
+    const next = page.getByRole("menuitem", { name: "Next file" }).or(page.locator('[data-component="ContextMenu"]').getByRole("button", { name: "Next file" })).filter({ visible: true });
     await expect(next).toBeVisible();
     await next.click();
     await expect(dialog(page).getByRole("heading", { level: 1 })).toHaveText("hostile.html");
+  });
+
+  test("AC-50.4 Details opens inside the viewer and follows Previous and Next", async ({ page }) => {
+    await openFile(page, "code.ts");
+    const details = dialog(page).getByRole("button", { name: "Details", exact: true });
+    await details.click();
+    await expect(details).toHaveAttribute("aria-expanded", "true");
+    // At 1440 it is a side panel inside the dialog; below 1024 a sheet layered on top of it.
+    const panel = page.locator('[data-component="DetailsPanel"]').filter({ visible: true });
+    await expect(panel).toBeVisible();
+    await expect(panel.getByText("code.ts", { exact: true })).toBeVisible();
+    const sidePanel = (await dialog(page).getByRole("complementary", { name: "Details" }).count()) > 0;
+    if (sidePanel) {
+      await details.focus();
+      await page.keyboard.press("ArrowRight");
+      await expect(dialog(page).getByRole("heading", { level: 1 })).toHaveText("hostile.html");
+      await expect(panel.getByText("hostile.html", { exact: true })).toBeVisible();
+      await expect(panel.getByText("code.ts", { exact: true })).toHaveCount(0);
+    }
+  });
+
+  test("AC-50.5 the viewer's Back button returns to the folder, keeps the selection and focuses the row", async ({ page }) => {
+    const target = row(page, "code.ts");
+    await expect(target).toBeVisible();
+    // A click selects from 768 px; on a phone a tap opens, so selection is checked only there.
+    const wide = (page.viewportSize()?.width ?? 0) >= 768;
+    if (wide) {
+      await target.click();
+      await expect(target).toHaveAttribute("aria-selected", "true");
+    } else await target.focus();
+    await page.keyboard.press("Enter");
+    await expect(dialog(page)).toBeVisible();
+    await page.keyboard.press("ArrowRight");
+    await expect(dialog(page).getByRole("heading", { level: 1 })).toHaveText("hostile.html");
+    await dialog(page).getByRole("button", { name: "Back", exact: true }).click();
+    await expect(dialog(page)).toHaveCount(0);
+    await expect.poll(() => page.evaluate(() => window.location.hash)).toBe("#/files/preview");
+    await expect(row(page, "hostile.html")).toBeFocused();
+    if (wide) await expect(target).toHaveAttribute("aria-selected", "true");
   });
 });

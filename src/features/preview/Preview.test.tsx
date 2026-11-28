@@ -44,7 +44,7 @@ afterEach(() => {
 
 function setup(files: FileItem[], index = 0, over: Partial<PreviewProps> = {}) {
   const props: PreviewProps = {
-    connection: loopback, files, index, onClose: vi.fn(), onStep: vi.fn(), onDownload: vi.fn(), onDetails: vi.fn(), onCopyKey: vi.fn(), onShare: vi.fn(), ...over,
+    connection: loopback, files, index, onClose: vi.fn(), onStep: vi.fn(), onDownload: vi.fn(), renderDetails: vi.fn((file: FileItem) => <aside aria-label="Details">{file.name}</aside>), onCopyKey: vi.fn(), onShare: vi.fn(), ...over,
   };
   render(<Preview {...props} />);
   return props;
@@ -65,8 +65,10 @@ describe("FR-50 viewer", () => {
     expect(screen.getByRole("heading", { level: 1, name: "a.txt" })).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Download" }));
     expect(props.onDownload).toHaveBeenCalledWith(expect.objectContaining({ name: "a.txt" }));
+    expect(screen.queryByRole("complementary", { name: "Details" })).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Details" }));
-    expect(props.onDetails).toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Details" })).toHaveAttribute("aria-expanded", "true");
+    expect(within(screen.getByRole("dialog")).getByRole("complementary", { name: "Details" })).toHaveTextContent("a.txt");
     await userEvent.click(screen.getByRole("button", { name: "Back" }));
     expect(props.onClose).toHaveBeenCalled();
   });
@@ -289,5 +291,20 @@ describe("accessibility", () => {
     await within(dialog).findByText(/Code or text/);
     await act(async () => { await Promise.resolve(); });
     expect(await axe(dialog.parentElement ?? dialog)).toHaveNoViolations();
+  });
+});
+
+describe("M11 details inside the viewer", () => {
+  it("renders inside the dialog and follows the file on screen", async () => {
+    readObject.mockResolvedValue(enc("x"));
+    const files = [file("a.txt"), file("b.txt")];
+    const renderDetails = vi.fn((shown: FileItem) => <aside aria-label="Details">{shown.name}</aside>);
+    const props: PreviewProps = { connection: loopback, files, index: 0, onClose: vi.fn(), onStep: vi.fn(), onDownload: vi.fn(), renderDetails, onCopyKey: vi.fn(), onShare: vi.fn() };
+    const { rerender } = render(<Preview {...props} />);
+    await userEvent.click(screen.getByRole("button", { name: "Details" }));
+    const panel = () => within(screen.getByRole("dialog")).getByRole("complementary", { name: "Details" });
+    expect(panel()).toHaveTextContent("a.txt");
+    rerender(<Preview {...props} index={1} />);
+    expect(panel()).toHaveTextContent("b.txt");
   });
 });

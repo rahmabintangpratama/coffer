@@ -1,5 +1,5 @@
 import { ArrowLeft, ChevronLeft, ChevronRight, Download, Info, Link2, Share2, SkipBack, SkipForward } from "lucide-react";
-import { type KeyboardEvent, lazy, Suspense } from "react";
+import { type KeyboardEvent, lazy, type ReactNode, Suspense, useState } from "react";
 import { ActionMenu } from "@/components/ActionMenu";
 import { Button } from "@/components/Button";
 import { FullscreenDialog } from "@/components/FullscreenDialog";
@@ -36,7 +36,11 @@ export interface PreviewProps {
   /** Move to another file by this many places (the owner clamps and updates the address). */
   onStep: (delta: 1 | -1) => void;
   onDownload: (file: FileItem) => void;
-  onDetails: (file: FileItem) => void;
+  /**
+   * The details of the file on screen, rendered inside the viewer (a side panel from 1024 px,
+   * a bottom sheet below), so they are never behind the modal and follow Previous and Next.
+   */
+  renderDetails: (file: FileItem, close: () => void) => ReactNode;
   onCopyKey: (file: FileItem) => void;
   onShare: (file: FileItem) => void;
 }
@@ -69,7 +73,8 @@ function Body({ connection, file, onSwipe, onDownload }: { connection: Connectio
  * and by the menu; the position is announced. It is a dialog named "Preview of
  * {name}"; closing returns focus to the row.
  */
-export function Preview({ connection, files, index, onClose, onClosed, onStep, onDownload, onDetails, onCopyKey, onShare }: PreviewProps) {
+export function Preview({ connection, files, index, onClose, onClosed, onStep, onDownload, renderDetails, onCopyKey, onShare }: PreviewProps) {
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const file = files[index];
   if (!file) return null;
 
@@ -91,7 +96,7 @@ export function Preview({ connection, files, index, onClose, onClosed, onStep, o
         <p role="status" className="shrink-0 text-sm text-(--cf-color-inverse-muted)">{t("pv.pos", { position: index + 1, total: files.length })}</p>
         <Button variant="ghost" iconOnly aria-label={t("act.download")} icon={<Download aria-hidden="true" className="size-5" />} onClick={() => { onDownload(file); }} />
         <Button variant="ghost" iconOnly aria-label={t("act.share")} icon={<Share2 aria-hidden="true" className="size-5" />} onClick={() => { onShare(file); }} />
-        <Button variant="ghost" iconOnly aria-label={t("act.details")} icon={<Info aria-hidden="true" className="size-5" />} onClick={() => { onDetails(file); }} />
+        <Button variant="ghost" iconOnly aria-label={t("act.details")} aria-expanded={detailsOpen} icon={<Info aria-hidden="true" className="size-5" />} onClick={() => { setDetailsOpen((open) => !open); }} />
         <ActionMenu
           component="ContextMenu"
           triggerLabel={t("act.more")}
@@ -109,15 +114,18 @@ export function Preview({ connection, files, index, onClose, onClosed, onStep, o
           ]}
         />
       </header>
-      <div className="relative flex min-h-0 flex-1 items-center justify-center">
-        {hasPrevious && (
-          <Button variant="ghost" iconOnly aria-label={t("pv.prev")} icon={<ChevronLeft aria-hidden="true" className="size-6" />} onClick={() => { onStep(-1); }} className="absolute left-2 z-10 hidden @md:flex" />
-        )}
-        {/* A new key per file resets zoom, loading and errors. */}
-        <Body key={file.key} connection={connection} file={file} onSwipe={onStep} onDownload={() => { onDownload(file); }} />
-        {hasNext && (
-          <Button variant="ghost" iconOnly aria-label={t("pv.next")} icon={<ChevronRight aria-hidden="true" className="size-6" />} onClick={() => { onStep(1); }} className="absolute right-2 z-10 hidden @md:flex" />
-        )}
+      <div className="flex min-h-0 flex-1">
+        <div className="relative flex min-h-0 min-w-0 flex-1 items-center justify-center">
+          {hasPrevious && (
+            <Button variant="ghost" iconOnly aria-label={t("pv.prev")} icon={<ChevronLeft aria-hidden="true" className="size-6" />} onClick={() => { onStep(-1); }} className="absolute left-2 z-10 hidden @md:flex" />
+          )}
+          {/* A new key per file resets zoom, loading and errors. */}
+          <Body key={file.key} connection={connection} file={file} onSwipe={onStep} onDownload={() => { onDownload(file); }} />
+          {hasNext && (
+            <Button variant="ghost" iconOnly aria-label={t("pv.next")} icon={<ChevronRight aria-hidden="true" className="size-6" />} onClick={() => { onStep(1); }} className="absolute right-2 z-10 hidden @md:flex" />
+          )}
+        </div>
+        {detailsOpen && renderDetails(file, () => { setDetailsOpen(false); })}
       </div>
     </FullscreenDialog>
   );

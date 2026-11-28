@@ -480,6 +480,8 @@ The UI never hides these. Each one is surfaced where it affects the person.
 - AC-50.1 Given a previewable file, When opened, Then a full-screen dark viewer shows name, Download, Share link, ⓘ and ⋮ with back/Esc to close.
 - AC-50.2 Given siblings in the folder, Then previous and next work by swipe (mobile), arrows and ← → (desktop) and announce "2 of 10".
 - AC-50.3 Given any preview, Then the dialog is labelled "Preview of {name}" and focus returns to the row on close.
+- AC-50.4 Given the viewer is open, When ⓘ is pressed, Then the details of the file on screen (FR-27) open inside the viewer (a side panel from 1024 px, a bottom sheet below), and Previous and Next update them.
+- AC-50.5 Given the viewer is open, When it is closed by its Back button, Escape or the browser's Back, Then the folder it was opened from shows with its selection, and focus is on the row of the file last shown.
 
 **States:** loading, ready, error, no preview. **Screens:** `S31_PreviewImage`, `T11_Previews`, `T11b_Previews`
 

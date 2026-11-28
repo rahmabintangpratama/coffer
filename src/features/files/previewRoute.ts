@@ -42,8 +42,26 @@ export function stepPreview(key: string): void {
   go("replace", urlFor(readHashRoute().path, key), true);
 }
 
+/**
+ * The one way the viewer closes: its Back button, Escape and the browser's Back all end on
+ * the folder it was opened from. Going back keeps the history clean; if the entry before the
+ * viewer turns out to be another place (QA saw Back land on the bucket root), the folder
+ * replaces it.
+ */
 export function closePreview(): void {
+  const folder = readHashRoute().path;
   const state = window.history.state as { coffer?: string } | null;
-  if (state?.coffer === MARK) window.history.back();
-  else go("replace", urlFor(readHashRoute().path, null), false);
+  if (state?.coffer !== MARK) {
+    go("replace", urlFor(folder, null), false);
+    return;
+  }
+  window.addEventListener(
+    "popstate",
+    () => {
+      const now = readHashRoute();
+      if (now.path !== folder || now.preview !== null) go("replace", urlFor(folder, null), false);
+    },
+    { once: true },
+  );
+  window.history.back();
 }
