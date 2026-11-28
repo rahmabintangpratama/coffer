@@ -42,13 +42,14 @@ export function toTrashItems(root: string, objects: readonly { key: string; size
  * placeholder object cannot be told from its contents, so its objects stay separate rows.
  */
 export function topLevelItems(items: readonly TrashItem[]): TrashItem[] {
-  const folders = items.filter((item) => item.folder);
+  // A batch's own placeholder (original "") is not a trashed folder: it holds nothing back.
+  const folders = items.filter((item) => item.folder && item.original !== "");
   return items.filter((item) => !folders.some((folder) => folder.batch === item.batch && folder.key !== item.key && item.key.startsWith(folder.key)));
 }
 
 /** The chosen rows and every object under a chosen folder row (same batch, by key prefix). */
 export function withDescendants(chosen: readonly TrashItem[], all: readonly TrashItem[]): TrashItem[] {
-  const folders = chosen.filter((item) => item.folder);
+  const folders = chosen.filter((item) => item.folder && item.original !== "");
   const keys = new Set(chosen.map((item) => item.key));
   return [...chosen, ...all.filter((item) => !keys.has(item.key) && folders.some((folder) => item.key.startsWith(folder.key)))];
 }

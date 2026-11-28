@@ -31,4 +31,10 @@ describe("M11 Trash shows items as they were trashed", () => {
       `.coffer-trash/${BATCH}/a/top.txt`,
     ]);
   });
+
+  it("a batch's own placeholder hides nothing", () => {
+    const withPlaceholder = toTrashItems("", [{ key: `.coffer-trash/${OTHER}/`, size: 0 }, { key: `.coffer-trash/${OTHER}/x.txt`, size: 1 }]);
+    expect(topLevelItems(withPlaceholder).map((item) => item.key).sort()).toEqual([`.coffer-trash/${OTHER}/`, `.coffer-trash/${OTHER}/x.txt`]);
+    expect(withDescendants(withPlaceholder.filter((item) => item.folder), withPlaceholder)).toHaveLength(1);
+  });
 });
