@@ -20,7 +20,7 @@ import {
 } from "@/lib/providers";
 import { vault } from "@/lib/storage/vault";
 import type { AddressingStyle, ProviderField, ProviderPreset } from "@/lib/types";
-import { type ConnectionPlan, describeProblems, type FieldProblem, isSecretField, optionLabel, planOf, withoutSecrets } from "./form-model";
+import { autofillOf, type ConnectionPlan, describeProblems, type FieldProblem, isSecretField, optionLabel, planOf, withoutSecrets } from "./form-model";
 import { StepFrame } from "./StepFrame";
 
 export interface CredentialsSubmit {
@@ -180,7 +180,8 @@ export function CredentialsScreen({ preset, initialValues, initialBucket = "", o
     const common = {
       value,
       placeholder: kept && isSecretField(field) ? t("conn.editKept") : field.placeholder,
-      autoComplete: "off",
+      name: field.id,
+      autoComplete: autofillOf(field, edit !== undefined),
       autoCapitalize: "none",
       autoCorrect: "off",
       spellCheck: false,
@@ -367,8 +368,9 @@ export function CredentialsScreen({ preset, initialValues, initialBucket = "", o
                 <TextInput
                   type="password"
                   mono
+                  name={ADVANCED_FIELDS.sessionToken}
                   value={values[ADVANCED_FIELDS.sessionToken] ?? ""}
-                  autoComplete="off"
+                  autoComplete="new-password"
                   autoCapitalize="none"
                   spellCheck={false}
                   onChange={(event) => {

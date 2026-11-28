@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/Button";
-import { Field, TextInput } from "@/components/Field";
+import { Field, PasswordOwner, TextInput } from "@/components/Field";
 import { t } from "@/lib/i18n";
 import { isStrongPassphrase, passphraseProblem } from "@/lib/storage/crypto";
 import { vault, WeakPassphraseError, WrongPassphraseError } from "@/lib/storage/vault";
@@ -66,6 +66,7 @@ export function SaveDeviceScreen({ summary, onSaved, onSkip }: { summary: Connec
         ) : (
           <>
             {verifying && <p className="text-base">{t("ob.save.existing")}</p>}
+            <PasswordOwner name={t("app.name")} />
             <Field
               label={t("ob.save.label")}
               error={wrong ? t("ob.unlock.wrong") : showTooShort ? t("ob.save.tooShort") : undefined}
@@ -73,6 +74,7 @@ export function SaveDeviceScreen({ summary, onSaved, onSkip }: { summary: Connec
             >
               <TextInput
                 type="password"
+                name="passphrase"
                 value={passphrase}
                 autoComplete={verifying ? "current-password" : "new-password"}
                 autoCapitalize="none"

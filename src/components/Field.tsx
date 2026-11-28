@@ -205,3 +205,11 @@ export function Segmented({
     </fieldset>
   );
 }
+
+/**
+ * The account a passphrase belongs to, for password managers: they save and fill a password together with a username.
+ * Without one, a manager pairs the passphrase with whatever else it knows for this address, such as an access key.
+ */
+export function PasswordOwner({ name }: { name: string }) {
+  return <input type="text" name="username" autoComplete="username" value={name} readOnly tabIndex={-1} aria-hidden="true" className="sr-only" />;
+}

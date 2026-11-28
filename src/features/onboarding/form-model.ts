@@ -25,6 +25,20 @@ export function withoutSecrets(preset: ProviderPreset, values: FieldValues): Rec
   return Object.fromEntries(Object.entries(values).filter(([id]) => !secret.has(id)));
 }
 
+/**
+ * What a password manager may do with a key field: the access key ID is the account name and the secret its password.
+ * While a saved connection is edited nothing is offered: a manager fills by the page's address, not by the storage
+ * server, so it could put one server's keys in a form that points at another (AC-11.6).
+ */
+export function autofillOf(field: ProviderField, editing: boolean): "username" | "current-password" | "new-password" | "off" {
+  const role = field.role ?? field.id;
+  if (editing) return field.control === "password" ? "new-password" : "off";
+  if (role === "accessKeyId") return "username";
+  if (role === "secretAccessKey") return "current-password";
+  // A session token expires: offering a saved one would fill a dead value.
+  return field.control === "password" ? "new-password" : "off";
+}
+
 /** The plan for a connection: everything but the keys. */
 export type ConnectionPlan = Omit<ResolvedConnection, "credentials">;
 

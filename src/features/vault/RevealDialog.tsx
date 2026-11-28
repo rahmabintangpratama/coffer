@@ -2,7 +2,7 @@ import { Copy } from "lucide-react";
 import { type RefObject, useEffect, useState } from "react";
 import { Button } from "@/components/Button";
 import { Dialog } from "@/components/Dialog";
-import { Field, TextInput } from "@/components/Field";
+import { Field, PasswordOwner, TextInput } from "@/components/Field";
 import { t } from "@/lib/i18n";
 import { vault, WrongPassphraseError } from "@/lib/storage/vault";
 import type { ConnectionSummary } from "@/lib/types";
@@ -74,8 +74,9 @@ function RevealBody({ connection, onClose, notify }: { connection: ConnectionSum
             void reveal();
           }}
         >
+          <PasswordOwner name={t("app.name")} />
           <Field label={t("ob.unlock.label")} error={wrong ? t("reveal.wrong") : undefined}>
-            <TextInput type="password" value={passphrase} autoComplete="current-password" autoCapitalize="none" spellCheck={false} onChange={(event) => { setPassphrase(event.target.value); }} />
+            <TextInput type="password" name="passphrase" value={passphrase} autoComplete="current-password" autoCapitalize="none" spellCheck={false} onChange={(event) => { setPassphrase(event.target.value); }} />
           </Field>
           {failed && <p role="alert" className="text-sm text-danger-fg">{t("reveal.failed")}</p>}
           <div className="flex flex-col-reverse gap-2 @md:flex-row @md:justify-end">
