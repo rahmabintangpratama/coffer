@@ -41,6 +41,8 @@ export default function FilesAppBar({ menuButton, brand, trailing }: { menuButto
       id: "type",
       name: t("filter.type"),
       valueLabel: filters.type === null ? null : t(typeLabel[filters.type]),
+      onClear: () => { setFilters({ ...filters, type: null }); },
+      clearLabel: t("filter.clear", { name: t("filter.type") }),
       options: [
         { id: "any", label: t("filter.any"), checked: filters.type === null, onSelect: () => { setFilters({ ...filters, type: null }); } },
         ...typeFilters.map((type) => ({ id: type, label: t(typeLabel[type]), checked: filters.type === type, onSelect: () => { setFilters({ ...filters, type }); } })),
@@ -50,6 +52,8 @@ export default function FilesAppBar({ menuButton, brand, trailing }: { menuButto
       id: "modified",
       name: t("filter.modified"),
       valueLabel: filters.modified === null ? null : t(modifiedLabel[filters.modified]),
+      onClear: () => { setFilters({ ...filters, modified: null }); },
+      clearLabel: t("filter.clear", { name: t("filter.modified") }),
       options: [
         { id: "any", label: t("filter.any"), checked: filters.modified === null, onSelect: () => { setFilters({ ...filters, modified: null }); } },
         ...modifiedFilters.map((modified) => ({ id: modified, label: t(modifiedLabel[modified]), checked: filters.modified === modified, onSelect: () => { setFilters({ ...filters, modified }); } })),

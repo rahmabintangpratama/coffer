@@ -86,13 +86,15 @@ export interface ActionMenuProps {
   className?: string;
   /** A button to use instead of ⋮. Spread the props it receives onto a native button. */
   trigger?: (props: TriggerProps) => ReactElement;
+  /** Which edge of the trigger the popover lines up with (default end). It still moves to stay inside the screen. */
+  align?: "start" | "end";
 }
 
 /**
  * The ⋮ menu. A popover from 768 px, a bottom action sheet with a header
  * below it (FR-31). Menus are non-modal under the CSP (D-25).
  */
-export function ActionMenu({ groups, triggerLabel, title, closeLabel, component, className, trigger: customTrigger }: ActionMenuProps) {
+export function ActionMenu({ groups, triggerLabel, title, closeLabel, component, className, trigger: customTrigger, align = "end" }: ActionMenuProps) {
   const layout = useLayout();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [opener, setOpener] = useState<HTMLButtonElement | null>(null);
@@ -156,7 +158,7 @@ export function ActionMenu({ groups, triggerLabel, title, closeLabel, component,
         {customTrigger?.({}) ?? <Button variant="ghost" iconOnly aria-label={triggerLabel} icon={icon} className={className} />}
       </Dropdown.Trigger>
       <Dropdown.Portal container={container}>
-        <Dropdown.Content align="end" sideOffset={4} data-surface="elevated" data-component={component} className={contentClass}>
+        <Dropdown.Content align={align} sideOffset={4} collisionPadding={8} data-surface="elevated" data-component={component} className={contentClass}>
           <Items groups={groups} kind={Dropdown} />
         </Dropdown.Content>
       </Dropdown.Portal>

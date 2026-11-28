@@ -54,3 +54,24 @@ test("M11 the switcher offers Lock for a saved connection", async ({ page }) => 
   await page.locator('[data-component="Sidebar"]').getByRole("button", { name: /^Switch connection:/ }).click();
   await expect(page.getByRole("button", { name: "Lock", exact: true }).or(page.getByRole("menuitem", { name: "Lock" })).first()).toBeVisible();
 });
+
+test("M11 the Type menu opens at its chip, inside the content, and an active chip has an × that clears it", async ({ page }) => {
+  await enterApp(page, "/files");
+  await page.evaluate(() => { window.location.hash = "#/files/preview"; });
+  await expect(rows(page).filter({ hasText: "sample.png" })).toBeVisible({ timeout: 20_000 });
+  const chip = page.getByRole("button", { name: "Type", exact: true });
+  await chip.click();
+  const menu = page.getByRole("menu");
+  await expect(menu).toBeVisible();
+  const chipBox = await chip.boundingBox();
+  const menuBox = await menu.boundingBox();
+  const sidebarBox = await page.locator('[data-component="Sidebar"]').boundingBox();
+  expect(chipBox && menuBox ? Math.abs(menuBox.x - chipBox.x) < 2 : false).toBe(true);
+  expect(menuBox && sidebarBox ? menuBox.x >= sidebarBox.x + sidebarBox.width : false).toBe(true);
+  await menu.getByRole("menuitemradio").or(menu.getByRole("menuitem")).filter({ hasText: /^Images?$/ }).first().click();
+  const active = page.getByRole("button", { name: /^Type: / });
+  await expect(active).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "Clear Type filter" }).click();
+  await expect(page.getByRole("button", { name: "Type", exact: true })).toHaveAttribute("aria-pressed", "false");
+  await expect(page.getByRole("button", { name: "Clear Type filter" })).toHaveCount(0);
+});
