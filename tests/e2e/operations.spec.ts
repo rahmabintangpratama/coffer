@@ -6,12 +6,13 @@ import { admin } from "../integration/config";
 import { putMany } from "../integration/seed";
 import { E2E_BUCKET } from "./fixture";
 import { axeViolations, enterApp, goToRoute, layoutFor, type Layout } from "./helpers";
+import { scratchPrefix } from "./scratch";
 
 // M6a: Rename, Make a copy, Move, the journal and the interrupted banner (FR-32, FR-33, FR-34, FR-45).
 const s3 = createClient(admin);
 test.afterAll(() => { s3.destroy(); });
 
-const unique = () => `e2e-ops/${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+const unique = () => scratchPrefix("e2e-ops");
 const rows = (page: Page) => page.locator('[data-component="FileRow"], [data-component="FileTile"], [data-component="FolderTile"]');
 const row = (page: Page, name: string) => rows(page).filter({ hasText: name }).first();
 

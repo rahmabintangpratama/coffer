@@ -5,6 +5,7 @@ import { admin } from "../integration/config";
 import { E2E_BUCKET } from "./fixture";
 import { expect, test } from "./test";
 import { enterApp, goToRoute } from "./helpers";
+import { scratchPrefix } from "./scratch";
 
 // Password managers watch the browser's top layer: Bitwarden turns its inline menu off on a page that keeps adding
 // dialogs or promoting elements. A dialog is in the document only while open, and is promoted once per open.
@@ -61,7 +62,7 @@ const topLayer = (page: Page) => page.evaluate(() => (window as unknown as { __t
 const closedDialogs = (page: Page) => page.locator("dialog:not([open])").count();
 
 test("a dialog is in the page only while open and is promoted once per open, from Unlock through toasts", async ({ page }) => {
-  const folder = `e2e-top/${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+  const folder = scratchPrefix("e2e-top");
   for (const name of ["a.txt", "b.txt", "c.txt"]) await s3.send(new PutObjectCommand({ Bucket: E2E_BUCKET, Key: `${folder}/${name}`, Body: "x" }));
   await enterApp(page, "/files", { passphrase: PASS });
   await watchTopLayer(page);

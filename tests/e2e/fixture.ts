@@ -1,5 +1,6 @@
 import { CreateBucketCommand, ListObjectsV2Command, PutBucketCorsCommand, PutObjectCommand, type S3Client } from "@aws-sdk/client-s3";
-import { createClient, uniqueName } from "../integration/client";
+import { assertLocalFixture, bucketNames, deleteBucket, emptyBucket } from "../integration/cleanup";
+import { createBucket, createClient } from "../integration/client";
 import { admin } from "../integration/config";
 import { readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -30,10 +31,24 @@ export async function allowOrigin(client: S3Client, bucket: string, origin: stri
 }
 
 /** A new bucket with no CORS rule. */
-export async function bareBucket(client: S3Client): Promise<string> {
-  const Bucket = uniqueName("e2e-bare");
-  await client.send(new CreateBucketCommand({ Bucket }));
-  return Bucket;
+export const bareBucket = (client: S3Client): Promise<string> => createBucket(client, "e2e-bare");
+
+/**
+ * The start of a run: nothing an earlier run left is kept. The shared bucket is emptied, every other bucket is deleted,
+ * and the big read-only bucket keeps its seed, which takes long to write, without any trash.
+ */
+export async function resetFixture(): Promise<void> {
+  assertLocalFixture();
+  const client = createClient(admin);
+  try {
+    for (const bucket of await bucketNames(client)) {
+      if (bucket === E2E_BUCKET) await emptyBucket(client, bucket);
+      else if (bucket === BIG_BUCKET) await emptyBucket(client, bucket, ".coffer-trash/");
+      else await deleteBucket(client, bucket);
+    }
+  } finally {
+    client.destroy();
+  }
 }
 
 /** Creates the shared e2e bucket and the users (idempotent). */

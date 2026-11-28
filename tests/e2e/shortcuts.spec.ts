@@ -1,16 +1,17 @@
-import { DeleteObjectsCommand, ListObjectsV2Command, PutObjectCommand } from "@aws-sdk/client-s3";
+import { ListObjectsV2Command, PutObjectCommand } from "@aws-sdk/client-s3";
 import { type Page } from "@playwright/test";
 import { expect, test } from "./test";
 import { createClient } from "../integration/client";
 import { admin } from "../integration/config";
 import { E2E_BUCKET } from "./fixture";
 import { axeViolations, enterApp, goToRoute } from "./helpers";
+import { scratchPrefix } from "./scratch";
 
 // M11, FR-26 and design ux-patterns "Keyboard": shortcuts on the list, the `?` sheet and app-wide keys.
 const s3 = createClient(admin);
 test.afterAll(() => { s3.destroy(); });
 
-const unique = () => `e2e-keys/${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+const unique = () => scratchPrefix("e2e-keys");
 const rows = (page: Page) => page.locator('[data-component="FileRow"], [data-component="FileTile"], [data-component="FolderTile"]');
 const row = (page: Page, name: string) => rows(page).filter({ hasText: name }).first();
 const toast = (page: Page) => page.locator('[data-component="Toast"]').last();
@@ -79,9 +80,6 @@ test("AC-26.1 Delete moves the selection to the trash", async ({ page }) => {
   if (await confirm.isVisible().catch(() => false)) await confirm.getByRole("button", { name: /Move to trash/ }).click();
   await expect(toast(page)).toContainText("Moved 1 item to trash", { timeout: 20_000 });
   await expect.poll(() => keysUnder(`${folder}/`), { timeout: 20_000 }).toEqual([`${folder}/b.txt`]);
-  // Leave the shared bucket's trash as it was: other specs read its first rows.
-  const trashed = (await keysUnder(".coffer-trash/")).filter((key) => key.endsWith(`/${folder}/a.txt`));
-  if (trashed.length > 0) await s3.send(new DeleteObjectsCommand({ Bucket: E2E_BUCKET, Delete: { Objects: trashed.map((Key) => ({ Key })) } }));
 });
 
 test("AC-26.2 single keys do nothing while typing", async ({ page }) => {

@@ -17,8 +17,12 @@ export function uniqueName(prefix: string): string {
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 }
 
+/** Every bucket made through `createBucket` in this process, for the teardown that deletes them. */
+export const createdBuckets = new Set<string>();
+
 export async function createBucket(client: S3Client, prefix = "t"): Promise<string> {
   const Bucket = uniqueName(prefix);
   await client.send(new CreateBucketCommand({ Bucket }));
+  createdBuckets.add(Bucket);
   return Bucket;
 }

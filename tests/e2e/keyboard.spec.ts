@@ -5,6 +5,7 @@ import { admin } from "../integration/config";
 import { E2E_BUCKET } from "./fixture";
 import { enterApp, layoutFor } from "./helpers";
 import { expect, test } from "./test";
+import { scratchPrefix } from "./scratch";
 
 // M10: every MVP flow that has a keyboard path, driven by the keyboard alone. The page is set up with the pointer (connecting
 // is covered by its own keyboard test in onboarding.spec.ts); from the first line of each test on, only keys are pressed:
@@ -14,7 +15,7 @@ const s3 = createClient(admin);
 test.afterAll(() => { s3.destroy(); });
 
 const PASS = "correct horse battery staple";
-const unique = () => `e2e-kbd/${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+const unique = () => scratchPrefix("e2e-kbd");
 const rows = (page: Page) => page.locator('[data-component="FileRow"], [data-component="FileTile"], [data-component="FolderTile"]');
 const row = (page: Page, name: string) => rows(page).filter({ hasText: name }).first();
 // Short timeout: evaluate() waits for the element, and a hang here would otherwise run to the test timeout instead of failing.

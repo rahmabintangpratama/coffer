@@ -6,6 +6,7 @@ import { admin, s3Fixture } from "../integration/config";
 import { E2E_BUCKET } from "./fixture";
 import { axeViolations, enterApp, fillCustomForm, goToRoute, layoutFor, openBucket } from "./helpers";
 import { temporaryCredentials } from "../integration/sts";
+import { scratchPrefix } from "./scratch";
 
 // M9: Settings pages and their persistence (FR-100, AC-100.1 to AC-100.3), and the demo that is not in the MVP (FR-120).
 const s3 = createClient(admin);
@@ -132,7 +133,7 @@ test.describe("settings persist (AC-100.2)", () => {
 
 test.describe("the settings do what they say", () => {
   test("Show hidden files shows names that start with a dot", async ({ page }) => {
-    const folder = `e2e-settings/${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+    const folder = scratchPrefix("e2e-settings");
     await s3.send(new PutObjectCommand({ Bucket: E2E_BUCKET, Key: `${folder}/visible.txt`, Body: "v" }));
     await s3.send(new PutObjectCommand({ Bucket: E2E_BUCKET, Key: `${folder}/.hidden.txt`, Body: "h" }));
     await enterApp(page, `/files/${folder}`);
@@ -146,7 +147,7 @@ test.describe("the settings do what they say", () => {
   });
 
   test("Ask before moving to trash puts a question in front of Move to trash", async ({ page }, testInfo) => {
-    const folder = `e2e-settings/${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+    const folder = scratchPrefix("e2e-settings");
     await s3.send(new PutObjectCommand({ Bucket: E2E_BUCKET, Key: `${folder}/ask.txt`, Body: "a" }));
     await enterApp(page, "/settings/behavior");
     await page.getByRole("checkbox", { name: /Ask before moving to trash/ }).check();
@@ -199,7 +200,7 @@ test.describe("M11 Settings → Connections", () => {
 
   test("AC-11.6 Edit connection saves only after a passing test, keeps unchanged keys, and replaces on a new start folder", async ({ page }) => {
     test.setTimeout(90_000);
-    const folder = `e2e-edit/${Date.now().toString(36)}`;
+    const folder = scratchPrefix("e2e-edit");
     await s3.send(new PutObjectCommand({ Bucket: E2E_BUCKET, Key: `${folder}/inside.txt`, Body: "x" }));
     await enterApp(page, "/settings/connections", { passphrase: PASS });
     const list = page.getByRole("list", { name: "Connections" });

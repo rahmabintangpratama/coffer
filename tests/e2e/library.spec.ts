@@ -5,12 +5,13 @@ import { createClient } from "../integration/client";
 import { admin } from "../integration/config";
 import { E2E_BUCKET } from "./fixture";
 import { axeViolations, enterApp, goToRoute, layoutFor, type Layout } from "./helpers";
+import { scratchPrefix } from "./scratch";
 
 // M11: Starred (FR-80) and Recent (FR-81), local lists in this browser.
 const s3 = createClient(admin);
 test.afterAll(() => { s3.destroy(); });
 
-const unique = () => `e2e-lib/${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+const unique = () => scratchPrefix("e2e-lib");
 const rows = (page: Page) => page.locator('[data-component="FileRow"], [data-component="FileTile"], [data-component="FolderTile"]');
 const row = (page: Page, name: string) => rows(page).filter({ hasText: name }).first();
 const toast = (page: Page) => page.locator('[data-component="Toast"]').last();

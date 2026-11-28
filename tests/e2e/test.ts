@@ -1,4 +1,5 @@
 import { type BrowserContext, expect, type Page, test as base } from "@playwright/test";
+import { startScratch } from "./scratch";
 
 /**
  * The `test` every spec uses. It adds one automatic guard (M10, C-31, NFR-2): in every test, in every page of every context
@@ -51,7 +52,17 @@ const recordViolations = () => {
   });
 };
 
-export const test = base.extend<GuardOptions & { guard: undefined }>({
+export const test = base.extend<GuardOptions & { guard: undefined; scratch: undefined }>({
+  // Set up before the page and so torn down after it: nothing still running in the browser writes once cleaning starts.
+  scratch: [
+    // eslint-disable-next-line no-empty-pattern -- Playwright requires the destructuring pattern.
+    async ({}, use) => {
+      const clean = startScratch();
+      await use(undefined);
+      await clean();
+    },
+    { auto: true, timeout: 60_000 },
+  ],
   expectedConsole: [null, { option: true }],
   guard: [
     async ({ browser, expectedConsole }, use, testInfo) => {

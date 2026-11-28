@@ -1,13 +1,14 @@
 import { mkdtempSync, truncateSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { CreateBucketCommand, ListMultipartUploadsCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
+import { ListMultipartUploadsCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { type Page } from "@playwright/test";
 import { expect, test } from "./test";
-import { createClient } from "../integration/client";
+import { createBucket, createClient } from "../integration/client";
 import { admin, s3Fixture } from "../integration/config";
 import { allowOrigin, E2E_BUCKET } from "./fixture";
 import { axeViolations, connectCustom, dumpStorage, enterApp, fillCustomForm, goToRoute } from "./helpers";
+import { scratchPrefix } from "./scratch";
 
 // M8: save on this device, unlock, lock and auto-lock, Forget this device, Show secret key, the switcher, and lock across tabs
 // (FR-8, FR-9, FR-10, FR-11, FR-101, FR-102, C-27, C-38). The fake keys are the fixture's; nothing here is a real credential.
@@ -16,7 +17,7 @@ test.afterAll(() => { s3.destroy(); });
 
 const PASS = "correct horse battery staple";
 const MIB = 1024 * 1024;
-const unique = () => `e2e-vault/${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+const unique = () => scratchPrefix("e2e-vault");
 const serious = (violations: Awaited<ReturnType<typeof axeViolations>>) => violations.filter((v) => v.impact === "serious" || v.impact === "critical");
 
 const lockedHeading = (page: Page) => page.getByRole("heading", { level: 1, name: "Coffer is locked" });
@@ -481,8 +482,7 @@ test.describe("Show secret key (FR-102) and the switcher (FR-11)", () => {
   });
 
   test("AC-11.1, AC-11.3 and AC-11.4 a second connection reuses the passphrase, the switcher lists both, and removing one keeps the other", async ({ page }, testInfo) => {
-    const second = `coffer-e2e-sw-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}`;
-    await s3.send(new CreateBucketCommand({ Bucket: second }));
+    const second = await createBucket(s3, "coffer-e2e-sw");
     await allowOrigin(s3, second);
     await enterApp(page, "/files", { passphrase: PASS });
     const compact = (testInfo.project.use.viewport?.width ?? 0) < 768;

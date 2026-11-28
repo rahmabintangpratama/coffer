@@ -1,10 +1,11 @@
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { type Page } from "@playwright/test";
 import { expect, test } from "./test";
-import { createClient } from "../integration/client";
+import { createBucket, createClient } from "../integration/client";
 import { admin } from "../integration/config";
-import { E2E_BUCKET } from "./fixture";
+import { allowOrigin, E2E_BUCKET } from "./fixture";
 import { axeViolations, enterReadOnlyApp, goToRoute, layoutFor, type Layout } from "./helpers";
+import { scratchPrefix } from "./scratch";
 
 // M9: the read-only experience (FR-110, FR-111; S41, S42): the chip and banner, and every write action off with its reason
 // or gone, in menus, the selection bar, New and the FAB, the viewer and Trash. The key is the fixture's read-only user.
@@ -12,7 +13,7 @@ const s3 = createClient(admin);
 test.afterAll(() => { s3.destroy(); });
 
 const REASON = "This key is read-only";
-const unique = () => `e2e-ro/${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+const unique = () => scratchPrefix("e2e-ro");
 const serious = (violations: Awaited<ReturnType<typeof axeViolations>>) => violations.filter((v) => v.impact === "serious" || v.impact === "critical");
 const rows = (page: Page) => page.locator('[data-component="FileRow"], [data-component="FileTile"], [data-component="FolderTile"]');
 const row = (page: Page, name: string) => rows(page).filter({ hasText: name }).first();
@@ -123,8 +124,11 @@ test.describe("a read-only connection", () => {
 
   test("S41 the Trash view shows the reason, and Empty trash, Restore and Delete forever are off", async ({ page }) => {
     const name = `ro-${Date.now().toString(36)}.txt`;
-    await put(`.coffer-trash/20261122T090503Z-roview/${name}`, "old");
-    await enterReadOnlyApp(page, "/trash");
+    // A bucket of its own: the Trash view lists a whole bucket and draws only the rows in sight.
+    const bucket = await createBucket(s3, "e2e-ro-trash");
+    await allowOrigin(s3, bucket);
+    await s3.send(new PutObjectCommand({ Bucket: bucket, Key: `.coffer-trash/20261122T090503Z-roview/${name}`, Body: "old" }));
+    await enterReadOnlyApp(page, "/trash", bucket);
     const item = page.locator('[data-component="TrashRow"]').filter({ hasText: name });
     await expect(item).toBeVisible({ timeout: 15_000 });
     await expect(banner(page)).toContainText(REASON);

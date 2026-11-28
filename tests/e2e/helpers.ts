@@ -147,9 +147,9 @@ export async function enterApp(page: Page, route = "/files", options: ConnectOpt
  * Open the app with the fixture's read-only key (FR-110, FR-111): the test finds list and read pass and write denied, offers
  * "Connect read-only", and the connection is kept in memory ("Not now").
  */
-export async function enterReadOnlyApp(page: Page, route = "/files"): Promise<void> {
+export async function enterReadOnlyApp(page: Page, route = "/files", bucket?: string): Promise<void> {
   await page.goto("/");
-  await connectCustom(page, { ...testUsers.readOnly });
+  await connectCustom(page, { ...testUsers.readOnly, ...(bucket === undefined ? {} : { bucket }) });
   await page.getByRole("button", { name: "Connect read-only" }).click({ timeout: 30_000 });
   await page.getByRole("button", { name: "Not now" }).click();
   await expect(page.getByRole("navigation", { name: "Main navigation" })).toBeVisible();

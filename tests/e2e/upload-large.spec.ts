@@ -7,6 +7,7 @@ import { createClient } from "../integration/client";
 import { admin } from "../integration/config";
 import { E2E_BUCKET } from "./fixture";
 import { enterApp } from "./helpers";
+import { scratchPrefix } from "./scratch";
 
 // M4 exit check: a 500 MB upload with live progress. It writes a 500 MB sparse file and
 // moves 500 MB to the fixture, so it runs on request: COFFER_E2E_LARGE=1 pnpm test:e2e upload-large
@@ -20,7 +21,7 @@ test("exit check: a 500 MB upload shows live progress and completes with nothing
   const path = join(dir, "huge.bin");
   writeFileSync(path, "");
   truncateSync(path, 500 * 1024 * 1024);
-  const folder = `e2e-up/large-${Date.now().toString(36)}`;
+  const folder = scratchPrefix("e2e-up");
 
   await enterApp(page, "/files");
   await page.evaluate((hash) => { window.location.hash = hash; }, `#/files/${folder}`);

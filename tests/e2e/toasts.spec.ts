@@ -5,11 +5,12 @@ import { createClient } from "../integration/client";
 import { admin } from "../integration/config";
 import { E2E_BUCKET } from "./fixture";
 import { enterApp, goToRoute, layoutFor } from "./helpers";
+import { scratchPrefix } from "./scratch";
 
 // M11: toasts say what happened and where, close when their action is used, leave with the screen, and stay clear of the sidebar.
 const s3 = createClient(admin);
 test.afterAll(() => { s3.destroy(); });
-const unique = () => `e2e-toast/${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+const unique = () => scratchPrefix("e2e-toast");
 const toast = (page: Page, text: string) => page.locator('[data-component="Toast"]').filter({ hasText: text });
 const rows = (page: Page) => page.locator('[data-component="FileRow"], [data-component="FileTile"], [data-component="FolderTile"]');
 

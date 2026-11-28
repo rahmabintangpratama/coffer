@@ -5,6 +5,7 @@ import { admin, testUsers } from "../integration/config";
 import { APP_ORIGIN, bareBucket, E2E_BUCKET } from "./fixture";
 import { allowBucketList, axeViolations, connectCustom, enterApp, enterReadOnlyApp, goToRoute, layoutFor, type Layout } from "./helpers";
 import { expect, PROVOKED_NETWORK_FAILURE, test } from "./test";
+import { scratchPrefix } from "./scratch";
 
 // M10: axe on every screen and state, in both themes, at every width and in every engine the matrix runs (NFR-5, NFR-6).
 // Each test walks one session through its states; every state is checked in light and then in dark, and every failure is
@@ -13,7 +14,7 @@ const s3 = createClient(admin);
 test.afterAll(() => { s3.destroy(); });
 
 const PASS = "correct horse battery staple";
-const unique = () => `e2e-a11y/${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+const unique = () => scratchPrefix("e2e-a11y");
 const rows = (page: Page) => page.locator('[data-component="FileRow"], [data-component="FileTile"], [data-component="FolderTile"]');
 const row = (page: Page, name: string) => rows(page).filter({ hasText: name }).first();
 

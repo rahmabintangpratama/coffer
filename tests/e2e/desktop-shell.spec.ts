@@ -5,6 +5,7 @@ import { createClient } from "../integration/client";
 import { admin } from "../integration/config";
 import { E2E_BUCKET } from "./fixture";
 import { enterApp, goToRoute } from "./helpers";
+import { scratchPrefix } from "./scratch";
 
 // M11, design screens.md: from 1024 px New sits at the top of the sidebar, Files has an ⓘ toggle for Details,
 // and the connection switcher offers Lock once a connection is saved.
@@ -18,7 +19,7 @@ test.beforeEach(({ page }) => {
 });
 
 test("M11 New is at the top of the sidebar on Files, and ⓘ toggles Details for the selected file", async ({ page }) => {
-  const folder = `e2e-shell/${Date.now().toString(36)}`;
+  const folder = scratchPrefix("e2e-shell");
   await s3.send(new PutObjectCommand({ Bucket: E2E_BUCKET, Key: `${folder}/a.txt`, Body: "x" }));
   await enterApp(page, "/files");
   await goToRoute(page, `/files/${folder}`);

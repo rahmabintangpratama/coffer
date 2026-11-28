@@ -5,13 +5,14 @@ import { createClient } from "../integration/client";
 import { admin } from "../integration/config";
 import { E2E_BUCKET } from "./fixture";
 import { axeViolations, enterApp, layoutFor, type Layout } from "./helpers";
+import { scratchPrefix } from "./scratch";
 
 // M7: Share link (FR-60, FR-61). The fixture serves the link to a plain fetch, so "open it in a private window"
 // is a request with no cookies and no keys.
 const s3 = createClient(admin);
 test.afterAll(() => { s3.destroy(); });
 
-const unique = () => `e2e-share/${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+const unique = () => scratchPrefix("e2e-share");
 const rows = (page: Page) => page.locator('[data-component="FileRow"], [data-component="FileTile"], [data-component="FolderTile"]');
 const row = (page: Page, name: string) => rows(page).filter({ hasText: name }).first();
 // M11: the dialog is named after the file it shares.

@@ -8,6 +8,7 @@ import { createClient } from "../integration/client";
 import { admin } from "../integration/config";
 import { E2E_BUCKET } from "./fixture";
 import { axeFor, connectCustom, enterApp, layoutFor, openBucket, type Layout } from "./helpers";
+import { scratchPrefix } from "./scratch";
 
 // M4: New menu, folder and file upload, conflicts, the transfer panel and abort on reload
 // (FR-35, FR-40, FR-41, FR-43, FR-44).
@@ -15,7 +16,7 @@ const s3 = createClient(admin);
 test.afterAll(() => { s3.destroy(); });
 
 const MIB = 1024 * 1024;
-const unique = () => `e2e-up/${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+const unique = () => scratchPrefix("e2e-up");
 
 async function keysUnder(prefix: string): Promise<string[]> {
   const listed = await s3.send(new ListObjectsV2Command({ Bucket: E2E_BUCKET, Prefix: prefix }));

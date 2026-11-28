@@ -4,6 +4,7 @@ import { PutBucketCorsCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { type Page } from "@playwright/test";
 import { expect, expectConsole, PROVOKED_NETWORK_FAILURE, test } from "./test";
 import type { ConnectionTestRun } from "../../src/lib/s3";
+import { deleteBucket } from "../integration/cleanup";
 import { createBucket, createClient } from "../integration/client";
 import { admin, s3Fixture, testUsers } from "../integration/config";
 import { provisionTestUsers } from "../integration/provision";
@@ -58,8 +59,10 @@ test.beforeAll(async () => {
   );
 });
 
-test.afterAll(() => {
+test.afterAll(async () => {
   appServer.close();
+  // Made in beforeAll, so they outlive each test and are removed here.
+  for (const bucket of [withCors, withoutCors]) if (bucket !== "") await deleteBucket(sdk, bucket);
 });
 
 async function appPage(page: Page): Promise<void> {

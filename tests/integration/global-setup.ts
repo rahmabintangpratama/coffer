@@ -1,4 +1,6 @@
-import { s3Fixture } from "./config";
+import { bucketNames, deleteBucket } from "./cleanup";
+import { createClient } from "./client";
+import { admin, s3Fixture } from "./config";
 import { provisionTestUsers } from "./provision";
 
 async function waitForFixture(): Promise<void> {
@@ -23,4 +25,15 @@ async function waitForFixture(): Promise<void> {
 export default async function setup(): Promise<void> {
   await waitForFixture();
   await provisionTestUsers();
+  await removeLeftovers();
+}
+
+/** Buckets a run that was stopped never deleted. The e2e buckets (`coffer-e2e-*`) are the e2e setup's to reset. */
+async function removeLeftovers(): Promise<void> {
+  const client = createClient(admin);
+  try {
+    for (const bucket of await bucketNames(client)) if (!bucket.startsWith("coffer-e2e-")) await deleteBucket(client, bucket);
+  } finally {
+    client.destroy();
+  }
 }
