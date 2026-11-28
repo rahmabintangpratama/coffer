@@ -287,7 +287,7 @@ The UI never hides these. Each one is surfaced where it affects the person.
 **Story:** As a keyboard user, I want Drive-like shortcuts.
 **Acceptance**
 - AC-26.1 Given list focus, When `Enter`, `Space`, `F2` or `N`, `M`, `S`, `I`, `Del` (or `Backspace`), `Shift+Del` are pressed, Then the mapped action runs on the selection, or on the focused item when nothing is selected. `Shift+Del` in Files is not built yet (Delete forever stays in Trash, AC-71.4).
-- AC-26.4 Given Files on a desktop layout and no dialog open, When `⌘/Ctrl+K` is pressed, Then the search pill gets focus (until the command palette, FR-25, exists); When `Esc` is pressed with a selection, Then it clears wherever focus is.
+- AC-26.4 Given Files on a desktop layout and no dialog open, When `⌘/Ctrl+K` is pressed, Then the search pill gets focus, clearing a selection first because the selection bar takes the pill's place (until the command palette, FR-25, exists; `/` from the list does the same); When `Esc` is pressed with a selection, Then it clears wherever focus is.
 - AC-26.2 Given focus is in a text field or dialog, Then single-key shortcuts do not fire.
 - AC-26.3 Given `?` is pressed, Then the shortcuts sheet opens; Esc closes the top layer first, then clears selection.
 

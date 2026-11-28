@@ -85,7 +85,8 @@ test("AC-26.1 Delete moves the selection to the trash", async ({ page }) => {
 });
 
 test("AC-26.2 single keys do nothing while typing", async ({ page }) => {
-  await row(page, "a.txt").focus();
+  // A real click gives the page and the row focus; a script focus() alone did not on the Linux runners (OQ-39).
+  await row(page, "a.txt").click();
   await page.keyboard.press("/");
   const pill = page.getByRole("searchbox");
   await expect(pill).toBeFocused();
@@ -95,10 +96,7 @@ test("AC-26.2 single keys do nothing while typing", async ({ page }) => {
 });
 
 test("AC-26.4 Ctrl or Cmd+K focuses the search", async ({ page }) => {
-  // OQ-39: on the Linux runners the key reaches the page and its default is prevented, yet focus stays on the row in
-  // every engine; on macOS it moves. Kept visible as fixme until a Linux desktop check settles it.
-  test.fixme(process.platform !== "darwin", "OQ-39: focus does not move on the Linux runners");
-  await row(page, "a.txt").focus();
+  await row(page, "a.txt").click();
   await page.keyboard.press("ControlOrMeta+k");
   await expect(page.getByRole("searchbox")).toBeFocused();
 });

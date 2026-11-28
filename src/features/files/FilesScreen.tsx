@@ -247,7 +247,12 @@ function Folder({ connection, relative, root, settings, onSettings, notify, onUs
     [navigate, root.length],
   );
   // The pill is in the app bar, away from the list that owns the "/" shortcut, so it is found by its id.
-  const focusSearch = useCallback(() => { document.getElementById(SEARCH_PILL_ID)?.focus(); }, []);
+  // While items are selected the selection bar replaces the app bar and the pill is not there: clear the selection,
+  // then focus the pill once it is back (on the next frame).
+  const focusSearch = useCallback(() => {
+    if (useSelection.getState().keys.size > 0) useSelection.getState().clear();
+    requestAnimationFrame(() => { document.getElementById(SEARCH_PILL_ID)?.focus(); });
+  }, []);
   const onContextItem = useCallback(
     (item: Item) => {
       if (actionsFor(item, handlers, readOnly).length === 0) return false;
@@ -337,8 +342,7 @@ function Folder({ connection, relative, root, settings, onSettings, notify, onUs
       if (typing || document.querySelector("dialog[open]") !== null) return;
       if ((event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === "k") {
         event.preventDefault();
-        // After the key has been handled: on Linux the browsers kept focus on the row when it moved during the keydown.
-        requestAnimationFrame(focusSearch);
+        focusSearch();
       } else if (event.key === "?" && !event.metaKey && !event.ctrlKey && !event.altKey) {
         event.preventDefault();
         setShortcutsOpen(true);
