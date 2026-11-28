@@ -178,3 +178,25 @@ test("AC-36.5 a folder in the trash is not offered Move to trash again, and a tr
   expect(await liveKeys(bucket)).toEqual(["docs/a.txt", "docs/n/b.txt"]);
 });
 
+
+test("M11 a trashed folder is one row in Trash; Delete forever on it removes what was inside", async ({ page }, testInfo) => {
+  const layout = layoutFor(testInfo);
+  const bucket = await freshBucket();
+  for (const key of ["a/", "a/b/", "a/b/c.txt", "a/top.txt", "keep.txt"]) await put(bucket, key);
+  await enterApp(page, "/files", { bucket });
+  const folderRow = page.locator('[data-component="FileRow"], [data-component="FolderTile"]').filter({ hasText: /^a/ }).first();
+  await expect(folderRow).toBeVisible({ timeout: 15_000 });
+  await trashFromMenu(page, layout, "a");
+  await expect(toast(page, "Moved 1 item to trash").first()).toBeVisible({ timeout: 20_000 });
+  await expect.poll(() => liveKeys(bucket), { timeout: 20_000 }).toEqual(["keep.txt"]);
+
+  await goToRoute(page, "/trash");
+  await expect(trashRows(page)).toHaveCount(1, { timeout: 15_000 });
+  await expect(trashRows(page).first()).toContainText("Original location: a/");
+  await trashRows(page).first().getByRole("checkbox").check();
+  await page.getByRole("button", { name: "Delete forever" }).click();
+  await page.getByRole("dialog", { name: /forever\?$/ }).getByRole("button", { name: "Delete forever" }).click();
+  await expect(page.getByRole("heading", { name: "Trash is empty" })).toBeVisible({ timeout: 20_000 });
+  expect(await keysIn(bucket, ".coffer-trash/")).toEqual([]);
+  expect(await liveKeys(bucket)).toEqual(["keep.txt"]);
+});

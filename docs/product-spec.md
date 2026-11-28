@@ -546,7 +546,7 @@ The UI never hides these. Each one is surfaced where it affects the person.
 #### FR-70 Trash view and restore (MVP)
 **Story:** As a user, I want to see deleted items and restore them.
 **Acceptance**
-- AC-70.1 Given Trash, Then it lists every item under the trash prefix that is in Coffer's batch format (`{UTC timestamp}-{6 chars}/...`; anything else there is ignored) flattened across batches, each with its original path and the deletion time read from its batch prefix, newest first, with the note `trash.note`.
+- AC-70.1 Given Trash, Then it lists every item under the trash prefix that is in Coffer's batch format (`{UTC timestamp}-{6 chars}/...`; anything else there is ignored) flattened across batches, each with its original path and the deletion time read from its batch prefix, newest first, with the note `trash.note`. An object under a folder trashed in the same batch is part of that folder's row, and Restore and Delete forever on the row include it (M11); a folder trashed without its own placeholder object cannot be told from its contents, so its objects stay separate rows.
 - AC-70.2 Given selected items, When `Restore` is chosen, Then the batch prefix is stripped and they move back to their original keys.
 - AC-70.3 Given an original key now exists, Then the conflict dialog (FR-43 semantics) asks.
 - AC-70.4 Given an empty trash, Then an empty state shows.

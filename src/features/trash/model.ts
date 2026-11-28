@@ -35,6 +35,24 @@ export function toTrashItems(root: string, objects: readonly { key: string; size
   return items.sort((a, b) => b.deletedAt.getTime() - a.deletedAt.getTime() || a.path.localeCompare(b.path));
 }
 
+/**
+ * What the Trash list shows (M11): the items as they were trashed, not every object inside them. An
+ * object under a folder that was trashed in the same batch is part of that folder's row; Restore and
+ * Delete forever on the folder take it along (`withDescendants`). A folder trashed without its own
+ * placeholder object cannot be told from its contents, so its objects stay separate rows.
+ */
+export function topLevelItems(items: readonly TrashItem[]): TrashItem[] {
+  const folders = items.filter((item) => item.folder);
+  return items.filter((item) => !folders.some((folder) => folder.batch === item.batch && folder.key !== item.key && item.key.startsWith(folder.key)));
+}
+
+/** The chosen rows and every object under a chosen folder row (same batch, by key prefix). */
+export function withDescendants(chosen: readonly TrashItem[], all: readonly TrashItem[]): TrashItem[] {
+  const folders = chosen.filter((item) => item.folder);
+  const keys = new Set(chosen.map((item) => item.key));
+  return [...chosen, ...all.filter((item) => !keys.has(item.key) && folders.some((folder) => item.key.startsWith(folder.key)))];
+}
+
 /** Objects per batch, to tell when a selection is a whole batch. */
 export function batchTotals(items: readonly TrashItem[]): Map<string, number> {
   const totals = new Map<string, number>();

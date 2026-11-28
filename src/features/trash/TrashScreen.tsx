@@ -16,7 +16,7 @@ import { fileKindOf } from "@/lib/s3/keys";
 import { parseTrashKey } from "@/lib/s3/trash";
 import type { ConnectionSummary } from "@/lib/types";
 import { DeleteForeverDialog, type DeleteRequest } from "./DeleteForeverDialog";
-import { canRestore, toTrashItems, type TrashItem } from "./model";
+import { canRestore, topLevelItems, toTrashItems, type TrashItem, withDescendants } from "./model";
 import { planRestore } from "./restore";
 
 export interface TrashScreenProps {
@@ -78,7 +78,9 @@ export function TrashScreen({ connection, writable, notify, onUseAnotherKey }: T
       return toTrashItems(root, objects);
     },
   });
-  const items = useMemo(() => query.data ?? [], [query.data]);
+  // Every object in the trash, and the rows shown: a trashed folder is one row with its contents (M11).
+  const all = useMemo(() => query.data ?? [], [query.data]);
+  const items = useMemo(() => topLevelItems(all), [all]);
   const [selection, setSelection] = useState<ReadonlySet<string>>(new Set());
   const [failures, setFailures] = useState<DeleteFailure[]>([]);
   const [request, setRequest] = useState<DeleteRequest | null>(null);
@@ -97,7 +99,7 @@ export function TrashScreen({ connection, writable, notify, onUseAnotherKey }: T
     const { clientFor, existingKeys } = await import("@/lib/s3");
     const client = clientFor(connection);
     try {
-      const moves = await planRestore(chosen, items, root, {
+      const moves = await planRestore(chosen, all, root, {
         existing: (keys) => existingKeys(client, { bucket, keys }),
         exists: async (key) => (await existingKeys(client, { bucket, keys: [key] })).has(key),
         ask,
@@ -225,7 +227,10 @@ export function TrashScreen({ connection, writable, notify, onUseAnotherKey }: T
         onConfirm={(confirmed) => {
           setRequest(null);
           if (confirmed.kind === "empty") startDelete({ connection, total: confirmed.count, prefix: `${root}.coffer-trash/`, owns: (key) => parseTrashKey(root, key) !== null }, hooks);
-          else startDelete({ connection, total: confirmed.items.length, keys: confirmed.items.map((item) => item.key) }, hooks);
+          else {
+            const keys = withDescendants(confirmed.items, all).map((item) => item.key);
+            startDelete({ connection, total: keys.length, keys }, hooks);
+          }
           setSelection(new Set());
         }}
       />
