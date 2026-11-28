@@ -312,8 +312,11 @@ test.describe("axe on every screen and state", () => {
     // The menu hands focus back to its button when it has closed; focusing the row before that would lose it again.
     await expect(page.getByRole("menu").or(page.getByRole("dialog"))).toHaveCount(0);
     await expect(page.getByRole("button", { name: "More actions for report.txt" }).first()).toBeFocused();
-    await row(page, "report.txt").focus();
-    await expect(row(page, "report.txt")).toBeFocused();
+    // The sheet can hand focus back once more as its close animation ends; focus the row until it stays.
+    await expect(async () => {
+      await row(page, "report.txt").focus();
+      await expect(row(page, "report.txt")).toBeFocused({ timeout: 500 });
+    }).toPass({ timeout: 5000 });
     await page.keyboard.press("Enter");
     await expect(page.locator('dialog[data-component="Preview"]')).toBeVisible();
     await expect(page.locator('dialog[data-component="Preview"]').getByText("numbers")).toBeVisible({ timeout: 15_000 });
