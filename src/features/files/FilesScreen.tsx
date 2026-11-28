@@ -85,6 +85,10 @@ function Folder({ connection, relative, root, settings, onSettings, notify, onUs
   const selection = useSelection();
   const [, navigate] = useLocation();
 
+  // The Files link reopens this folder later in the session (M11).
+  const rememberFolder = useFilesChrome((state) => state.rememberFolder);
+  useEffect(() => { rememberFolder(connection.id, pathFromPrefix(relative)); }, [rememberFolder, connection.id, relative]);
+
   // A new folder starts with nothing selected (AC-30.4).
   useEffect(() => {
     selection.clear();

@@ -18,6 +18,9 @@ interface FilesChromeState {
   selectionActions: SelectionAction[];
   /** The shell's sidebar is collapsed to icons: New, which Files puts at its top, shows only its icon. */
   sidebarCollapsed: boolean;
+  /** The last folder opened per connection, as its Files path, for the Files link (this session only, cleared on lock). */
+  lastFolder: Readonly<Record<string, string>>;
+  rememberFolder: (connectionId: string, path: string) => void;
   activate: (searchPlaceholder: string) => void;
   deactivate: () => void;
   setFilters: (filters: Filters) => void;
@@ -31,6 +34,8 @@ export const useFilesChrome = create<FilesChromeState>((set) => ({
   selectedCount: 0,
   selectionActions: [],
   sidebarCollapsed: false,
+  lastFolder: {},
+  rememberFolder: (connectionId, path) => { set((state) => ({ lastFolder: { ...state.lastFolder, [connectionId]: path } })); },
   activate: (searchPlaceholder) => { set({ active: true, searchPlaceholder }); },
   // Leaving a folder drops its search and filters, as the screen's state always did.
   deactivate: () => { set({ active: false, filters: noFilters, selectedCount: 0, selectionActions: [] }); },

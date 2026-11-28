@@ -247,6 +247,7 @@ The UI never hides these. Each one is surfaced where it affects the person.
 - AC-22.4 Given a nested folder, When the breadcrumb shows, Then at 375 it reads `Root › … › current ▾` and the ▾ menu offers the folder actions.
 - AC-22.5 Given any folder, Then its path is in the URL hash and a reload returns to it; no key names are sent to the host (NFR-8).
 - AC-22.6 Given a layout breakpoint, Then layout switches by container width, not viewport width.
+- AC-22.7 Given a folder was open earlier in the session, When `Files` is chosen from another screen, Then that folder opens again for the active connection; chosen on Files, it goes to the top. The memory is per connection, for the session only, and cleared on lock (M11).
 
 **States:** current, hover, focus, drawer open.
 **Screens:** `S10_FilesList`, `S18_BreadcrumbMenu`, `S38_MoreSheet`, `S40_NavDrawer`

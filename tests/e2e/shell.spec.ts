@@ -211,3 +211,18 @@ test.describe("navigation shell", () => {
     expect((await sidebar.boundingBox())?.width).toBe(256);
   });
 });
+
+test.describe("M11 the Files link", () => {
+  test("AC-22.7 reopens the last folder of the session from another screen, and goes to the top from Files", async ({ page }, testInfo) => {
+    await enterApp(page, "/files");
+    await page.evaluate(() => { window.location.hash = "#/files/preview"; });
+    await expect(page.locator('[data-component="FileRow"], [data-component="FileTile"]').filter({ hasText: "sample.png" }).first()).toBeVisible({ timeout: 20_000 });
+    await goToRoute(page, "/trash");
+    await expect(page.getByRole("heading", { level: 1, name: "Trash" })).toBeVisible();
+    const files = layoutFor(testInfo) === "compact" ? page.locator('[data-component="BottomNav"]').getByRole("link", { name: "Files" }) : page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Files" });
+    await files.click();
+    await expect.poll(() => page.evaluate(() => window.location.hash)).toBe("#/files/preview");
+    await files.click();
+    await expect.poll(() => page.evaluate(() => window.location.hash)).toBe("#/files");
+  });
+});

@@ -1,6 +1,7 @@
 import { forgetDevice, releaseStorage } from "@/lib/storage/forget";
 import { tabSync, type TabMessage } from "@/lib/storage/tabsync";
 import { vault } from "@/lib/storage/vault";
+import { useFilesChrome } from "@/features/files/chrome";
 import { clearInterruptedOperations } from "@/features/operations";
 import { queryClient } from "./query";
 import { useSession } from "./session";
@@ -24,6 +25,7 @@ function applyLock(reason: "manual" | "auto" | "remote"): void {
   // Names and keys of bucket objects held by the screens go with the keys; the interrupted list is read again from the journal.
   clearInterruptedOperations();
   useToasts.setState({ toasts: [] });
+  useFilesChrome.setState({ lastFolder: {} });
   // Already locked, or still in onboarding: the keys are gone and that is all. A form clears its own secret fields
   // (it hears the vault's lock), and keeps provider, endpoint, region, bucket and start folder.
   if (locked !== null || connection === null) return;
@@ -51,6 +53,7 @@ export async function forgetThisDevice(): Promise<void> {
   tabSync().post({ type: "forget" });
   await forgetDevice();
   queryClient.clear();
+  useFilesChrome.setState({ lastFolder: {} });
   returnToWelcome();
 }
 
@@ -76,6 +79,7 @@ export function applyTabMessage(message: TabMessage): void {
   applyLock("remote");
   void releaseStorage().finally(() => {
     queryClient.clear();
+    useFilesChrome.setState({ lastFolder: {} });
     returnToWelcome();
   });
 }

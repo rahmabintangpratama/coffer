@@ -1,7 +1,9 @@
 import { Link, useLocation } from "wouter";
+import { useFilesChrome } from "@/features/files/chrome";
 import { cn } from "@/lib/utils";
 import type { Destination } from "./nav-items";
 import { isActiveRoute } from "./routes";
+import { useSession } from "./session";
 
 interface NavLinkProps {
   destination: Destination;
@@ -19,9 +21,13 @@ export function NavLink({ destination, label, layout, onNavigate, className, ico
   const [location] = useLocation();
   const active = isActiveRoute(destination.to, location);
   const Icon = destination.icon;
+  // From another screen Files reopens the folder last seen for this connection; on Files it goes to the top.
+  const connectionId = useSession((state) => state.connection?.id);
+  const last = useFilesChrome((state) => (destination.id === "files" && connectionId !== undefined ? state.lastFolder[connectionId] : undefined));
+  const href = last !== undefined && !active ? last : destination.to;
   return (
     <Link
-      href={destination.to}
+      href={href}
       {...(onNavigate ? { onClick: onNavigate } : {})}
       aria-current={active ? "page" : undefined}
       data-status={active ? "active" : "inactive"}
