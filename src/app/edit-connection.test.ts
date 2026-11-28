@@ -9,7 +9,7 @@ import { vault } from "@/lib/storage/vault";
 import type { ConnectionSummary } from "@/lib/types";
 import { editActions } from "./edit-connection";
 
-// FR-11, AC-11.6, OQ-38: saving an edited connection, and every way it can fail, against fake IndexedDB and real Web Crypto.
+// FR-11, AC-11.6, OQ-40: saving an edited connection, and every way it can fail, against fake IndexedDB and real Web Crypto.
 const removal = vi.hoisted(() => ({ inspect: vi.fn(), remove: vi.fn() }));
 vi.mock("./removal", () => ({ connectionRemoval: removal }));
 

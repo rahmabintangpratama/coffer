@@ -31,7 +31,7 @@ function nameFor(before: ConnectionSummary, typed: string, provider: string, buc
 }
 
 /**
- * Edit a saved connection (FR-11, AC-11.6, OQ-38): the form prefilled from the record, the same six-step test, and
+ * Edit a saved connection (FR-11, AC-11.6, OQ-40): the form prefilled from the record, the same six-step test, and
  * only after it passes the save. Until the save succeeds the old record is not touched.
  */
 export default function EditConnectionFlow({ connection, actions, onDone, onCancel }: EditConnectionFlowProps) {

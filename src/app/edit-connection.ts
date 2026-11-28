@@ -21,7 +21,7 @@ async function carried(before: ConnectionSummary, next: ConnectionSummary, to?: 
 }
 
 /**
- * Saving an edited connection (AC-11.6, OQ-38). The same destination writes the record again under its id, in one
+ * Saving an edited connection (AC-11.6, OQ-40). The same destination writes the record again under its id, in one
  * IndexedDB put. A changed destination is a new record under a new id; Starred and Recent are copied to it when they
  * still point at the same objects, and the old one is removed (C-55) only after both are stored. While the old one has
  * unfinished moves nothing is saved. The journal is never carried over.

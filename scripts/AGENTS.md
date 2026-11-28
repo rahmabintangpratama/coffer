@@ -12,6 +12,10 @@ Build-time tooling. Nothing here ships to the browser. Rules from [../AGENTS.md]
 - `pnpm tokens:build` writes the files; `pnpm tokens:check` regenerates to a temp directory and fails on any difference from the committed files (CI runs it).
 - A color token change needs the real-browser contrast pass ([technical-spec](../docs/technical-spec.md) section 15.7).
 
+## docs/
+
+- `docs/ids.test.ts` runs with `pnpm test` and fails when an OQ, D, C or DC ID is defined twice in `docs/`.
+
 ## Other scripts
 
 Keep each script small, documented in its header, and free of network access and secrets.
