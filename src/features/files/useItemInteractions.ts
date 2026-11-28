@@ -86,9 +86,8 @@ export function useItemInteractions(options: InteractionOptions) {
       } else if (event.key === "Escape") {
         state.clear();
       } else if ((event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === "k") {
-        // ⌘/Ctrl+K from the list focuses the search too (the screen also listens app-wide).
+        // ⌘/Ctrl+K: the screen's app-wide listener moves focus to the search; only keep the browser's own use of the key away.
         event.preventDefault();
-        onSearchShortcut();
       } else if (event.key === "/" && !event.metaKey && !event.ctrlKey && !event.altKey) {
         event.preventDefault();
         onSearchShortcut();

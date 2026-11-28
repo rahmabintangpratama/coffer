@@ -337,7 +337,8 @@ function Folder({ connection, relative, root, settings, onSettings, notify, onUs
       if (typing || document.querySelector("dialog[open]") !== null) return;
       if ((event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === "k") {
         event.preventDefault();
-        focusSearch();
+        // After the key has been handled: on Linux the browsers kept focus on the row when it moved during the keydown.
+        requestAnimationFrame(focusSearch);
       } else if (event.key === "?" && !event.metaKey && !event.ctrlKey && !event.altKey) {
         event.preventDefault();
         setShortcutsOpen(true);
