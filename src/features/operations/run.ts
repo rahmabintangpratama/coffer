@@ -249,19 +249,11 @@ async function announce(connection: ConnectionSummary, final: JournalEntry, hook
 
 /** On load: entries that were running with no live lock were cut off; the ones for this endpoint and bucket wait for the person. */
 export async function loadInterrupted(connection: ConnectionSummary): Promise<void> {
-  const [{ journalStore }, { interrupt }, { heldOperationIds }] = await Promise.all([import("@/lib/storage/journal-store"), import("@/lib/storage/journal"), import("@/lib/storage/locks")]);
+  const [{ journalStore }, { recoverEntries }] = await Promise.all([import("@/lib/storage/journal-store"), import("@/lib/storage/journal-recovery")]);
   await journalStore.prune();
-  const held = await heldOperationIds();
-  const found: JournalEntry[] = [];
-  for (const stored of await journalStore.list()) {
-    if (stored.endpoint !== connection.endpoint || stored.bucket !== (connection.bucket ?? "")) continue;
-    // A running entry whose lock is held is alive in another tab (or this one); without the Web Locks API it cannot be told.
-    const alive = stored.status === "running" && (held?.has(stored.id) ?? false);
-    if (alive) continue;
-    const entry = stored.status === "running" ? interrupt(stored) : stored;
-    if (entry !== stored) await journalStore.put(entry);
-    if (entry.status === "interrupted") found.push(entry);
-  }
+  const recovered = await recoverEntries(journalStore, (entry) => entry.endpoint === connection.endpoint && entry.bucket === (connection.bucket ?? ""));
+  // A live entry is running in another tab (or this one) and is left to it.
+  const found = recovered.map((item) => item.entry).filter((entry) => entry.status === "interrupted");
   useOperations.getState().setInterrupted(found);
 }
 

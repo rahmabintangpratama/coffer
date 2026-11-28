@@ -15,22 +15,15 @@ const hooks = (connection: ConnectionSummary) => ({
 });
 
 async function inspect(connection: ConnectionSummary): Promise<RemovalPlan> {
-  const [{ dataOf }, { journalStore }, { interrupt }, { heldOperationIds }] = await Promise.all([
+  const [{ dataOf }, { journalStore }, { recoverEntries }] = await Promise.all([
     import("@/lib/storage/connection-data"),
     import("@/lib/storage/journal-store"),
-    import("@/lib/storage/journal"),
-    import("@/lib/storage/locks"),
+    import("@/lib/storage/journal-recovery"),
   ]);
+  // A running entry with no live lock was cut off: it is interrupted and can be resumed or discarded, as on load.
+  const recovered = await recoverEntries(journalStore, (entry) => entry.connectionId === connection.id);
+  const unfinished = recovered.filter(({ entry }) => entry.status === "running" || entry.status === "interrupted" || entry.status === "paused");
   const data = await dataOf(connection.id);
-  const held = await heldOperationIds();
-  const unfinished: RemovalPlan["unfinished"] = [];
-  for (const stored of data.unfinished) {
-    // A running entry with no live lock was cut off: it is interrupted and can be resumed or discarded, as on load.
-    const live = stored.status === "running" && (held?.has(stored.id) ?? false);
-    const entry = stored.status === "running" && !live ? interrupt(stored) : stored;
-    if (entry !== stored) await journalStore.put(entry);
-    unfinished.push({ entry, live });
-  }
   return { unfinished, transfers: countConnectionTransfers(connection.id), uploads: data.uploads.length, starred: data.starred, recent: data.recent };
 }
 
