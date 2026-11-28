@@ -257,8 +257,10 @@ function Folder({ connection, relative, root, settings, onSettings, notify, onUs
       const { clientFor, putFolder } = await import("@/lib/s3");
       await putFolder(clientFor(connection), { bucket, key: `${root}${relative}${name}/` });
       reload();
+      // "Folder created · Open" (M11).
+      notify(t("toast.folderCreated", { name }), { label: t("kb.open"), run: () => { navigate(pathFromPrefix(`${relative}${name}/`)); } });
     },
-    [connection, bucket, root, relative, reload],
+    [connection, bucket, root, relative, reload, notify, navigate],
   );
 
   // Dropping files anywhere in the screen uploads them here (AC-40.2). Only file drags react; the overlay hides on leave or drop.

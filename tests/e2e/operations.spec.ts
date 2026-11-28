@@ -139,7 +139,8 @@ test.describe("rename, copy and move", () => {
     await target.focus();
     await page.keyboard.press("Enter");
     await dialog.getByRole("button", { name: "Move here" }).click();
-    await expect(toast(page)).toContainText("Moved a.txt", { timeout: 20_000 });
+    // M11: the toast names where it went.
+    await expect(toast(page)).toContainText("Moved 1 item to target", { timeout: 20_000 });
     expect(await keysUnder(`${folder}/`)).toEqual([`${folder}/b.txt`, `${folder}/target/a.txt`, `${folder}/target/keep.txt`]);
     await toast(page).getByRole("button", { name: "Undo" }).click();
     await expect.poll(() => keysUnder(`${folder}/`), { timeout: 20_000 }).toEqual([`${folder}/a.txt`, `${folder}/b.txt`, `${folder}/target/keep.txt`]);
@@ -193,7 +194,7 @@ test.describe("folders and the journal", () => {
     const bar = page.getByRole("progressbar", { name: "Moving “src”" });
     await expect(bar).toBeVisible({ timeout: 20_000 });
     await expect(bar).toHaveAttribute("aria-valuetext", /of 400 objects/);
-    await expect(toast(page)).toContainText("Moved src", { timeout: 120_000 });
+    await expect(toast(page)).toContainText("Moved 1 item to dst", { timeout: 120_000 });
     expect((await keysUnder(`${folder}/dst/src/`)).length).toBe(count);
     const longest = await page.evaluate(() => Math.max(0, ...(window as unknown as { __long: number[] }).__long));
     // No task blocked the main thread for long enough to notice (the browser calls anything over 50 ms a long task).
@@ -267,7 +268,7 @@ test("exit check: a 2,000-object folder move cut off by a reload resumes from th
   expect(partway).toBeLessThan(2000);
   await banner.getByRole("button", { name: "Resume" }).click();
   await expect(banner).toHaveCount(0, { timeout: 30_000 });
-  await expect(toast(page)).toContainText("Moved src", { timeout: 180_000 });
+  await expect(toast(page)).toContainText("Moved 1 item to dst", { timeout: 180_000 });
   // The diff: nothing left at the source, every object at the destination exactly once, none invented.
   expect(await keysUnder(`${folder}/src/`)).toEqual([]);
   expect(await keysUnder(`${folder}/dst/src/`)).toEqual(original.map((key) => key.replace("/src/", "/dst/src/")));
@@ -328,7 +329,7 @@ test("D-41 Resume clicked in two tabs runs the operation once, and the result ha
 
   // Exactly one tab ran it; the other said so and copied nothing.
   const messages = await Promise.all(tabs.map((tab) => tab.evaluate(() => (window as unknown as { __toasts: string[] }).__toasts)));
-  expect(messages.flat().filter((text) => text.includes("Moved src"))).toHaveLength(1);
+  expect(messages.flat().filter((text) => text.includes("Moved 1 item to dst"))).toHaveLength(1);
   expect(messages.flat().some((text) => /running in another tab|already finished or was discarded/.test(text))).toBe(true);
   expect([...copies.values()].every((count) => count === 1)).toBe(true);
   expect(await keysUnder(`${folder}/dst/src/`)).toEqual(original.map((key) => key.replace("/src/", "/dst/src/")));

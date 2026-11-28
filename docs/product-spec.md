@@ -384,6 +384,7 @@ The UI never hides these. Each one is surfaced where it affects the person.
 - AC-36.4 Given a folder, Then all objects under it move and the journal tracks it.
 - AC-36.5 Given an item already under the trash prefix, Then Move to trash is not offered.
 - AC-36.6 Given the same key is trashed twice, Then both copies exist in separate batch prefixes; nothing is overwritten.
+- AC-36.7 Given the trash toast, When `Undo` is tapped, Then the toast closes at once and "Restored N items" replaces it; a restore from Trash offers `Show location`, a move names its destination ("Moved 1 item to {folder}"), and New folder offers `Open`. A toast without an action leaves when the screen changes; from 768 px toasts sit at the bottom left of the content, clear of the rail or sidebar.
 
 **States:** running, success with Undo, error (nothing lost). **Edge cases:** trash collisions are impossible because each operation has its own batch prefix ([ADR-004](adr/ADR-004-trash-as-prefix.md)). Mobile never deletes on a single tap without a sheet or Undo.
 **Screens:** `S23_TrashUndo`

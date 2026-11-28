@@ -55,6 +55,9 @@ test("AC-36.1, AC-36.3, AC-70.1, AC-70.4 and AC-71.2 exit check: trash, undo, tr
   await expect(toast(page, "Moved 1 item to trash").first()).toBeVisible();
   await expect(fileRow(page, "a.txt")).toHaveCount(0, { timeout: 15_000 });
   await toast(page, "Moved 1 item to trash").first().getByRole("button", { name: "Undo" }).click();
+  // M11: Undo closes the trash toast at once, and "Restored" replaces it.
+  await expect(toast(page, "Moved 1 item to trash")).toHaveCount(0);
+  await expect(toast(page, "Restored 1 item")).toBeVisible({ timeout: 15_000 });
   await expect(fileRow(page, "a.txt")).toBeVisible({ timeout: 15_000 });
   expect(await liveKeys(bucket)).toEqual(["a.txt"]);
   expect(await keysIn(bucket, ".coffer-trash/")).toEqual([]);
@@ -82,7 +85,8 @@ test("AC-36.1, AC-36.3, AC-70.1, AC-70.4 and AC-71.2 exit check: trash, undo, tr
   // Restore one.
   await trashRows(page).first().getByRole("checkbox").check();
   await page.getByRole("button", { name: "Restore" }).click();
-  await expect(toast(page, "Restored 1 item")).toBeVisible({ timeout: 15_000 });
+  await expect(toast(page, "Restored 1 item").last()).toBeVisible({ timeout: 15_000 });
+  await expect(toast(page, "Restored 1 item").last().getByRole("button", { name: "Show location" })).toBeVisible();
   await expect(trashRows(page)).toHaveCount(1, { timeout: 15_000 });
   expect(await liveKeys(bucket)).toEqual(["a.txt"]);
 

@@ -379,7 +379,10 @@
     "deleted": "Deleted {count, plural, one {# item} other {# items}} forever",
     "deleteFailed": "{count, plural, one {# item} other {# items}} could not be deleted",
     "starred": "{count, plural, one {Added # item to starred} other {Added # items to starred}}",
-    "unstarred": "{count, plural, one {Removed # item from starred} other {Removed # items from starred}}"
+    "unstarred": "{count, plural, one {Removed # item from starred} other {Removed # items from starred}}",
+    "folderCreated": "Folder {name} created",
+    "movedTo": "{count, plural, one {Moved # item to {folder}} other {Moved # items to {folder}}}",
+    "showLocation": "Show location"
   },
   "trash": {
     "deleted": "Deleted {when}",

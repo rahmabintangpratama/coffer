@@ -122,7 +122,7 @@ export function Shell({ children }: { children: ReactNode }) {
             setMoreOpen(false);
           }}
         />
-        <ToastHost />
+        <ToastHost sidebarCollapsed={sidebarCollapsed} />
         <TransferPanelHost />
       </div>
     </div>

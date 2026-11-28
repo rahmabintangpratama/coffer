@@ -109,7 +109,10 @@ export function startTrash(input: { connection: ConnectionSummary; root: string;
       label: t("act.undo"),
       run: () => {
         void enqueue(async () => {
-          await runEntries(undo.map((entry) => ({ connection: input.connection, kind: "restore", source: entry.source, target: entry.target ?? "", ...(entry.undoOf === undefined ? {} : { undoOf: entry.undoOf }) })), hooks);
+          const restored = await runEntries(undo.map((entry) => ({ connection: input.connection, kind: "restore", source: entry.source, target: entry.target ?? "", ...(entry.undoOf === undefined ? {} : { undoOf: entry.undoOf }) })), hooks);
+          // Undo replaces the trash toast with what happened.
+          const back = restored.filter((entry) => entry.status === "done").length;
+          if (back > 0) hooks.notify(t("toast.restored", { count: back }));
         }, hooks);
       },
     });
@@ -122,7 +125,8 @@ export function startRestore(input: { connection: ConnectionSummary; moves: read
   void enqueue(async () => {
     const finals = await runEntries(input.moves.map((move) => ({ connection: input.connection, kind: "restore", source: move.source, target: move.target })), hooks);
     const done = finals.filter((entry) => entry.status === "done");
-    if (done.length > 0) hooks.notify(t("toast.restored", { count: done.length }));
+    const first = done[0]?.target;
+    if (done.length > 0) hooks.notify(t("toast.restored", { count: done.length }), first === undefined ? undefined : showLocationOf(input.connection, first));
   }, hooks);
 }
 
@@ -155,6 +159,29 @@ export function resumeOperation(connection: ConnectionSummary, entry: JournalEnt
       hooks.notify(t("op.error"));
     }
   })();
+}
+
+/** The folder a key sits in, as the toast names it: its last segment, or the bucket at the top. */
+function folderOf(connection: ConnectionSummary, key: string): string {
+  const root = connection.prefix ?? "";
+  const relative = key.startsWith(root) ? key.slice(root.length) : key;
+  const trimmed = relative.endsWith("/") ? relative.slice(0, -1) : relative;
+  const parent = trimmed.slice(0, Math.max(0, trimmed.lastIndexOf("/")));
+  return parent === "" ? (connection.bucket ?? "") : parent.slice(parent.lastIndexOf("/") + 1);
+}
+
+/** "Show location": open the folder a key sits in. The address is in the fragment, like every Files route. */
+function showLocationOf(connection: ConnectionSummary, key: string): { label: string; run: () => void } {
+  return {
+    label: t("toast.showLocation"),
+    run: () => {
+      const root = connection.prefix ?? "";
+      const relative = key.startsWith(root) ? key.slice(root.length) : key;
+      const trimmed = relative.endsWith("/") ? relative.slice(0, -1) : relative;
+      const parts = trimmed.split("/").slice(0, -1).filter((part) => part !== "");
+      window.location.hash = parts.length === 0 ? "#/files" : `#/files/${parts.map(encodeURIComponent).join("/")}`;
+    },
+  };
 }
 
 const titleOf = (entry: JournalEntry, name: string) => (entry.kind === "trash" ? t("op.titleTrash", { name }) : entry.kind === "restore" ? t("op.titleRestore", { name }) : t("op.title", { name }));
@@ -206,11 +233,15 @@ async function announce(connection: ConnectionSummary, final: JournalEntry, hook
     return;
   }
   if (final.kind === "restore") {
-    hooks.notify(t("toast.restored", { count: 1 }));
+    hooks.notify(t("toast.restored", { count: 1 }), final.target === undefined ? undefined : showLocationOf(connection, final.target));
     return;
   }
   hooks.notify(
-    final.kind === "rename" ? t("toast.renamed", { name: target }) : final.kind === "copy" ? t("toast.copyMade", { name: target }) : t("toast.moved", { name: target }),
+    final.kind === "rename"
+      ? t("toast.renamed", { name: target })
+      : final.kind === "copy"
+        ? t("toast.copyMade", { name: target })
+        : t("toast.movedTo", { count: 1, folder: folderOf(connection, final.target ?? final.source) }),
     // Undo for a move and a rename while the entry exists; a copy and an Undo itself have none (technical-spec 8).
     final.undoOf === undefined ? undoAction : undefined,
   );
