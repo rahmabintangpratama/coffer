@@ -45,6 +45,7 @@ Package manager: **pnpm** 12 with Node 22 only (`engines` is `>=22 <23` and `eng
 | Typecheck | `pnpm typecheck` |
 | Lint | `pnpm lint` |
 | Unit and component tests | `pnpm test` |
+| Every local gate in order (typecheck, lint, copy keys, token CSS, unit tests), stopping at the first failure; the pre-push hook runs it | `pnpm gates` |
 | Integration tests (needs the S3 fixture) | `pnpm test:integration` |
 | End-to-end tests (install browsers once: `pnpm exec playwright install chromium webkit`; the connection-test spec needs the S3 fixture running) | `pnpm test:e2e` |
 | Start the local S3 fixture (RustFS) | `docker compose -f tests/integration/docker-compose.yml up -d --wait` |
@@ -100,7 +101,7 @@ Package manager: **pnpm** 12 with Node 22 only (`engines` is `>=22 <23` and `eng
 
 - CI is the source of truth for the full gate set. Do not re-run all gates in a clean clone locally.
 - Locally, run only what the change touches: affected unit tests (`vitest related` or `--changed`) and every affected e2e spec in one browser at one viewport, before pushing. Changing a shared component, menu or copy means its consumers' specs are affected (a new menu item affects every spec that opens that menu). The full e2e matrix runs in CI only.
-- The pre-push hook (typecheck, lint, unit) is the local gate. Do not repeat it by hand right before pushing.
+- The pre-push hook runs `pnpm gates`. Do not repeat it by hand right before pushing.
 - After pushing, wait for CI with this procedure, once per push, and never poll in loops:
   1. Get the run ID of the exact commit: `gh run list --commit <sha> --limit 1 --json databaseId -q '.[0].databaseId'`. The run can take a few seconds to appear; repeat only that command until it prints an ID.
   2. `gh run watch <id> --exit-status`. A non-zero exit means stop and diagnose (`gh run view <id> --log-failed`); do not start the next piece of work on a red run.
@@ -115,8 +116,8 @@ Package manager: **pnpm** 12 with Node 22 only (`engines` is `>=22 <23` and `eng
 
 A gate is lint, typecheck, test, e2e, build or the size check.
 
-- Never pipe a gate command (for example `| tail`) unless the shell has `set -o pipefail`: the pipe hides the failing exit code.
-- Chain gates, and every other step whose failure must stop the work, with `&&`, in scripts, hooks and by hand. Never join them with `;`.
+- Run local gates only with `pnpm gates` or as single commands, one per invocation. Never chain them by hand with `;` or pipes (for example `| tail`): both hide a failing exit code.
+- Inside `package.json` scripts and hooks, join steps whose failure must stop the work with `&&`.
 - Check the exit code before committing or pushing.
 - A gate whose failure was hidden counts as a failed gate: fix it and run it again.
 - Show that every new guard, check script or CI gate fails on a known-bad input before committing it, and name that input in the commit body.
@@ -124,7 +125,7 @@ A gate is lint, typecheck, test, e2e, build or the size check.
 ## Git
 
 - Use Conventional Commits: `type(scope): subject` with `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore` or `revert`; imperative, lowercase start, no trailing period, header at most 72 characters; the body explains why.
-- A `commit-msg` hook (lefthook, installed by `pnpm install`) runs commitlint, and CI lints every commit in the pushed range. A `pre-push` hook runs `pnpm typecheck && pnpm lint && pnpm test`. Never bypass the hooks (`--no-verify`).
+- A `commit-msg` hook (lefthook, installed by `pnpm install`) runs commitlint, and CI lints every commit in the pushed range. A `pre-push` hook runs `pnpm gates`. Never bypass the hooks (`--no-verify`).
 - **Do not add a `Co-Authored-By` trailer or any other attribution** (tool or author credit lines) to commits.
 - **Every commit must be signed** (SSH signing is configured for the maintainer). Never disable signing: no `-c commit.gpgsign=false`, no `--no-gpg-sign`. If signing fails, stop and tell the maintainer.
 - Before the first commit of a session, check that `ssh-add -l` lists the signing key; if not, stop and ask.

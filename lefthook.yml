@@ -5,9 +5,9 @@ commit-msg:
     commitlint:
       run: pnpm exec commitlint --edit {1}
 
-# Runs before a push. The steps are chained with && so a failing step stops
-# the push and no later step can hide it.
+# Runs before a push. `pnpm gates` chains the local gates with && so a failing
+# step stops the push and no later step can hide it.
 pre-push:
   commands:
     checks:
-      run: pnpm typecheck && pnpm lint && pnpm test
+      run: pnpm gates

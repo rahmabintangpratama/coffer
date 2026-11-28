@@ -19,6 +19,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "gates": "pnpm typecheck && pnpm lint && pnpm copy:check && pnpm tokens:check && pnpm test",
     "tokens:build": "node scripts/tokens/build.ts",
     "tokens:check": "node scripts/tokens/build.ts --check",
     "lint": "eslint .",
