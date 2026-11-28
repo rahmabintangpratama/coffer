@@ -85,8 +85,9 @@ test("AC-26.1 Delete moves the selection to the trash", async ({ page }) => {
 });
 
 test("AC-26.2 single keys do nothing while typing", async ({ page }) => {
-  // A real click gives the page and the row focus; a script focus() alone did not on the Linux runners (OQ-39).
+  // A click selects the row, so the selection bar has taken the pill's place: wait for it, then ask for the search.
   await row(page, "a.txt").click();
+  await expect(page.locator('[data-component="SelectionBar"]')).toBeVisible();
   await page.keyboard.press("/");
   const pill = page.getByRole("searchbox");
   await expect(pill).toBeFocused();
@@ -97,6 +98,7 @@ test("AC-26.2 single keys do nothing while typing", async ({ page }) => {
 
 test("AC-26.4 Ctrl or Cmd+K focuses the search", async ({ page }) => {
   await row(page, "a.txt").click();
+  await expect(page.locator('[data-component="SelectionBar"]')).toBeVisible();
   await page.keyboard.press("ControlOrMeta+k");
   await expect(page.getByRole("searchbox")).toBeFocused();
 });
