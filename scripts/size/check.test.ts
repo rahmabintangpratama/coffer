@@ -23,6 +23,12 @@ describe("bundle budgets (technical-spec 14)", () => {
     expect(report.lazy.map((entry) => entry.file)).toContain("assets/pdf.worker.min-d.mjs");
   });
 
+  it("ADR-010 measures a subpath build, and fails when it finds no initial script", () => {
+    const built = dist({ "index-a.js": "entry", "vendor-b.js": "vendor", ...lazy }, HTML.replaceAll("/assets/", "/coffer/assets/"));
+    expect(analyze(built, "/coffer/").initial).toHaveLength(2);
+    expect(analyze(built).problems.join("\n")).toContain("names no script under /");
+  });
+
   it("fails when pdf.js leaks into the initial bundle", () => {
     const report = analyze(dist({ "index-a.js": "entry GlobalWorkerOptions", "vendor-b.js": "v", ...lazy }, HTML));
     expect(report.problems.join("\n")).toMatch(/pdf\.js is in the initial bundle/);
