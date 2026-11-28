@@ -9,6 +9,8 @@ import { actionsFor } from "./actions";
 import { FileIcon } from "@/components/FileIcon";
 import { Name, stopRowEvents } from "./FileRow";
 import type { ItemViewProps } from "./FileList";
+import { Thumbnail } from "./Thumbnail";
+import type { ConnectionSummary } from "@/lib/types";
 import type { Item } from "./model";
 import { useSelection } from "./selection";
 import { useItemInteractions } from "./useItemInteractions";
@@ -33,7 +35,7 @@ function buildRows(items: Item[], columns: number): GridRow[] {
 }
 
 /** The grid view (AC-20.3): folder chips under a "Folders" heading, then file cards; virtualized by row. */
-export function FileGrid(props: ItemViewProps) {
+export function FileGrid(props: ItemViewProps & { connection: ConnectionSummary }) {
   const { items, folderLabel, handlers } = props;
   const layout = useLayout();
   const container = useRef<HTMLDivElement>(null);
@@ -158,7 +160,7 @@ export function FileGrid(props: ItemViewProps) {
             style={{ transform, height: (row.kind === "folders" ? FOLDER_ROW : FILE_ROW) - GAP, gridTemplateColumns: `repeat(${columns.toString()}, minmax(0, 1fr))` }}
           >
             {row.items.map((item, offset) => (
-              <Tile key={item.key} item={item} selected={keys.has(item.key)} index={row.start + offset} itemProps={itemProps} handlers={handlers} readOnly={props.readOnly} />
+              <Tile key={item.key} item={item} selected={keys.has(item.key)} index={row.start + offset} itemProps={itemProps} handlers={handlers} readOnly={props.readOnly} connection={props.connection} />
             ))}
           </div>
         );
@@ -167,7 +169,7 @@ export function FileGrid(props: ItemViewProps) {
   );
 }
 
-function Tile({ item, selected, index, itemProps, handlers, readOnly }: { readOnly: boolean; item: Item; selected: boolean; index: number; itemProps: ReturnType<typeof useItemInteractions>["itemProps"]; handlers: ItemViewProps["handlers"] }) {
+function Tile({ item, selected, index, itemProps, handlers, readOnly, connection }: { connection: ConnectionSummary; readOnly: boolean; item: Item; selected: boolean; index: number; itemProps: ReturnType<typeof useItemInteractions>["itemProps"]; handlers: ItemViewProps["handlers"] }) {
   const menu = actionsFor(item, handlers, readOnly);
   const folder = item.kind === "folder";
   return (
@@ -190,9 +192,7 @@ function Tile({ item, selected, index, itemProps, handlers, readOnly }: { readOn
         </>
       ) : (
         <>
-          <div className="flex flex-1 items-center justify-center bg-subtle">
-            <FileIcon kind={item.fileKind} className="size-10" />
-          </div>
+          <Thumbnail connection={connection} file={item} />
           <div className="px-3 py-2">
             <Name name={item.name} />
           </div>

@@ -375,7 +375,7 @@ function Folder({ connection, relative, root, settings, onSettings, notify, onUs
       </div>
     );
   } else {
-    const view = settings.view === "grid" ? <FileGrid {...viewProps} /> : <FileList {...viewProps} sort={settings.sort} onSort={onSort} />;
+    const view = settings.view === "grid" ? <FileGrid {...viewProps} connection={connection} /> : <FileList {...viewProps} sort={settings.sort} onSort={onSort} />;
     body = (
       <ContextMenuArea component="ContextMenu" groups={contextItem ? actionsFor(contextItem, handlers, readOnly) : []}>
         {view}
