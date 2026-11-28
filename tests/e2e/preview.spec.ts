@@ -363,6 +363,13 @@ test.describe("PDF, Markdown and HTML (M5b)", () => {
         const color = parseColor(await text.evaluate((element) => getComputedStyle(element).color));
         expect(ratio(color, background)).toBeGreaterThanOrEqual(4.5);
       }
+      // DC-27: the media layer's edge and focus ring.
+      const edge = parseColor(await header.evaluate((element) => getComputedStyle(element).borderBottomColor));
+      expect(ratio(edge, background), "header edge").toBeGreaterThanOrEqual(3);
+      await page.keyboard.press("Shift+Tab");
+      await page.keyboard.press("Tab");
+      const ring = parseColor(await page.evaluate(() => getComputedStyle(document.activeElement ?? document.body).outlineColor));
+      expect(ratio(ring, background), "focus ring").toBeGreaterThanOrEqual(3);
     });
   }
 

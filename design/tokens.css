@@ -112,6 +112,10 @@
   --cf-color-media-buffer: var(--cf-gray-600);
   --cf-color-media-progress: var(--cf-teal-300);
   --cf-color-media-scrim: rgba(18, 17, 16, 0.6);
+  --cf-color-media-fg-muted: var(--cf-gray-300);
+  --cf-color-media-surface: var(--cf-gray-850);
+  --cf-color-media-border: var(--cf-gray-450);
+  --cf-color-media-focus-ring: var(--cf-teal-300);
   --cf-color-paper-bg: var(--cf-gray-0);
   --cf-color-paper-text: var(--cf-gray-950);
   --cf-color-paper-muted: var(--cf-gray-600);
@@ -257,6 +261,10 @@
   --cf-color-media-buffer: var(--cf-gray-600);
   --cf-color-media-progress: var(--cf-teal-300);
   --cf-color-media-scrim: rgba(18, 17, 16, 0.6);
+  --cf-color-media-fg-muted: var(--cf-gray-300);
+  --cf-color-media-surface: var(--cf-gray-850);
+  --cf-color-media-border: var(--cf-gray-450);
+  --cf-color-media-focus-ring: var(--cf-teal-300);
   --cf-color-paper-bg: var(--cf-gray-0);
   --cf-color-paper-text: var(--cf-gray-950);
   --cf-color-paper-muted: var(--cf-gray-600);
