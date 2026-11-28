@@ -5,6 +5,10 @@
 - **Source files:** `.github/workflows/pages.yml`, `scripts/vite/deploy.ts`
 - **Related:** [all targets](README.md), [ADR-010](../adr/ADR-010-deploy-portability.md)
 
+**Supported only on an origin of Coffer's own:** a custom domain, or the user site `https://<account>.github.io/` from a repository that hosts only Coffer.
+
+**A project site (`https://<account>.github.io/<repository>/`) is not recommended.** It shares its origin, and with it its browser storage, with every other Pages site of the account: any of them can read the encrypted records Coffer saves and can run code that reaches them while Coffer is open. Coffer warns about this on its first screen.
+
 **Use a host that sends headers if you can.** GitHub Pages does not let a site set response headers. This build puts the policy inside the page, which covers less. It has been tested against a server that sends no headers, not deployed to GitHub Pages by this project.
 
 ## What is lost
@@ -21,20 +25,18 @@
 | Cache rules | **Lost.** Hashed files are not cached for a year; GitHub's own cache lifetime applies. |
 | `pnpm headers:check --url` | Fails, as expected. |
 
-A project site (`https://<account>.github.io/<repository>/`) shares its origin with every other Pages site of that account, and with them its browser storage. Read [the note on shared origins](README.md#serving-under-a-path). Use a custom domain for Coffer alone, or do not save connections there.
-
 ## Turn it on
 
-The workflow is off by default.
+The workflow is off by default. Set up the custom domain, or use the `<account>.github.io` repository, first.
 
 1. Repository **Settings**, **Pages**, **Source**: **GitHub Actions**.
 2. **Settings**, **Secrets and variables**, **Actions**, **Variables**: add `COFFER_PAGES` = `true`.
 3. **Actions**, **GitHub Pages**, **Run workflow** on `main`. The base path comes from the Pages settings.
 
-To build by hand: `COFFER_TARGET=github-pages COFFER_BASE=/<repository>/ pnpm build`.
+To build by hand for your own origin: `COFFER_TARGET=github-pages pnpm build`. A project site would need `COFFER_BASE=/<repository>/`; read the warning above first.
 
 ## After the first deploy
 
-- **CORS.** Add the origin (`https://<account>.github.io`, without the path, or your custom domain) to the CORS rule of **every bucket**.
+- **CORS.** Add the origin (your custom domain, or `https://<account>.github.io`) to the CORS rule of **every bucket**.
 - **Saved connections belong to the origin.** At a new address, add the connection and save it again.
 - Open the browser console: there must be no policy violation.

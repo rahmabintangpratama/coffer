@@ -1,5 +1,6 @@
 # GitHub Pages, the degraded tier (ADR-010, docs/deploy/github-pages.md): no response headers, so the policy is a meta
-# element and several protections are lost. Off until the owner turns it on: it runs only by hand, and only when the
+# element and several protections are lost. Use a custom domain or a <account>.github.io repository that holds only
+# Coffer: a project site shares its origin with the account's other sites. Off until the owner turns it on: it runs only by hand, and only when the
 # repository variable COFFER_PAGES is "true" and Pages is set to "GitHub Actions" as its source.
 name: GitHub Pages
 

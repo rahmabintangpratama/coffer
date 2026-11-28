@@ -107,7 +107,7 @@ Prerequisites: Node 22 (`>=22 <23`; run `nvm use` or `fnm use` to read `.nvmrc`;
 
 ## Deploy
 
-`pnpm build`, then serve `dist/` with the headers from `deploy/headers.json`. Ready-made configurations cover Cloudflare Pages, Netlify, Vercel, nginx and Caddy; GitHub Pages works with weaker protection. See the [deploy guides](docs/deploy/README.md). Whatever the host, add its address to your bucket's CORS rule; connections saved in the browser belong to that one address.
+`pnpm build`, then serve `dist/` with the headers from `deploy/headers.json`. Ready-made configurations cover Cloudflare Pages, Netlify, Vercel, nginx and Caddy; GitHub Pages works with weaker protection, and only on an address of Coffer's own. See the [deploy guides](docs/deploy/README.md). Whatever the host, add its address to your bucket's CORS rule; connections saved in the browser belong to that one address.
 
 ## Brand
 
