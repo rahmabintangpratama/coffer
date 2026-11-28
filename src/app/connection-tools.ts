@@ -9,6 +9,7 @@ import type { ConnectionSummary } from "@/lib/types";
  * the record again: the name is not part of the record's binding (D-49), so nothing else changes.
  */
 export const connectionTools: Omit<ConnectionTools, "add"> = {
+  providerName: (connection) => getPreset(connection.providerId).displayName,
   async test(connection, onStep, signal) {
     const { createClient, runConnectionTest } = await import("@/lib/s3");
     const client = createClient({

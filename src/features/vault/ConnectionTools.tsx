@@ -7,14 +7,7 @@ import { StepList } from "@/components/StepList";
 import { pendingSteps, stepRows } from "@/features/onboarding";
 import { t } from "@/lib/i18n";
 import type { ConnectionSummary, ConnectionTestStep } from "@/lib/types";
-
-/** What Settings → Connections needs from the app to add, test and rename (M11). */
-export interface ConnectionTools {
-  /** Start the onboarding flow for another connection. */
-  add: () => void;
-  test: (connection: ConnectionSummary, onStep: (step: ConnectionTestStep) => void, signal: AbortSignal) => Promise<{ steps: ConnectionTestStep[] }>;
-  rename: (connection: ConnectionSummary, name: string) => Promise<ConnectionSummary>;
-}
+import type { ConnectionTools } from "./connection-tools-types";
 
 type Outcome = "running" | "pass" | "fail" | "error";
 
@@ -95,5 +88,22 @@ export function RenameConnectionDialog({ connection, tools, onRenamed, onClose }
         </div>
       </form>
     </Dialog>
+  );
+}
+
+/** Both dialogs, as one lazy chunk: the test rows come from onboarding, which the Unlock screen must not load. */
+export default function ConnectionToolDialogs(props: {
+  testing: ConnectionSummary | null;
+  renaming: ConnectionSummary | null;
+  tools: ConnectionTools;
+  onCloseTest: () => void;
+  onCloseRename: () => void;
+  onRenamed: (next: ConnectionSummary) => void;
+}) {
+  return (
+    <>
+      <TestConnectionDialog connection={props.testing} tools={props.tools} onClose={props.onCloseTest} />
+      <RenameConnectionDialog connection={props.renaming} tools={props.tools} onClose={props.onCloseRename} onRenamed={props.onRenamed} />
+    </>
   );
 }

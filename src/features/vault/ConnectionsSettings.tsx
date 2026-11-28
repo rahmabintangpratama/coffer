@@ -1,11 +1,12 @@
-import { useRef, useState } from "react";
+import { lazy, Suspense, useRef, useState } from "react";
 import { Button } from "@/components/Button";
 import { Dialog } from "@/components/Dialog";
-import { getPreset } from "@/lib/providers";
 import { t } from "@/lib/i18n";
 import { nameOfEntry } from "@/lib/storage/journal";
 import type { ConnectionSummary, JournalEntry } from "@/lib/types";
-import { type ConnectionTools, RenameConnectionDialog, TestConnectionDialog } from "./ConnectionTools";
+import type { ConnectionTools } from "./connection-tools-types";
+
+const ConnectionToolDialogs = lazy(() => import("./ConnectionTools"));
 import { RevealDialog } from "./RevealDialog";
 
 /** What Remove needs from the app (OQ-37, C-55); the page owns only the dialogs. */
@@ -104,7 +105,7 @@ export function ConnectionsSettings({ active, saved, removal, tools, onRenamed, 
               <p className="truncate text-base">{connection.name}</p>
               <p className="truncate text-sm text-fg-muted">
                 {t("conn.subtitle", {
-                  connection: connection.bucket === undefined ? getPreset(connection.providerId).displayName : t("conn.name", { provider: getPreset(connection.providerId).displayName, bucket: connection.bucket }),
+                  connection: connection.bucket === undefined ? tools.providerName(connection) : t("conn.name", { provider: tools.providerName(connection), bucket: connection.bucket }),
                   state: isSaved(connection) ? t("conn.encrypted") : t("conn.notSaved"),
                 })}
               </p>
@@ -138,13 +139,18 @@ export function ConnectionsSettings({ active, saved, removal, tools, onRenamed, 
         ))}
       </ul>
 
-      <TestConnectionDialog connection={testing} tools={tools} onClose={() => { setTesting(null); }} />
-      <RenameConnectionDialog
-        connection={renaming}
-        tools={tools}
-        onClose={() => { setRenaming(null); }}
-        onRenamed={(next) => { onRenamed(next); notify(t("conn.renamed", { name: next.name })); }}
-      />
+      {(testing !== null || renaming !== null) && (
+        <Suspense fallback={null}>
+          <ConnectionToolDialogs
+            testing={testing}
+            renaming={renaming}
+            tools={tools}
+            onCloseTest={() => { setTesting(null); }}
+            onCloseRename={() => { setRenaming(null); }}
+            onRenamed={(next) => { onRenamed(next); notify(t("conn.renamed", { name: next.name })); }}
+          />
+        </Suspense>
+      )}
       <RevealDialog connection={revealing} onClose={() => { setRevealing(null); }} notify={notify} returnFocusRef={revealReturn} />
 
       <Dialog open={blocked !== null} onClose={() => { setStep(null); }} title={t("conn.blockedTitle")} closeLabel={t("act.close")}>

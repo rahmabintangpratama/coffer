@@ -29,7 +29,7 @@ function removalOf(over: Partial<ConnectionRemoval> = {}): ConnectionRemoval {
   return { inspect: vi.fn(() => Promise.resolve(emptyPlan)), resume: vi.fn(), discard: vi.fn(() => Promise.resolve()), remove: vi.fn(() => Promise.resolve({ aborted: 0, failed: 0 })), ...over };
 }
 function connectionProps(over: Partial<ConnectionsSettingsProps> = {}): ConnectionsSettingsProps {
-  return { active: one, saved: [one, two], removal: removalOf(), tools: { add: vi.fn(), test: vi.fn(() => Promise.resolve({ steps: [] })), rename: vi.fn((connection: ConnectionSummary, name: string) => Promise.resolve({ ...connection, name })) }, onRenamed: vi.fn(), onRemoved: vi.fn(), notify: vi.fn(), ...over };
+  return { active: one, saved: [one, two], removal: removalOf(), tools: { providerName: () => "Other S3-compatible", add: vi.fn(), test: vi.fn(() => Promise.resolve({ steps: [] })), rename: vi.fn((connection: ConnectionSummary, name: string) => Promise.resolve({ ...connection, name })) }, onRenamed: vi.fn(), onRemoved: vi.fn(), notify: vi.fn(), ...over };
 }
 
 beforeEach(() => {
