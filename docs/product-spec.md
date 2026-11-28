@@ -563,7 +563,7 @@ The UI never hides these. Each one is surfaced where it affects the person.
 
 ## 8. Starred and Recent
 
-#### FR-80 Starred (v1)
+#### FR-80 Starred (v1, built in M11)
 **Story:** As a user, I want to pin items I use often.
 **Acceptance**
 - AC-80.1 Given `Add to starred`, Then the item is saved locally (connection, bucket, key) and labelled "Saved in this browser".
@@ -573,7 +573,7 @@ The UI never hides these. Each one is surfaced where it affects the person.
 
 **Screens:** `S29_Starred`, `T14_Storage_Starred`
 
-#### FR-81 Recent (v1)
+#### FR-81 Recent (v1, built in M11)
 **Story:** As a user, I want to reopen what I opened lately.
 **Acceptance:** AC-81.1 Given a file is opened in Preview, Then it is added to Recent locally (names only). AC-81.2 Given Home, Then Recent shows with `home.recent.note`. AC-81.3 Given `Forget this device`, Then Recent is cleared. **Edge cases:** capped at 50 items; items for other connections are hidden. **Screens:** `S14_Home`
 

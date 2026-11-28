@@ -331,7 +331,9 @@
     "copyMade": "Copy saved as {name}",
     "restored": "Restored {count, plural, one {# item} other {# items}}",
     "deleted": "Deleted {count, plural, one {# item} other {# items}} forever",
-    "deleteFailed": "{count, plural, one {# item} other {# items}} could not be deleted"
+    "deleteFailed": "{count, plural, one {# item} other {# items}} could not be deleted",
+    "starred": "{count, plural, one {Added # item to starred} other {Added # items to starred}}",
+    "unstarred": "{count, plural, one {Removed # item from starred} other {Removed # items from starred}}"
   },
   "trash": {
     "deleted": "Deleted {when}",
@@ -497,5 +499,10 @@
   },
   "set": {
     "back": "Back to Settings"
+  },
+  "star": {
+    "missing": "Not found in {bucket}. It was moved or deleted outside Coffer.",
+    "location": "In {folder}",
+    "listLabel": "Starred items"
   }
 }

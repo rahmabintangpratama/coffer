@@ -69,6 +69,11 @@ async function runEntries(specs: readonly StartInput[], hooks: RunHooks): Promis
     });
     finals.push(final);
     if (final.status !== "done") break;
+    // AC-80.2: a star follows a move or rename through Coffer and goes with a trash. Stars are a convenience; a failure here never fails the operation.
+    if ((final.kind === "move" || final.kind === "rename" || final.kind === "trash") && final.target !== undefined) {
+      const target = final.kind === "trash" ? null : final.target;
+      await import("@/lib/storage/library").then((library) => library.followStars(final.connectionId, final.bucket, final.source, target)).catch(() => undefined);
+    }
   }
   hooks.onChanged();
   return finals;

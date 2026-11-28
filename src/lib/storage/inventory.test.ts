@@ -87,8 +87,8 @@ describe("AC-10.3 and AC-10.4 Forget this device", () => {
     const handle = await sharedDb();
     await handle.put("journal", { id: "j1", status: "interrupted" } as never);
     await handle.put("uploads", { id: "u1" } as never);
-    await handle.put("starred", { connectionId: "c", bucket: "b", key: "k" });
-    await handle.put("recent", { connectionId: "c", bucket: "b", key: "k" });
+    await handle.put("starred", { connectionId: "c", bucket: "b", key: "k", kind: "file", addedAt: "2026-01-01T00:00:00.000Z" });
+    await handle.put("recent", { connectionId: "c", bucket: "b", key: "k", name: "k", fileKind: "unknown", openedAt: "2026-01-01T00:00:00.000Z" });
     await handle.put("meta", { key: "m", value: 1 });
     vault.put("c1", { accessKeyId: "AK", secretAccessKey: "SK" });
     await vault.save({ id: "c1", name: "n", providerId: "custom", fields: {}, endpoint: "http://x", region: "r", addressingStyle: "path", access: "readWrite", createdAt: "2026-01-01T00:00:00Z" }, "correct horse battery");

@@ -44,7 +44,7 @@ afterEach(() => {
 
 function setup(files: FileItem[], index = 0, over: Partial<PreviewProps> = {}) {
   const props: PreviewProps = {
-    connection: loopback, files, index, onClose: vi.fn(), onStep: vi.fn(), onDownload: vi.fn(), renderDetails: vi.fn((file: FileItem) => <aside aria-label="Details">{file.name}</aside>), onCopyKey: vi.fn(), onShare: vi.fn(), ...over,
+    connection: loopback, files, index, onClose: vi.fn(), onStep: vi.fn(), onDownload: vi.fn(), renderDetails: vi.fn((file: FileItem) => <aside aria-label="Details">{file.name}</aside>), onCopyKey: vi.fn(), onShare: vi.fn(), isStarred: () => false, onToggleStar: vi.fn(), ...over,
   };
   render(<Preview {...props} />);
   return props;
@@ -299,7 +299,7 @@ describe("M11 details inside the viewer", () => {
     readObject.mockResolvedValue(enc("x"));
     const files = [file("a.txt"), file("b.txt")];
     const renderDetails = vi.fn((shown: FileItem) => <aside aria-label="Details">{shown.name}</aside>);
-    const props: PreviewProps = { connection: loopback, files, index: 0, onClose: vi.fn(), onStep: vi.fn(), onDownload: vi.fn(), renderDetails, onCopyKey: vi.fn(), onShare: vi.fn() };
+    const props: PreviewProps = { connection: loopback, files, index: 0, onClose: vi.fn(), onStep: vi.fn(), onDownload: vi.fn(), renderDetails, onCopyKey: vi.fn(), onShare: vi.fn(), isStarred: () => false, onToggleStar: vi.fn() };
     const { rerender } = render(<Preview {...props} />);
     await userEvent.click(screen.getByRole("button", { name: "Details" }));
     const panel = () => within(screen.getByRole("dialog")).getByRole("complementary", { name: "Details" });

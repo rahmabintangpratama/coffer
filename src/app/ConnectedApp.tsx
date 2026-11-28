@@ -21,8 +21,10 @@ import { useAutoLock } from "./useAutoLock";
 // Browsing is its own chunk too: the listing code, the virtualizer and the menus load when Files opens.
 const FilesRoute = lazy(() => import("./screens/FilesRoute"));
 const TrashRoute = lazy(() => import("./screens/TrashRoute"));
+const StarredRoute = lazy(() => import("./screens/StarredRoute"));
 const HomeScreen = lazy(() => import("@/features/files").then((module) => ({ default: module.HomeScreen })));
 const filesGroups = ["files", "det", "filter", "search", "sel", "kind", "col", "view", "sort", "row", "menu", "home", "type", "dlg", "conf", "upl", "drop", "pv", "op", "ro", "share"] as const;
+const starredGroups = ["star"] as const;
 const trashGroups = ["trash", "del", "sel", "conf", "op", "ro"] as const;
 const settingsGroups = ["sec", "stored", "forget", "reveal", "conn", "ob", "beh", "about", "op"] as const;
 
@@ -77,7 +79,11 @@ export default function ConnectedApp({ connection }: { connection: ConnectionSum
               </CopyBoundary>
             </Route>
             <Route path={routes.starred}>
-              <PlaceholderScreen titleKey="nav.starred" />
+              <CopyBoundary groups={starredGroups} fallback={screenFallback} errorFallback={<LoadError />}>
+                <Suspense fallback={screenFallback}>
+                  <StarredRoute connection={connection} />
+                </Suspense>
+              </CopyBoundary>
             </Route>
             <Route path={routes.trash}>
               <CopyBoundary groups={trashGroups} fallback={screenFallback} errorFallback={<LoadError />}>

@@ -26,8 +26,8 @@ const openUploads = async (): Promise<string[]> => ((await client.send(new ListM
 
 async function seedRows(connectionId: string): Promise<void> {
   const handle = await sharedDb();
-  await handle.put("starred", { connectionId, bucket, key: "a.txt" });
-  await handle.put("recent", { connectionId, bucket, key: "b.txt" });
+  await handle.put("starred", { connectionId, bucket, key: "a.txt", kind: "file", addedAt: "2026-01-01T00:00:00.000Z" });
+  await handle.put("recent", { connectionId, bucket, key: "b.txt", name: "b.txt", fileKind: "code", openedAt: "2026-01-01T00:00:00.000Z" });
   await handle.put("journal", { id: `j-${connectionId}`, kind: "move", connectionId, endpoint: ENDPOINT, bucket, source: "x/", target: "y/", status: "done", phase: "finished", total: 1, done: 1, startedAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-01T00:00:00.000Z" });
 }
 

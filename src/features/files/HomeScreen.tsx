@@ -1,10 +1,11 @@
 import { Database } from "lucide-react";
+import { RecentSection } from "@/features/library";
 import { getPreset } from "@/lib/providers";
 import { t } from "@/lib/i18n";
 import type { ConnectionSummary } from "@/lib/types";
 import { pathFromPrefix } from "./model";
 
-/** Home (FR-24): the connection's bucket as a card. The object count is not known without listing, so it is not shown (AC-24.1 "when known"). */
+/** Home (FR-24): the connection's bucket as a card, then Recent files (FR-81). The object count is not known without listing, so it is not shown (AC-24.1 "when known"). */
 export function HomeScreen({ connection }: { connection: ConnectionSummary }) {
   const provider = getPreset(connection.providerId).displayName;
   return (
@@ -30,6 +31,7 @@ export function HomeScreen({ connection }: { connection: ConnectionSummary }) {
           </ul>
         </>
       )}
+      <RecentSection connection={connection} />
     </section>
   );
 }

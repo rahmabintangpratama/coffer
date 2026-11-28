@@ -1,4 +1,4 @@
-import { Copy, Download, Eye, FolderInput, Info, Link2, Pencil, Share2, Trash2 } from "lucide-react";
+import { Copy, Download, Eye, FolderInput, Info, Link2, Pencil, Share2, Star, StarOff, Trash2 } from "lucide-react";
 import { createElement } from "react";
 import type { MenuGroup } from "@/components/ActionMenu";
 import { t } from "@/lib/i18n";
@@ -17,6 +17,9 @@ export interface ActionHandlers {
   move: (items: Item[]) => void;
   /** Left out inside the trash (AC-36.5). */
   trash?: (items: Item[]) => void;
+  /** FR-80: stars are local, so they stay on a read-only connection. */
+  isStarred: (item: Item) => boolean;
+  star: (items: Item[], add: boolean) => void;
 }
 
 const icon = (component: typeof Download) => createElement(component, { "aria-hidden": true, className: "size-5 text-fg-muted" });
@@ -48,7 +51,14 @@ export function actionsFor(item: Item, handlers: ActionHandlers, readOnly = fals
   const remove: MenuGroup[] = handlers.trash
     ? [{ id: "remove", actions: [{ id: "trash", label: t("act.trash"), icon: icon(Trash2), ...write(false), onSelect: () => { handlers.trash?.([item]); } }] }]
     : [];
-  if (item.kind === "folder") return [{ id: "share", actions: [share(t("share.reason.folder"))] }, organize, ...remove];
+  const starred = handlers.isStarred(item);
+  const starAction = {
+    id: "star",
+    label: starred ? t("act.unstar") : t("act.star"),
+    icon: icon(starred ? StarOff : Star),
+    onSelect: () => { handlers.star([item], !starred); },
+  };
+  if (item.kind === "folder") return [{ id: "share", actions: [share(t("share.reason.folder")), starAction] }, organize, ...remove];
   return [
     {
       id: "file",
@@ -62,6 +72,7 @@ export function actionsFor(item: Item, handlers: ActionHandlers, readOnly = fals
     {
       id: "info",
       actions: [
+        starAction,
         { id: "details", label: t("act.details"), icon: icon(Info), onSelect: () => { handlers.details(item); } },
         { id: "copyKey", label: t("act.copyKey"), icon: icon(Link2), onSelect: () => { handlers.copyKey(item); } },
       ],

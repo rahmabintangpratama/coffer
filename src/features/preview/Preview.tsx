@@ -1,4 +1,4 @@
-import { ArrowLeft, ChevronLeft, ChevronRight, Download, Info, Link2, Share2, SkipBack, SkipForward } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Download, Info, Link2, Share2, SkipBack, SkipForward, Star, StarOff } from "lucide-react";
 import { type KeyboardEvent, lazy, type ReactNode, Suspense, useState } from "react";
 import { ActionMenu } from "@/components/ActionMenu";
 import { Button } from "@/components/Button";
@@ -43,6 +43,9 @@ export interface PreviewProps {
   renderDetails: (file: FileItem, close: () => void) => ReactNode;
   onCopyKey: (file: FileItem) => void;
   onShare: (file: FileItem) => void;
+  /** FR-80: Add to or Remove from starred, in the More menu. */
+  isStarred: (file: FileItem) => boolean;
+  onToggleStar: (file: FileItem) => void;
 }
 
 function Body({ connection, file, onSwipe, onDownload }: { connection: ConnectionSummary; file: FileItem; onSwipe: (direction: 1 | -1) => void; onDownload: () => void }) {
@@ -73,7 +76,7 @@ function Body({ connection, file, onSwipe, onDownload }: { connection: Connectio
  * and by the menu; the position is announced. It is a dialog named "Preview of
  * {name}"; closing returns focus to the row.
  */
-export function Preview({ connection, files, index, onClose, onClosed, onStep, onDownload, renderDetails, onCopyKey, onShare }: PreviewProps) {
+export function Preview({ connection, files, index, onClose, onClosed, onStep, onDownload, renderDetails, onCopyKey, onShare, isStarred, onToggleStar }: PreviewProps) {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const file = files[index];
   if (!file) return null;
@@ -110,7 +113,15 @@ export function Preview({ connection, files, index, onClose, onClosed, onStep, o
                 { id: "next", label: t("pv.next"), icon: <SkipForward aria-hidden="true" className="size-5" />, disabled: !hasNext, onSelect: () => { onStep(1); } },
               ],
             },
-            { id: "file", actions: [{ id: "copyKey", label: t("act.copyKey"), icon: <Link2 aria-hidden="true" className="size-5" />, onSelect: () => { onCopyKey(file); } }] },
+            {
+              id: "file",
+              actions: [
+                isStarred(file)
+                  ? { id: "unstar", label: t("act.unstar"), icon: <StarOff aria-hidden="true" className="size-5" />, onSelect: () => { onToggleStar(file); } }
+                  : { id: "star", label: t("act.star"), icon: <Star aria-hidden="true" className="size-5" />, onSelect: () => { onToggleStar(file); } },
+                { id: "copyKey", label: t("act.copyKey"), icon: <Link2 aria-hidden="true" className="size-5" />, onSelect: () => { onCopyKey(file); } },
+              ],
+            },
           ]}
         />
       </header>

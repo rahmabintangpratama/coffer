@@ -287,11 +287,23 @@ Total: 35 days plus buffer. Every MVP FR in the product spec appears in at least
 
 ---
 
+## M11: UX polish round from manual QA
+
+**Status:** In progress (2026-11-28). The owner tested against a real Cloudflare R2 bucket at about 1050 px (dark) and 486 px and asked for the findings to be fixed, pulling some v1 features forward ([D-51](open-questions.md#decisions-made-on-the-owners-behalf)).
+
+**Pulled forward from v1:** Starred (FR-80) and Recent (FR-81).
+
+**Deliverables and checks**
+- Every fix has a regression test named after its AC; new behavior gets an AC in the product spec.
+- Budgets stay green (technical-spec 14); new heavy code is lazy.
+
+---
+
 ## Buffer and ordering notes
 
 - **Buffer:** 4 days for review fixes, provider quirks found in M10 and any milestone that overruns. If a milestone overruns by more than a day, stop and re-plan instead of absorbing it silently.
 - **Why this order:** the connection flow (M2) comes before browse because everything needs a working client; upload (M4) before preview and moves so test data is easy to create; the journal (M6a) before trash because trash is a move; the vault (M8) late because earlier milestones run on memory-only keys and the lease design needs real transfers to test.
-- **Not in this plan (v1):** demo workspace, coach tips, command palette, keyboard shortcuts sheet, drag-to-move, folder zip, resume after reload, Starred, Recent, Storage usage, change passphrase.
+- **Not in this plan (v1):** demo workspace, coach tips, command palette, keyboard shortcuts sheet, drag-to-move, folder zip, resume after reload, Storage usage, change passphrase. Starred and Recent were pulled into M11.
 
 ## Working agreements for every milestone
 

@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { Download, FolderInput, FolderPlus, Share2, Trash2 } from "lucide-react";
+import { Download, FolderInput, FolderPlus, Share2, Star, StarOff, Trash2 } from "lucide-react";
 import { type DragEvent, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { Banner } from "@/components/Banner";
@@ -13,6 +13,7 @@ import type { AppError } from "@/lib/s3/errors";
 import type { ConnectionSummary, FileItem, FolderItem, Settings } from "@/lib/types";
 import { useOperationDialogs, useTrashAction } from "@/features/operations";
 import { ReadOnlyNotice, writeGate } from "@/features/readonly";
+import { useRecordOpen, useStarActions, useStarredKeys } from "@/features/library";
 import { useShareAction } from "@/features/share";
 import { candidatesFromDrop, useTransfers, useUpload } from "@/features/transfers";
 import { actionsFor, type ActionHandlers } from "./actions";
@@ -131,12 +132,22 @@ function Folder({ connection, relative, root, settings, onSettings, notify, onUs
   // After uploads or a new folder the folder reloads from page 1.
   const reload = useCallback(() => {
     void queryClient.resetQueries({ queryKey: ["list", connection.id, bucket, root + relative] });
+    // A rename, move or trash may have carried or removed a star (AC-80.2).
+    void queryClient.invalidateQueries({ queryKey: ["starred", connection.id] });
   }, [queryClient, connection.id, bucket, root, relative]);
   const runHooks = useMemo(() => ({ notify, onChanged: reload }), [notify, reload]);
   const { rename, copy: makeCopy, move, dialogs: operationDialogs } = useOperationDialogs({ connection, folderPrefix: root + relative, folderName: folderLabel, root, hooks: runHooks });
   const { trash, dialog: trashDialog } = useTrashAction({ connection, root, hooks: runHooks, confirm: settings.confirmTrash });
   const { share, dialog: shareDialog } = useShareAction({ connection, notify });
   const readOnly = !writable;
+  const starredKeys = useStarredKeys(connection);
+  const { star: addStars, unstar: removeStars } = useStarActions(connection, notify);
+  const recordOpen = useRecordOpen(connection);
+  // AC-81.1: every file shown in the viewer, also by Previous and Next, goes to Recent.
+  const previewed = previewIndex >= 0 ? previewFiles[previewIndex] : undefined;
+  useEffect(() => {
+    if (previewed) recordOpen(previewed);
+  }, [previewed, recordOpen]);
   // Nothing in the trash is trashed again (AC-36.5): inside it Files offers no Move to trash.
   const inTrash = (root + relative).startsWith(`${root}.coffer-trash/`);
 
@@ -164,6 +175,13 @@ function Folder({ connection, relative, root, settings, onSettings, notify, onUs
         const chosen = first && items.length === 1 && state.keys.has(first.key) && state.keys.size > 1 ? visible.filter((item) => state.keys.has(item.key)) : items;
         move(chosen.map((item) => ({ key: item.key, name: item.name, kind: item.kind })));
       },
+      isStarred: (item) => starredKeys.has(item.key),
+      star: (items, add) => {
+        const state = useSelection.getState();
+        const first = items[0];
+        const chosen = first && items.length === 1 && state.keys.has(first.key) && state.keys.size > 1 ? visible.filter((item) => state.keys.has(item.key)) : items;
+        (add ? addStars : removeStars)(chosen.map((item) => ({ key: item.key, kind: item.kind })));
+      },
       ...(inTrash
         ? {}
         : {
@@ -176,7 +194,7 @@ function Folder({ connection, relative, root, settings, onSettings, notify, onUs
             },
           }),
     }),
-    [connection, visible, notify, rename, makeCopy, move, trash, share, inTrash],
+    [connection, visible, notify, rename, makeCopy, move, trash, share, inTrash, starredKeys, addStars, removeStars],
   );
 
   // The selection bar is drawn by the app bar; it is told what is selected and which actions apply (AC-30.3).
@@ -185,6 +203,10 @@ function Folder({ connection, relative, root, settings, onSettings, notify, onUs
     setSelection(selected.length, [
       { id: "download", label: t("act.download"), icon: <Download aria-hidden="true" className="size-5" />, disabled: !onlyFiles, onSelect: () => { handlers.download(selected); } },
       { id: "share", label: t("act.share"), icon: <Share2 aria-hidden="true" className="size-5" />, disabled: selected.length !== 1 || !onlyFiles, onSelect: () => { { const only = selected[0]; if (only) handlers.share(only); }; } },
+      // Stars are local, so they stay on a read-only key; Remove when every selected item is starred, else Add.
+      selected.length > 0 && selected.every((item) => starredKeys.has(item.key))
+        ? { id: "unstar", label: t("act.unstar"), icon: <StarOff aria-hidden="true" className="size-5" />, onSelect: () => { handlers.star(selected, false); } }
+        : { id: "star", label: t("act.star"), icon: <Star aria-hidden="true" className="size-5" />, onSelect: () => { handlers.star(selected, true); } },
       // A read-only key drops Move and Move to trash from the bar: it has no room for a reason line, and the menus say why (AC-111.3).
       ...(readOnly
         ? []
@@ -193,7 +215,7 @@ function Folder({ connection, relative, root, settings, onSettings, notify, onUs
             ...(handlers.trash ? [{ id: "trash", label: t("act.trash"), icon: <Trash2 aria-hidden="true" className="size-5" />, onSelect: () => { handlers.trash?.(selected); } }] : []),
           ]),
     ]);
-  }, [selected, handlers, setSelection, readOnly]);
+  }, [selected, handlers, setSelection, readOnly, starredKeys]);
 
   const openFolder = useCallback(
     (folder: FolderItem) => { navigate(pathFromPrefix(folder.key.slice(root.length))); },
@@ -348,6 +370,8 @@ function Folder({ connection, relative, root, settings, onSettings, notify, onUs
             )}
             onCopyKey={handlers.copyKey}
             onShare={(file) => { handlers.share(file); }}
+            isStarred={(file) => starredKeys.has(file.key)}
+            onToggleStar={(file) => { handlers.star([file], !starredKeys.has(file.key)); }}
           />
         </Suspense>
       )}

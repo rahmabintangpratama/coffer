@@ -1,5 +1,5 @@
 import { type DBSchema, type IDBPDatabase, openDB } from "idb";
-import type { ConnectionProfile, JournalEntry } from "@/lib/types";
+import type { ConnectionProfile, JournalEntry, RecentItem, StarredItem } from "@/lib/types";
 
 export const DB_NAME = "coffer";
 
@@ -24,8 +24,10 @@ export interface CofferDb extends DBSchema {
   connections: { key: string; value: ConnectionProfile };
   journal: { key: string; value: JournalEntry };
   uploads: { key: string; value: UploadRecord };
-  starred: { key: [string, string, string]; value: { connectionId: string; bucket: string; key: string } };
-  recent: { key: [string, string, string]; value: { connectionId: string; bucket: string; key: string } };
+  /** FR-80: a key the person starred, local only. */
+  starred: { key: [string, string, string]; value: StarredItem };
+  /** FR-81: a file opened in Preview, names only. */
+  recent: { key: [string, string, string]; value: RecentItem };
   meta: { key: string; value: { key: string; value: unknown } };
 }
 
