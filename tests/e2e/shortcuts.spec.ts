@@ -1,4 +1,4 @@
-import { ListObjectsV2Command, PutObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectsCommand, ListObjectsV2Command, PutObjectCommand } from "@aws-sdk/client-s3";
 import { type Page } from "@playwright/test";
 import { expect, test } from "./test";
 import { createClient } from "../integration/client";
@@ -79,6 +79,9 @@ test("AC-26.1 Delete moves the selection to the trash", async ({ page }) => {
   if (await confirm.isVisible().catch(() => false)) await confirm.getByRole("button", { name: /Move to trash/ }).click();
   await expect(toast(page)).toContainText("Moved 1 item to trash", { timeout: 20_000 });
   await expect.poll(() => keysUnder(`${folder}/`), { timeout: 20_000 }).toEqual([`${folder}/b.txt`]);
+  // Leave the shared bucket's trash as it was: other specs read its first rows.
+  const trashed = (await keysUnder(".coffer-trash/")).filter((key) => key.endsWith(`/${folder}/a.txt`));
+  if (trashed.length > 0) await s3.send(new DeleteObjectsCommand({ Bucket: E2E_BUCKET, Delete: { Objects: trashed.map((Key) => ({ Key })) } }));
 });
 
 test("AC-26.2 single keys do nothing while typing; Ctrl or Cmd+K focuses the search", async ({ page }) => {

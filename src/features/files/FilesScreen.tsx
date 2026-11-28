@@ -335,13 +335,14 @@ function Folder({ connection, relative, root, settings, onSettings, notify, onUs
       } else if (event.key === "?" && !event.metaKey && !event.ctrlKey && !event.altKey) {
         event.preventDefault();
         setShortcutsOpen(true);
-      } else if (event.key === "Escape" && useSelection.getState().keys.size > 0) {
-        // Escape clears the selection wherever focus is, a toast included (AC-30.4).
+      } else if (event.key === "Escape" && useSelection.getState().keys.size > 0 && document.querySelector('[role="menu"]') === null) {
+        // Escape clears the selection wherever focus is, a toast included (AC-30.4); an open menu closes first.
         useSelection.getState().clear();
       }
     };
-    document.addEventListener("keydown", onKey);
-    return () => { document.removeEventListener("keydown", onKey); };
+    // Capture, so a browser or a widget that handles the key on the way down cannot swallow it first.
+    window.addEventListener("keydown", onKey, true);
+    return () => { window.removeEventListener("keydown", onKey, true); };
   }, [focusSearch]);
 
   const viewProps = { readOnly, onShortcut, items: visible, density: settings.density, folderLabel, handlers, onOpenFolder: openFolder, onSearchShortcut: focusSearch, onContextItem, focusRequest };
