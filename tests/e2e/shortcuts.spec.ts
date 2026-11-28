@@ -86,9 +86,17 @@ test("AC-26.1 Delete moves the selection to the trash", async ({ page }) => {
 
 test("AC-26.2 single keys do nothing while typing; Ctrl or Cmd+K focuses the search", async ({ page }) => {
   await row(page, "a.txt").focus();
+  // Diagnostics for CI on Linux, where this key did not move focus: what the page saw, and where focus ended.
+  await page.evaluate(() => {
+    const seen: string[] = [];
+    (window as unknown as { __keys: string[] }).__keys = seen;
+    window.addEventListener("keydown", (event) => { seen.push(`${event.key}|ctrl=${String(event.ctrlKey)}|meta=${String(event.metaKey)}|prevented=${String(event.defaultPrevented)}`); }, true);
+    window.addEventListener("keydown", (event) => { seen.push(`after:${event.key}|prevented=${String(event.defaultPrevented)}`); });
+  });
   await page.keyboard.press("ControlOrMeta+k");
   const pill = page.getByRole("searchbox");
-  await expect(pill).toBeFocused();
+  const report = async () => JSON.stringify(await page.evaluate(() => ({ keys: (window as unknown as { __keys: string[] }).__keys, active: document.activeElement?.outerHTML.slice(0, 160) ?? null })));
+  await expect(pill, await report()).toBeFocused();
   await page.keyboard.type("m?s");
   await expect(pill).toHaveValue("m?s");
   await expect(page.getByRole("dialog")).toHaveCount(0);
