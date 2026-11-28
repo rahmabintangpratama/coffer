@@ -10,7 +10,7 @@ import { t, type CopyKey } from "@/lib/i18n";
 import { revealHiddenChars } from "@/lib/names";
 import type { ConnectionSummary, FileItem, FileKind } from "@/lib/types";
 import { getClient } from "./client";
-import { FileIcon } from "./FileIcon";
+import { FileIcon } from "@/components/FileIcon";
 
 const kindLabel: Record<FileKind, CopyKey> = {
   image: "kind.image",

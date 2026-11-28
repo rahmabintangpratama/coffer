@@ -6,7 +6,7 @@ import { formatBytes, formatModified } from "@/lib/format";
 import { t } from "@/lib/i18n";
 import { isolate } from "@/lib/names";
 import { cn } from "@/lib/utils";
-import { FileIcon } from "./FileIcon";
+import { FileIcon } from "@/components/FileIcon";
 import type { Item } from "./model";
 
 /** The ⋮ cell is its own control: its clicks, presses and keys must not select the row or open the item behind it. */

@@ -4,7 +4,7 @@ import { RotateCcw, Trash2 } from "lucide-react";
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Banner } from "@/components/Banner";
 import { Button } from "@/components/Button";
-import { FileIcon } from "@/features/files/FileIcon";
+import { FileIcon } from "@/components/FileIcon";
 import { type DeleteFailure } from "@/lib/s3";
 import { startDelete, startRestore } from "@/features/operations";
 import { useConflictPrompt } from "@/features/transfers";

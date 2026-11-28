@@ -6,7 +6,7 @@ import { useLayout } from "@/components/layout";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { actionsFor } from "./actions";
-import { FileIcon } from "./FileIcon";
+import { FileIcon } from "@/components/FileIcon";
 import { Name, stopRowEvents } from "./FileRow";
 import type { ItemViewProps } from "./FileList";
 import type { Item } from "./model";
