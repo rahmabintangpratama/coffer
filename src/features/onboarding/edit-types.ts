@@ -4,8 +4,11 @@ import type { ConnectionSummary } from "@/lib/types";
 export type EditPlan =
   /** Endpoint, region, addressing, bucket and start folder are unchanged: the record is written again. */
   | { kind: "same" }
-  /** The destination changed: a new record is written, then the old one is removed with this browser's data for it. */
-  | { kind: "replace"; transfers: number; uploads: number; starred: number; recent: number }
+  /**
+   * The destination changed: a new record is written, then the old one is removed with this browser's data for it.
+   * `starred` and `recent` are removed; `kept` of them move to the new record (same server and bucket).
+   */
+  | { kind: "replace"; transfers: number; uploads: number; starred: number; recent: number; kept: number }
   /** The destination changed while moves are unfinished: nothing is saved (C-55). */
   | { kind: "blocked"; unfinished: number };
 

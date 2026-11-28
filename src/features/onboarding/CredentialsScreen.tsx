@@ -9,11 +9,13 @@ import {
   ADVANCED_FIELDS,
   buildEndpoint,
   defaultValues,
+  fieldForRole,
   hostLooksRight,
   needsGenericSessionToken,
   parsePaste,
   resolveConnection,
   resolveRegion,
+  sameServer,
   visibleFields,
   withKeptCredentials,
 } from "@/lib/providers";
@@ -40,8 +42,11 @@ interface CredentialsScreenProps {
   initialBucket?: string;
   onBack: () => void;
   onSubmit: (result: CredentialsSubmit) => void;
-  /** Edit a saved connection (AC-11.6): a name field, a required bucket, and empty key fields keep the saved keys. */
-  edit?: { connectionId: string; name: string };
+  /**
+   * Edit a saved connection (AC-11.6): a name field, a required bucket, and, while the endpoint stays on the saved
+   * server, empty key fields keep the saved keys. On another server every key is typed again.
+   */
+  edit?: { connectionId: string; name: string; endpoint: string };
 }
 
 const ADDRESSING: readonly AddressingStyle[] = ["auto", "path", "virtual"];
@@ -117,9 +122,21 @@ export function CredentialsScreen({ preset, initialValues, initialBucket = "", o
     setPasteNotes(notes);
   };
 
+  /** The preset and values as they will be resolved: an edited endpoint replaces the template. */
+  const effectiveOf = (formValues: Record<string, string>) => ({
+    effective: endpointOverride === null ? preset : { ...preset, endpointTemplate: null, endpointTemplateByField: {} },
+    runValues: endpointOverride === null ? formValues : { ...formValues, endpoint: endpointOverride },
+  });
+  const staysOnServer = (formValues: Record<string, string>) => {
+    if (!edit) return false;
+    const { effective, runValues } = effectiveOf(formValues);
+    return sameServer(effective, runValues, edit.endpoint);
+  };
+
   const submit = (event: SubmitEvent) => {
     event.preventDefault();
-    if (!edit) {
+    // On another server the saved keys are not even read: they never leave for a host they were not saved for.
+    if (!edit || !staysOnServer(values)) {
       run(values);
       return;
     }
@@ -131,9 +148,7 @@ export function CredentialsScreen({ preset, initialValues, initialBucket = "", o
   };
 
   const run = (formValues: Record<string, string>) => {
-    const effective: ProviderPreset =
-      endpointOverride === null ? preset : { ...preset, endpointTemplate: null, endpointTemplateByField: {} };
-    const runValues = endpointOverride === null ? formValues : { ...formValues, endpoint: endpointOverride };
+    const { effective, runValues } = effectiveOf(formValues);
     const style = runValues[ADVANCED_FIELDS.addressingStyle];
     const addressingStyle = ADDRESSING.find((candidate) => candidate === style);
     const result = resolveConnection(effective, runValues, {
@@ -143,6 +158,11 @@ export function CredentialsScreen({ preset, initialValues, initialBucket = "", o
     const own: FieldProblem[] = [];
     if (edit && name.trim() === "") own.push({ target: "name", text: t("conn.nameEmpty") });
     if (edit && bucket.trim() === "") own.push({ target: "bucket", text: t("form.error.required", { field: t("form.bucketLabel") }) });
+    // A saved session token is typed again too: without it the new server would be tested with different credentials than before.
+    const tokenField = fieldForRole(preset, runValues, "sessionToken");
+    if (edit && tokenField !== undefined && !staysOnServer(formValues) && vault.hasSessionToken(edit.connectionId) && (runValues[tokenField] ?? "").trim() === "") {
+      own.push({ target: tokenField, text: t("conn.editTokenAgain") });
+    }
     if (!result.ok || own.length > 0) {
       setProblems([...own, ...(result.ok ? [] : describeProblems(preset, result.problems))]);
       return;
@@ -165,7 +185,7 @@ export function CredentialsScreen({ preset, initialValues, initialBucket = "", o
     const value = values[field.id] ?? "";
     const common = {
       value,
-      placeholder: edit && isSecretField(field) ? t("conn.editKept") : field.placeholder,
+      placeholder: kept && isSecretField(field) ? t("conn.editKept") : field.placeholder,
       autoComplete: "off",
       autoCapitalize: "none",
       autoCorrect: "off",
@@ -200,7 +220,8 @@ export function CredentialsScreen({ preset, initialValues, initialBucket = "", o
   };
 
   const insecure = problems.find((problem) => problem.insecure);
-  const advancedHasProblem = problems.some((problem) => problem.target === ADVANCED_FIELDS.prefix);
+  const advancedHasProblem = problems.some((problem) => problem.target === ADVANCED_FIELDS.prefix || problem.target === ADVANCED_FIELDS.sessionToken);
+  const kept = staysOnServer(values);
 
   return (
     <StepFrame title={edit ? t("conn.editTitle", { name: edit.name }) : t("ob.cred.title", { provider: preset.displayName })} onBack={onBack}>
@@ -255,7 +276,7 @@ export function CredentialsScreen({ preset, initialValues, initialBucket = "", o
 
         {edit ? (
           <>
-            <p className="text-sm text-fg-muted">{t("conn.editKeysHint")}</p>
+            {kept ? <p className="text-sm text-fg-muted">{t("conn.editKeysHint")}</p> : <Banner tone="warning">{t("conn.editHostChanged")}</Banner>}
             <Field label={t("conn.nameLabel")} hint={t("conn.nameHint")} error={problemFor("name")}>
               <TextInput value={name} autoComplete="off" spellCheck={false} maxLength={80} onChange={(event) => { setName(event.target.value); }} />
             </Field>
@@ -277,8 +298,8 @@ export function CredentialsScreen({ preset, initialValues, initialBucket = "", o
               />
             );
           }
-          // While editing, an empty key field keeps the saved key.
-          const keeps = edit !== undefined && isSecretField(field);
+          // While editing on the saved server, an empty key field keeps the saved key.
+          const keeps = kept && isSecretField(field);
           const isRegion = field.id === "region" && !field.required && regionDefault !== undefined;
           return (
             <Field
@@ -348,7 +369,7 @@ export function CredentialsScreen({ preset, initialValues, initialBucket = "", o
               <p className="text-sm text-fg-muted">{t("form.addr.hint")}</p>
             </div>
             {needsGenericSessionToken(preset) ? (
-              <Field label={t("form.sessionTokenLabel")} optionalLabel={t("form.optional")} marker={marker(ADVANCED_FIELDS.sessionToken)}>
+              <Field label={t("form.sessionTokenLabel")} optionalLabel={t("form.optional")} marker={marker(ADVANCED_FIELDS.sessionToken)} error={problemFor(ADVANCED_FIELDS.sessionToken)}>
                 <TextInput
                   type="password"
                   mono

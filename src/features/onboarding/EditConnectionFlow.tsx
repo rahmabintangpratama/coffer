@@ -95,7 +95,7 @@ export default function EditConnectionFlow({ connection, actions, onDone, onCanc
           preset={preset}
           initialValues={step.values}
           initialBucket={step.bucket}
-          edit={{ connectionId: connection.id, name: step.connectionName }}
+          edit={{ connectionId: connection.id, name: step.connectionName, endpoint: connection.endpoint }}
           onBack={onCancel}
           onSubmit={(submitted) => {
             pendingId.current = submitted.connectionId;
@@ -129,15 +129,15 @@ export default function EditConnectionFlow({ connection, actions, onDone, onCanc
         plan.uploads > 0 ? t("conn.removeUploads", { count: plan.uploads }) : null,
         plan.starred > 0 ? t("conn.removeStarred", { count: plan.starred }) : null,
         plan.recent > 0 ? t("conn.removeRecent", { count: plan.recent }) : null,
+        t("conn.editJournal"),
       ].filter((line): line is string => line !== null);
       return (
         <StepFrame key="replace" title={t("conn.editReplaceTitle")} onBack={() => { toForm(submitted); }}>
           <p>{t("conn.editReplaceBody", { name: connection.name })}</p>
-          {lines.length > 0 && (
-            <ul className="list-disc pl-5">
-              {lines.map((line) => <li key={line}>{line}</li>)}
-            </ul>
-          )}
+          <ul className="list-disc pl-5">
+            {lines.map((line) => <li key={line}>{line}</li>)}
+          </ul>
+          {plan.kept > 0 && <p>{t("conn.editCarried", { count: plan.kept })}</p>}
           <p className="text-sm text-fg-muted">{t("conn.removeKeep")}</p>
           <div className="flex flex-col-reverse gap-2 @md:flex-row">
             <Button variant="secondary" onClick={onCancel}>{t("act.cancel")}</Button>

@@ -2,7 +2,7 @@ import "fake-indexeddb/auto";
 import { deleteDB } from "idb";
 import { beforeEach, describe, expect, it } from "vitest";
 import { closeSharedDb, DB_NAME, unsealDbForTests } from "./db";
-import { addStars, clearRecent, followStars, listRecent, listStarred, RECENT_LIMIT, recordRecent, removeStars } from "./library";
+import { addStars, carryLibrary, clearRecent, followStars, listRecent, listStarred, RECENT_LIMIT, recordRecent, removeStars } from "./library";
 
 beforeEach(async () => {
   unsealDbForTests();
@@ -50,5 +50,18 @@ describe("FR-81 recent", () => {
     expect(list.some((item) => item.key === "f0")).toBe(false);
     await clearRecent("c1", "b");
     expect(await listRecent("c1", "b")).toEqual([]);
+  });
+});
+
+describe("AC-11.6 carrying Starred and Recent to an edited connection", () => {
+  it("copies the rows of the bucket under the start folder, and counts without writing", async () => {
+    await addStars([star("docs/a.txt"), star("other/b.txt"), star("docs/c.txt", "c1", "elsewhere")]);
+    await recordRecent({ connectionId: "c1", bucket: "b", key: "docs/a.txt", name: "a.txt", fileKind: "code" });
+    await expect(carryLibrary("c1", "b", "docs/")).resolves.toEqual({ starred: 1, recent: 1 });
+    expect(await keys("c2")).toEqual([]);
+    await carryLibrary("c1", "b", "docs/", "c2");
+    expect(await keys("c2")).toEqual(["docs/a.txt"]);
+    expect((await listRecent("c2", "b")).map((item) => item.key)).toEqual(["docs/a.txt"]);
+    expect(await keys("c1")).toEqual(["docs/a.txt", "other/b.txt"]);
   });
 });

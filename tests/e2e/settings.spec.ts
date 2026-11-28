@@ -2,9 +2,10 @@ import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { type Page } from "@playwright/test";
 import { expect, test } from "./test";
 import { createClient } from "../integration/client";
-import { admin } from "../integration/config";
+import { admin, s3Fixture } from "../integration/config";
 import { E2E_BUCKET } from "./fixture";
-import { axeViolations, enterApp, goToRoute, layoutFor } from "./helpers";
+import { axeViolations, enterApp, fillCustomForm, goToRoute, layoutFor, openBucket } from "./helpers";
+import { temporaryCredentials } from "../integration/sts";
 
 // M9: Settings pages and their persistence (FR-100, AC-100.1 to AC-100.3), and the demo that is not in the MVP (FR-120).
 const s3 = createClient(admin);
@@ -247,4 +248,48 @@ test.describe("M11 Settings → Connections", () => {
     await goToRoute(page, "/files");
     await expect(page.getByText("inside.txt").first()).toBeVisible({ timeout: 15_000 });
   });
+
+  test("AC-11.6 a new endpoint host gets none of the saved keys: they are typed again", async ({ page }) => {
+    test.setTimeout(90_000);
+    const temporary = await temporaryCredentials();
+    await page.goto("/");
+    await page.getByRole("button", { name: "Connect a bucket" }).click();
+    await page.getByRole("button", { name: "Other S3-compatible service" }).click();
+    await page.getByText("Advanced options").click();
+    await page.getByLabel("Session token").fill(temporary.sessionToken);
+    await fillCustomForm(page, temporary);
+    await openBucket(page, PASS);
+    await expect(page.getByRole("navigation", { name: "Main navigation" })).toBeVisible();
+    await goToRoute(page, "/settings/connections");
+
+    // The same fixture under another host name stands for another server.
+    const otherHost = s3Fixture.endpoint.replace("127.0.0.1", "localhost");
+    const sent: string[] = [];
+    page.on("request", (request) => {
+      if (!request.url().startsWith(otherHost)) return;
+      sent.push(`${request.url()} ${JSON.stringify(request.headers())}`);
+    });
+    await page.getByRole("list", { name: "Connections" }).getByRole("button", { name: /^Edit: / }).click();
+    await page.getByLabel("Endpoint URL").fill(otherHost);
+    await expect(page.getByText(/the saved keys are not sent there/)).toBeVisible();
+    await page.getByRole("button", { name: "Test connection" }).click();
+    await expect(page.getByText("Access Key ID is required.")).toBeVisible();
+    await expect(page.getByText("Type the session token again for the new server.")).toBeVisible();
+    expect(sent).toEqual([]);
+
+    const typed = await temporaryCredentials();
+    await page.getByLabel("Access Key ID").fill(typed.accessKeyId);
+    await page.getByLabel("Secret Access Key").fill(typed.secretAccessKey);
+    await page.getByLabel("Session token").fill(typed.sessionToken);
+    await page.getByRole("button", { name: "Test connection" }).click();
+    await page.getByRole("button", { name: "Save changes" }).click({ timeout: 30_000 });
+    await page.getByRole("button", { name: "Save changes" }).click();
+    await expect(page.getByRole("list", { name: "Connections" })).toBeVisible({ timeout: 15_000 });
+    expect(sent.length).toBeGreaterThan(0);
+    for (const request of sent) {
+      expect(request).not.toContain(temporary.accessKeyId);
+      expect(request).not.toContain(temporary.sessionToken);
+    }
+  });
 });
+

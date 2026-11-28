@@ -16,6 +16,7 @@ import {
   providersFile,
   resolveAddressing,
   resolveConnection,
+  sameServer,
   sessionTokenExpiry,
   validateFields,
   validateProvidersFile,
@@ -321,5 +322,25 @@ describe("AC-11.6 keeping saved keys while editing", () => {
       const filled = credentialsFromValues(candidate, withKeptCredentials(candidate, defaultValues(candidate), { accessKeyId: saved.accessKeyId, secretAccessKey: saved.secretAccessKey }));
       expect([candidate.id, filled.accessKeyId, filled.secretAccessKey]).toEqual([candidate.id, saved.accessKeyId, saved.secretAccessKey]);
     }
+  });
+});
+
+describe("AC-11.6 whether an edit stays on the saved server", () => {
+  const custom = getPreset("custom");
+  const at = (endpoint: string) => sameServer(custom, { endpoint }, "https://s3.example-provider.test");
+
+  it("is the same server for the same scheme, host and port, whatever the path", () => {
+    expect(at("https://S3.example-provider.test/")).toBe(true);
+    expect(at("https://s3.example-provider.test:443")).toBe(true);
+  });
+
+  it("is another server for another host, subdomain, port or scheme, and for no endpoint", () => {
+    for (const endpoint of ["https://s3.other-provider.test", "https://a.s3.example-provider.test", "https://s3.example-provider.test:8443", "http://localhost:9000", ""]) expect(at(endpoint)).toBe(false);
+  });
+
+  it("follows a template: a region that changes the host is another server", () => {
+    const aws = getPreset("aws-s3");
+    expect(sameServer(aws, { region: "eu-west-1" }, "https://s3.eu-west-1.amazonaws.com")).toBe(true);
+    expect(sameServer(aws, { region: "us-east-2" }, "https://s3.eu-west-1.amazonaws.com")).toBe(false);
   });
 });

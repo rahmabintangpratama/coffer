@@ -81,11 +81,15 @@
     "editSaving": "Saving",
     "editBlocked": "{name} has {count, plural, one {a move that was cut off} other {# moves that were cut off}}. Changing where it points would lose track of {count, plural, one {it} other {them}}. Resume or discard each one, then edit the connection.",
     "editReplaceTitle": "Point to a different place?",
-    "editReplaceBody": "Saving replaces {name}. Your bucket and its files are not touched. This browser removes what it kept for the old endpoint, bucket or start folder:",
+    "editReplaceBody": "Saving replaces {name}. Your bucket and its files are not touched. These don’t carry over and are removed from this browser:",
     "editFailed": "Couldn’t save the changes",
     "editFailedBody": "The saved connection is unchanged. Try again.",
     "edited": "Saved {name}",
-    "editedOldKept": "Saved {name}. The old connection couldn’t be removed: remove it in Settings."
+    "editedOldKept": "Saved {name}. The old connection couldn’t be removed: remove it in Settings.",
+    "editHostChanged": "The endpoint points to another server, so the saved keys are not sent there. Type the access key ID, the secret key and any session token again.",
+    "editTokenAgain": "Type the session token again for the new server.",
+    "editJournal": "The history of past operations: they can no longer be undone",
+    "editCarried": "{count, plural, one {# starred or recent entry for files in the new location moves} other {# starred or recent entries for files in the new location move}} to the new connection."
   },
   "dlg": {
     "zip": {

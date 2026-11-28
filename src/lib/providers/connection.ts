@@ -117,18 +117,37 @@ export function credentialsFromValues(preset: ProviderPreset, values: FieldValue
   };
 }
 
+/** The form field a key goes in: the one with that role whose roleWhen holds, else the field with that id. */
+export function fieldForRole(preset: ProviderPreset, values: FieldValues, role: Role): string | undefined {
+  const matching = preset.fields.find((field) => field.role === role && isVisible(field, values) && (!field.roleWhen || (values[field.roleWhen.field] ?? "") === field.roleWhen.equals));
+  const own = preset.fields.find((field) => field.id === role && isVisible(field, values));
+  return matching?.id ?? own?.id ?? (role === "sessionToken" && preset.sessionToken ? ADVANCED_FIELDS.sessionToken : undefined);
+}
+
+/**
+ * Whether these form values send requests to the same server (scheme, host and port) as `endpoint`. Saved keys are only
+ * ever used there (AC-11.6). Values that do not make an endpoint count as another server.
+ */
+export function sameServer(preset: ProviderPreset, values: FieldValues, endpoint: string): boolean {
+  const built = buildEndpoint(preset, values, resolveRegion(preset, values).region);
+  if (!built.ok) return false;
+  try {
+    return new URL(built.endpoint).origin === new URL(endpoint).origin;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Fill the key fields the person left empty while editing a saved connection (AC-11.6) with the saved keys, so only
- * what changed is typed again. A session token belongs to its key pair: it is kept only when neither the access key
+ * what changed is typed again. Call it only when `sameServer` holds. A session token belongs to its key pair: it is kept only when neither the access key
  * id nor the secret was typed again.
  */
 export function withKeptCredentials(preset: ProviderPreset, values: FieldValues, saved: Credentials): Record<string, string> {
   const next: Record<string, string> = { ...values };
   const typed = credentialsFromValues(preset, values);
   const fill = (role: Role, value: string) => {
-    const matching = preset.fields.filter((field) => field.role === role && isVisible(field, next) && (!field.roleWhen || (next[field.roleWhen.field] ?? "") === field.roleWhen.equals));
-    const own = preset.fields.find((field) => field.id === role && isVisible(field, next));
-    const target = matching[0]?.id ?? own?.id ?? (role === "sessionToken" && preset.sessionToken ? ADVANCED_FIELDS.sessionToken : undefined);
+    const target = fieldForRole(preset, next, role);
     if (target !== undefined) next[target] = value;
   };
   const samePair = typed.accessKeyId === "" && typed.secretAccessKey === "";

@@ -4,6 +4,7 @@ import { deleteDB } from "idb";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { connectionStore } from "@/lib/storage/connection-store";
 import { closeSharedDb, DB_NAME } from "@/lib/storage/db";
+import { addStars, listStarred } from "@/lib/storage/library";
 import { vault } from "@/lib/storage/vault";
 import type { ConnectionSummary } from "@/lib/types";
 import { editActions } from "./edit-connection";
@@ -82,7 +83,26 @@ describe("AC-11.6 a changed destination", () => {
   const moved = edited({ bucket: "archive" });
 
   it("plans a replacement with what the old connection loses", async () => {
-    await expect(editActions(before).plan(moved)).resolves.toEqual({ kind: "replace", transfers: 1, uploads: 2, starred: 3, recent: 4 });
+    await expect(editActions(before).plan(moved)).resolves.toEqual({ kind: "replace", transfers: 1, uploads: 2, starred: 3, recent: 4, kept: 0 });
+  });
+
+  it("keeps Starred for the same server and bucket under the new start folder, and counts the rest as removed", async () => {
+    await addStars(["team/a.txt", "other/b.txt"].map((key) => ({ connectionId: "old", bucket: "docs", key, kind: "file" as const })));
+    removal.inspect.mockResolvedValue({ unfinished: [], transfers: 0, uploads: 0, starred: 2, recent: 0 });
+    const actions = editActions(before);
+    await expect(actions.plan(edited({ prefix: "team/" }))).resolves.toMatchObject({ starred: 1, kept: 1 });
+    await actions.save(edited({ prefix: "team/" }));
+    expect((await listStarred("tested", "docs")).map((item) => item.key)).toEqual(["team/a.txt"]);
+  });
+
+  it("carries nothing to another bucket or another server", async () => {
+    await addStars([{ connectionId: "old", bucket: "docs", key: "a.txt", kind: "file" }]);
+    removal.inspect.mockResolvedValue({ unfinished: [], transfers: 0, uploads: 0, starred: 1, recent: 0 });
+    for (const change of [{ bucket: "archive" }, { endpoint: "http://localhost:9000" }]) {
+      await expect(editActions(before).plan(edited(change))).resolves.toMatchObject({ starred: 1, kept: 0 });
+    }
+    await editActions(before).save(edited({ endpoint: "http://localhost:9000" }));
+    expect(await listStarred("tested", "docs")).toEqual([]);
   });
 
   it("stores the new record before the old one is removed", async () => {

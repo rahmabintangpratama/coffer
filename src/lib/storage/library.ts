@@ -60,3 +60,22 @@ export async function recordRecent(item: { connectionId: string; bucket: string;
 export async function clearRecent(connectionId: string, bucket: string): Promise<void> {
   await (await sharedDb()).delete("recent", range(connectionId, bucket));
 }
+
+/**
+ * Edit connection (AC-11.6): copy the Starred and Recent rows for keys of `bucket` under `prefix` from one connection id
+ * to another, in one transaction. The caller has checked that both ids reach the same bucket on the same server. The
+ * old rows stay until the old connection is removed. Returns how many rows were (or, without `to`, would be) copied.
+ */
+export async function carryLibrary(from: string, bucket: string, prefix: string, to?: string): Promise<{ starred: number; recent: number }> {
+  const tx = (await sharedDb()).transaction(["starred", "recent"], "readwrite");
+  const work: Promise<unknown>[] = [];
+  const own = range(from, bucket);
+  const stars = (await tx.objectStore("starred").getAll(own)).filter((item) => item.key.startsWith(prefix));
+  const recent = (await tx.objectStore("recent").getAll(own)).filter((item) => item.key.startsWith(prefix));
+  if (to !== undefined) {
+    for (const item of stars) work.push(tx.objectStore("starred").put({ ...item, connectionId: to }));
+    for (const item of recent) work.push(tx.objectStore("recent").put({ ...item, connectionId: to }));
+  }
+  await Promise.all([...work, tx.done]);
+  return { starred: stars.length, recent: recent.length };
+}

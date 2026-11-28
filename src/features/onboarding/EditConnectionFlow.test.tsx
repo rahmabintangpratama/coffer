@@ -88,11 +88,13 @@ describe("AC-11.6 Edit connection", () => {
   });
 
   it("asks before replacing, listing what goes; Cancel saves nothing", async () => {
-    const { actions, onCancel } = setup({ plan: vi.fn(() => Promise.resolve({ kind: "replace" as const, transfers: 0, uploads: 0, starred: 2, recent: 0 })) });
+    const { actions, onCancel } = setup({ plan: vi.fn(() => Promise.resolve({ kind: "replace" as const, transfers: 0, uploads: 0, starred: 2, recent: 0, kept: 1 })) });
     await test();
     await userEvent.click(await screen.findByRole("button", { name: "Save changes" }));
     expect(await screen.findByRole("heading", { level: 1, name: "Point to a different place?" })).toBeInTheDocument();
     expect(screen.getByText("2 starred items")).toBeInTheDocument();
+    expect(screen.getByText("The history of past operations: they can no longer be undone")).toBeInTheDocument();
+    expect(screen.getByText(/1 starred or recent entry for files in the new location/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(onCancel).toHaveBeenCalled();
     expect(actions.save).not.toHaveBeenCalled();
@@ -107,5 +109,53 @@ describe("AC-11.6 Edit connection", () => {
     expect(actions.save).not.toHaveBeenCalled();
     unmount();
     expect(forget).toHaveBeenCalledTimes(1);
+  });
+
+  describe("another server", () => {
+    const token = "saved-example-session-token";
+    const moveEndpoint = async () => {
+      const endpoint = screen.getByLabelText("Endpoint URL");
+      await userEvent.clear(endpoint);
+      await userEvent.type(endpoint, "https://s3.other-provider.test");
+    };
+
+    it("never reads the saved keys, and asks for the access key ID, the secret and the session token again", async () => {
+      vault.put(connection.id, { ...saved, sessionToken: token });
+      const read = vi.spyOn(vault, "credentialsFor");
+      setup();
+      await moveEndpoint();
+      expect(screen.getByText(/the saved keys are not sent there/)).toBeInTheDocument();
+      expect(screen.queryByPlaceholderText("Saved. Leave empty to keep it")).toBeNull();
+      await test();
+      expect(await screen.findByText("Type the session token again for the new server.")).toBeInTheDocument();
+      expect(screen.getByText("Access Key ID is required.")).toBeInTheDocument();
+      expect(screen.getByText("Secret Access Key is required.")).toBeInTheDocument();
+      expect(mocks.runConnectionTest).not.toHaveBeenCalled();
+      expect(read).not.toHaveBeenCalled();
+    });
+
+    it("tests with the typed keys only", async () => {
+      vault.put(connection.id, { ...saved, sessionToken: token });
+      const { actions } = setup();
+      await moveEndpoint();
+      await userEvent.type(screen.getByLabelText("Access Key ID"), "typed-example-access-id");
+      await userEvent.type(screen.getByLabelText("Secret Access Key"), "typed-example-secret");
+      await userEvent.click(screen.getByText("Advanced options"));
+      await userEvent.type(screen.getByLabelText("Session token"), "typed-example-token");
+      await test();
+      await userEvent.click(await screen.findByRole("button", { name: "Save changes" }));
+      await vi.waitFor(() => { expect(actions.save).toHaveBeenCalled(); });
+      const next = vi.mocked(actions.save).mock.calls[0]?.[0];
+      await expect(vault.credentialsFor(next?.id ?? "")).resolves.toEqual({ accessKeyId: "typed-example-access-id", secretAccessKey: "typed-example-secret", sessionToken: "typed-example-token" });
+    });
+
+    it("keeps the saved keys again when the endpoint goes back to the saved server", async () => {
+      setup();
+      await moveEndpoint();
+      const endpoint = screen.getByLabelText("Endpoint URL");
+      await userEvent.clear(endpoint);
+      await userEvent.type(endpoint, connection.endpoint);
+      expect(screen.getAllByPlaceholderText("Saved. Leave empty to keep it").length).toBeGreaterThan(1);
+    });
   });
 });
