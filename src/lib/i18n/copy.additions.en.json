@@ -533,5 +533,16 @@
     "missing": "Not found in {bucket}. It was moved or deleted outside Coffer.",
     "location": "In {folder}",
     "listLabel": "Starred items"
+  },
+  "kb": {
+    "moveFocus": "Move between items",
+    "firstLast": "First or last item",
+    "star": "Add to or remove from starred",
+    "select": "Select",
+    "range": "Select a range",
+    "toggle": "Add to or remove from the selection",
+    "escape": "Close the top layer, then clear the selection",
+    "title": "Keyboard shortcuts",
+    "note": "Single-key shortcuts work while the file list has focus, never while you type."
   }
 }

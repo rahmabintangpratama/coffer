@@ -1,11 +1,14 @@
-import { Copy, Download, Eye, FolderInput, Info, Link2, Pencil, Share2, Star, StarOff, Trash2 } from "lucide-react";
+import { Copy, Download, Eye, FolderInput, FolderOpen, Info, Link2, Pencil, Share2, Star, StarOff, Trash2 } from "lucide-react";
 import { createElement } from "react";
 import type { MenuGroup } from "@/components/ActionMenu";
 import { t } from "@/lib/i18n";
 import { writeGate } from "@/features/readonly";
 import type { Item } from "./model";
+import { hints } from "./shortcuts";
 
 export interface ActionHandlers {
+  /** A folder opens (navigates); a file previews. */
+  open: (item: Item) => void;
   preview: (item: Item) => void;
   download: (items: Item[]) => void;
   details: (item: Item) => void;
@@ -37,9 +40,9 @@ export function actionsFor(item: Item, handlers: ActionHandlers, readOnly = fals
     id: "organize",
     label: t("menu.group.organize"),
     actions: [
-      { id: "rename", label: t("act.rename"), icon: icon(Pencil), ...write(false), onSelect: () => { handlers.rename(item); } },
+      { id: "rename", label: t("act.rename"), icon: icon(Pencil), shortcut: hints.rename, ...write(false), onSelect: () => { handlers.rename(item); } },
       ...(item.kind === "file" ? [{ id: "makeCopy", label: t("act.makeCopy"), icon: icon(Copy), ...write(false), onSelect: () => { handlers.makeCopy(item); } }] : []),
-      { id: "move", label: t("act.moveTo"), icon: icon(FolderInput), ...write(false), onSelect: () => { handlers.move([item]); } },
+      { id: "move", label: t("act.moveTo"), icon: icon(FolderInput), shortcut: hints.move, ...write(false), onSelect: () => { handlers.move([item]); } },
     ],
   };
   const share = (disabledReason?: string) => ({
@@ -49,21 +52,29 @@ export function actionsFor(item: Item, handlers: ActionHandlers, readOnly = fals
     ...(disabledReason === undefined ? { onSelect: () => { handlers.share(item); } } : { disabled: true, reason: disabledReason, onSelect: () => undefined }),
   });
   const remove: MenuGroup[] = handlers.trash
-    ? [{ id: "remove", actions: [{ id: "trash", label: t("act.trash"), icon: icon(Trash2), ...write(false), onSelect: () => { handlers.trash?.([item]); } }] }]
+    ? [{ id: "remove", actions: [{ id: "trash", label: t("act.trash"), icon: icon(Trash2), shortcut: hints.trash, ...write(false), onSelect: () => { handlers.trash?.([item]); } }] }]
     : [];
   const starred = handlers.isStarred(item);
   const starAction = {
     id: "star",
     label: starred ? t("act.unstar") : t("act.star"),
     icon: icon(starred ? StarOff : Star),
+    shortcut: hints.star,
     onSelect: () => { handlers.star([item], !starred); },
   };
-  if (item.kind === "folder") return [{ id: "share", actions: [share(t("share.reason.folder")), starAction] }, organize, ...remove];
+  if (item.kind === "folder") {
+    return [
+      { id: "open", actions: [{ id: "open", label: t("kb.open"), icon: icon(FolderOpen), shortcut: hints.open, onSelect: () => { handlers.open(item); } }] },
+      { id: "share", actions: [share(t("share.reason.folder")), starAction] },
+      organize,
+      ...remove,
+    ];
+  }
   return [
     {
       id: "file",
       actions: [
-        { id: "preview", label: t("act.preview"), icon: icon(Eye), onSelect: () => { handlers.preview(item); } },
+        { id: "preview", label: t("act.preview"), icon: icon(Eye), shortcut: hints.preview, onSelect: () => { handlers.preview(item); } },
         { id: "download", label: t("act.download"), icon: icon(Download), onSelect: () => { handlers.download([item]); } },
         share(),
       ],
@@ -73,7 +84,7 @@ export function actionsFor(item: Item, handlers: ActionHandlers, readOnly = fals
       id: "info",
       actions: [
         starAction,
-        { id: "details", label: t("act.details"), icon: icon(Info), onSelect: () => { handlers.details(item); } },
+        { id: "details", label: t("act.details"), icon: icon(Info), shortcut: hints.details, onSelect: () => { handlers.details(item); } },
         { id: "copyKey", label: t("act.copyKey"), icon: icon(Link2), onSelect: () => { handlers.copyKey(item); } },
       ],
     },

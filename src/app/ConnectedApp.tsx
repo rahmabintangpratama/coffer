@@ -23,7 +23,7 @@ const TrashRoute = lazy(() => import("./screens/TrashRoute"));
 const StarredRoute = lazy(() => import("./screens/StarredRoute"));
 const StorageScreen = lazy(() => import("@/features/storage").then((module) => ({ default: module.StorageScreen })));
 const HomeScreen = lazy(() => import("@/features/files").then((module) => ({ default: module.HomeScreen })));
-const filesGroups = ["files", "det", "filter", "search", "sel", "kind", "col", "view", "sort", "row", "menu", "home", "type", "dlg", "conf", "upl", "drop", "pv", "op", "ro", "share"] as const;
+const filesGroups = ["files", "det", "filter", "search", "sel", "kind", "col", "view", "sort", "row", "menu", "home", "type", "dlg", "conf", "upl", "drop", "pv", "op", "ro", "share", "kb", "star"] as const;
 const starredGroups = ["star"] as const;
 const storageGroups = ["stor"] as const;
 const trashGroups = ["trash", "del", "sel", "conf", "op", "ro"] as const;

@@ -3,6 +3,7 @@ import type { LayoutMode } from "@/components/layout";
 import type { FolderItem } from "@/lib/types";
 import type { Item } from "./model";
 import { useSelection } from "./selection";
+import { type ItemShortcut, itemShortcutOf } from "./shortcuts";
 
 const LONG_PRESS_MS = 450;
 
@@ -19,6 +20,8 @@ export interface InteractionOptions {
   onSearchShortcut: () => void;
   /** Called for a right-click, Shift+F10 or the Menu key on an item; return false when it has no menu. */
   onContextItem: (item: Item) => boolean;
+  /** F2/N, M, S, I, Del or Backspace on an item: the screen runs it on the selection, or on this item when nothing is selected (FR-26). */
+  onShortcut: (action: ItemShortcut, item: Item) => void;
 }
 
 /**
@@ -28,7 +31,7 @@ export interface InteractionOptions {
  * taps toggle; outside it a tap opens a folder or the details of a file.
  */
 export function useItemInteractions(options: InteractionOptions) {
-  const { items, layout, onOpenFolder, onActivateFile, focusIndex, nextIndex, onSearchShortcut, onContextItem } = options;
+  const { items, layout, onOpenFolder, onActivateFile, focusIndex, nextIndex, onSearchShortcut, onContextItem, onShortcut } = options;
   const [focused, setFocused] = useState(0);
   const press = useRef<{ timer: ReturnType<typeof setTimeout>; fired: boolean } | null>(null);
   const order = useMemo(() => items.map((item) => item.key), [items]);
@@ -61,6 +64,12 @@ export function useItemInteractions(options: InteractionOptions) {
   const keyDown = useCallback(
     (event: KeyboardEvent, item: Item, index: number) => {
       const state = selection.getState();
+      const shortcut = itemShortcutOf(event);
+      if (shortcut) {
+        event.preventDefault();
+        onShortcut(shortcut, item);
+        return;
+      }
       if (event.key === "Enter") {
         event.preventDefault();
         if (item.kind === "folder") onOpenFolder(item);
@@ -96,7 +105,7 @@ export function useItemInteractions(options: InteractionOptions) {
         }
       }
     },
-    [focusIndex, items, nextIndex, onActivateFile, onOpenFolder, onSearchShortcut, order, selection],
+    [focusIndex, items, nextIndex, onActivateFile, onOpenFolder, onSearchShortcut, onShortcut, order, selection],
   );
 
   const pointerDown = useCallback(

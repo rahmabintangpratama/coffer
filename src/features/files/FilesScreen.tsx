@@ -29,6 +29,8 @@ import { filterItems, hasFilters, type Item, noFilters, pathFromPrefix, prefixFr
 import { ViewControls } from "./Toolbar";
 import { closePreview, openPreview, readHashRoute, stepPreview } from "./previewRoute";
 import { useFilesChrome } from "./chrome";
+import { ShortcutSheet } from "./ShortcutSheet";
+import type { ItemShortcut } from "./shortcuts";
 
 // The viewer is its own chunk, loaded the first time a file is opened.
 const Preview = lazy(() => import("@/features/preview").then((module) => ({ default: module.Preview })));
@@ -172,6 +174,10 @@ function Folder({ connection, relative, root, settings, onSettings, notify, onUs
         const chosen = first && items.length === 1 && state.keys.has(first.key) && state.keys.size > 1 ? visible.filter((item) => state.keys.has(item.key)) : items;
         void downloadItems(connection, chosen, notify);
       },
+      open: (item) => {
+        if (item.kind === "folder") navigate(pathFromPrefix(item.key.slice(root.length)));
+        else openPreview(item.key);
+      },
       preview: (item) => { if (item.kind === "file") openPreview(item.key); },
       details: (item) => { if (item.kind === "file") setDetailsKey(item.key); },
       copyKey: (item) => {
@@ -206,7 +212,7 @@ function Folder({ connection, relative, root, settings, onSettings, notify, onUs
             },
           }),
     }),
-    [connection, visible, notify, rename, makeCopy, move, trash, share, inTrash, starredKeys, addStars, removeStars],
+    [connection, visible, notify, rename, makeCopy, move, trash, share, inTrash, starredKeys, addStars, removeStars, navigate, root.length],
   );
 
   // The selection bar is drawn by the app bar; it is told what is selected and which actions apply (AC-30.3).
@@ -295,7 +301,47 @@ function Folder({ connection, relative, root, settings, onSettings, notify, onUs
     onSettings({ sort: { by, dir: settings.sort.by === by && settings.sort.dir === "asc" ? "desc" : "asc" } });
   };
 
-  const viewProps = { readOnly, items: visible, density: settings.density, folderLabel, handlers, onOpenFolder: openFolder, onSearchShortcut: focusSearch, onContextItem, focusRequest };
+  // FR-26: a shortcut on an item acts on the selection when there is one, else on that item.
+  const onShortcut = useCallback(
+    (action: ItemShortcut, item: Item) => {
+      const targets = selected.length > 0 ? selected : [item];
+      const first = targets[0];
+      if (!first) return;
+      if (readOnly && (action === "rename" || action === "move" || action === "trash")) {
+        notify(t("ro.reason"));
+        return;
+      }
+      if (action === "rename") { if (targets.length === 1) handlers.rename(first); }
+      else if (action === "move") handlers.move(targets);
+      else if (action === "trash") handlers.trash?.(targets);
+      else if (action === "star") handlers.star(targets, !targets.every((target) => starredKeys.has(target.key)));
+      else if (first.kind === "file") handlers.details(first);
+    },
+    [selected, readOnly, notify, handlers, starredKeys],
+  );
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  // App-wide keys while Files shows: never while typing, and never under an open dialog (it owns Escape there).
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const typing = target !== null && (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName));
+      if (typing || document.querySelector("dialog[open]") !== null) return;
+      if ((event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        focusSearch();
+      } else if (event.key === "?" && !event.metaKey && !event.ctrlKey && !event.altKey) {
+        event.preventDefault();
+        setShortcutsOpen(true);
+      } else if (event.key === "Escape" && useSelection.getState().keys.size > 0) {
+        // Escape clears the selection wherever focus is, a toast included (AC-30.4).
+        useSelection.getState().clear();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("keydown", onKey); };
+  }, [focusSearch]);
+
+  const viewProps = { readOnly, onShortcut, items: visible, density: settings.density, folderLabel, handlers, onOpenFolder: openFolder, onSearchShortcut: focusSearch, onContextItem, focusRequest };
 
   let body;
   if (listing.isPending) {
@@ -372,6 +418,7 @@ function Folder({ connection, relative, root, settings, onSettings, notify, onUs
           </>
         )}
       </div>
+      <ShortcutSheet open={shortcutsOpen} onClose={() => { setShortcutsOpen(false); }} />
       {conflictDialog}
       {operationDialogs}
       {trashDialog}

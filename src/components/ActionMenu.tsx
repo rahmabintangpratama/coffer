@@ -19,6 +19,8 @@ export interface MenuAction {
   reason?: string;
   /** Marks the current choice in a menu of options (the filter chips). */
   checked?: boolean;
+  /** A keyboard shortcut hint shown at the end of the item (`label`), and its `aria-keyshortcuts` value. */
+  shortcut?: { label: string; aria: string };
 }
 
 export interface MenuGroup {
@@ -53,13 +55,14 @@ function Items({ groups, kind }: { groups: MenuGroup[]; kind: typeof Dropdown | 
       {index > 0 && <kind.Separator className="my-1 h-px bg-line" />}
       {group.label !== undefined && <kind.Label className="px-3 py-1 text-sm text-fg-muted">{group.label}</kind.Label>}
       {group.actions.map((action) => (
-        <kind.Item key={action.id} disabled={action.disabled ?? false} onSelect={action.onSelect} className={itemClass(action, focusRing)}>
+        <kind.Item key={action.id} disabled={action.disabled ?? false} onSelect={action.onSelect} className={itemClass(action, focusRing)} {...(action.shortcut ? { "aria-keyshortcuts": action.shortcut.aria } : {})}>
           {action.icon}
           <span className="flex min-w-0 flex-col">
             {action.label}
             {action.disabled === true && action.reason !== undefined && <span className="text-sm text-fg-muted">{action.reason}</span>}
           </span>
           {action.checked === true && <Check aria-hidden="true" className="ml-auto size-4" />}
+          {action.shortcut && <kbd aria-hidden="true" className="ml-auto pl-4 font-sans text-sm text-fg-muted">{action.shortcut.label}</kbd>}
         </kind.Item>
       ))}
     </kind.Group>

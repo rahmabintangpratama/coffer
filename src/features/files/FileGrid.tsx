@@ -126,6 +126,7 @@ export function FileGrid(props: ItemViewProps) {
     nextIndex,
     onSearchShortcut: props.onSearchShortcut,
     onContextItem: props.onContextItem,
+    onShortcut: props.onShortcut,
   });
 
   return (

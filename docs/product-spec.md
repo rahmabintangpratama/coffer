@@ -281,10 +281,11 @@ The UI never hides these. Each one is surfaced where it affects the person.
 
 **Screens:** `S33_Palette`
 
-#### FR-26 Keyboard shortcuts (v1)
+#### FR-26 Keyboard shortcuts (v1, built in M11)
 **Story:** As a keyboard user, I want Drive-like shortcuts.
 **Acceptance**
-- AC-26.1 Given list focus, When `Enter`, `Space`, `F2` or `N`, `M`, `S`, `I`, `Del`, `Shift+Del` are pressed, Then the mapped action runs on the selection.
+- AC-26.1 Given list focus, When `Enter`, `Space`, `F2` or `N`, `M`, `S`, `I`, `Del` (or `Backspace`), `Shift+Del` are pressed, Then the mapped action runs on the selection, or on the focused item when nothing is selected. `Shift+Del` in Files is not built yet (Delete forever stays in Trash, AC-71.4).
+- AC-26.4 Given Files on a desktop layout and no dialog open, When `⌘/Ctrl+K` is pressed, Then the search pill gets focus (until the command palette, FR-25, exists); When `Esc` is pressed with a selection, Then it clears wherever focus is.
 - AC-26.2 Given focus is in a text field or dialog, Then single-key shortcuts do not fire.
 - AC-26.3 Given `?` is pressed, Then the shortcuts sheet opens; Esc closes the top layer first, then clears selection.
 
@@ -323,6 +324,7 @@ The UI never hides these. Each one is surfaced where it affects the person.
 **Acceptance**
 - AC-31.1 Given a file, When right-click, ⋮, Shift+F10 or the Menu key is used, Then the menu shows Preview/Open, Download, Rename, Make a copy, Share, Organize (Move…, Add to starred), Details, Move to trash.
 - AC-31.2 Given 375 px, Then the menu is a bottom action sheet with a file header.
+- AC-31.4 Given a folder, Then its menu starts with Open; from 768 px every action with a shortcut shows it at the end of the item and in `aria-keyshortcuts` (FR-26).
 - AC-31.3 Given a folder, Then Preview and Share are absent and Download is "Download as .zip" (v1).
 
 **Screens:** `S16_ContextMenu`, `S17_NewMenu`

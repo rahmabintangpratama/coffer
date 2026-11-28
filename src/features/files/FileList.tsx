@@ -9,6 +9,7 @@ import { actionsFor, type ActionHandlers } from "./actions";
 import { FileRow } from "./FileRow";
 import type { Item, Sort } from "./model";
 import { useSelection } from "./selection";
+import type { ItemShortcut } from "./shortcuts";
 import { useItemInteractions } from "./useItemInteractions";
 
 const OVERSCAN = 8;
@@ -23,6 +24,7 @@ export interface ItemViewProps {
   onOpenFolder: (folder: FolderItem) => void;
   onSearchShortcut: () => void;
   onContextItem: (item: Item) => boolean;
+  onShortcut: (action: ItemShortcut, item: Item) => void;
   /** Move focus to this item (the preview closed and the row it came from takes focus back). `nonce` makes the same index fire again. */
   focusRequest?: { index: number; nonce: number } | undefined;
 }
@@ -96,6 +98,7 @@ export function FileList(props: ItemViewProps & { sort: Sort; onSort: (by: Sort[
     nextIndex,
     onSearchShortcut: props.onSearchShortcut,
     onContextItem: props.onContextItem,
+    onShortcut: props.onShortcut,
   });
 
   return (
